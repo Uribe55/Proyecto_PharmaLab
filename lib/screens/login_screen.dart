@@ -5,7 +5,6 @@ import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/pharma_logo.dart';
 import 'cliente_farmacia/client_shell.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,9 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    final error = PharmaService.instance.login(
+    final error = await PharmaService.instance.login(
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -57,14 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const ClientShell()),
     );
-  }
-
-  void _fillDemoAccount() {
-    setState(() {
-      _emailController.text = PharmaService.demoEmail;
-      _passwordController.text = PharmaService.demoPassword;
-      _error = null;
-    });
   }
 
   Future<void> _showRecoveryDialog() async {
@@ -110,9 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
     controller.dispose();
     if (!mounted || email == null || email.isEmpty) return;
 
+    final error = await PharmaService.instance.recoverPassword(email);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Enviamos las instrucciones a $email.'),
+        content: Text(error ?? 'Si existe una cuenta, recibirás las instrucciones.'),
       ),
     );
   }
@@ -147,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const PharmaLogo(),
                             const SizedBox(height: 30),
                             const Text(
-                              'TU ALIADO EN DIAGNÓSTICO',
+                              'TU ALIADO EN ABASTECIMIENTO',
                               style: AppText.eyebrow,
                             ),
                             const SizedBox(height: 9),
@@ -157,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Todo lo que tu laboratorio necesita, '
+                              'Todo lo que tu farmacia necesita, '
                               'en un solo lugar.',
                               style: AppText.muted,
                             ),
@@ -304,8 +295,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 18),
-                            _DemoAccountCard(onUse: _fillDemoAccount),
-                            const SizedBox(height: 18),
                             Wrap(
                               alignment: WrapAlignment.center,
                               crossAxisAlignment: WrapCrossAlignment.center,
@@ -316,9 +305,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => const RegisterScreen(),
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Registro real pendiente de habilitar.'),
                                       ),
                                     );
                                   },
@@ -336,71 +325,6 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _DemoAccountCard extends StatelessWidget {
-  const _DemoAccountCard({required this.onUse});
-
-  final VoidCallback onUse;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-      decoration: BoxDecoration(
-        color: AppColors.mint.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            size: 17,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: 9),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cuenta de prueba local',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'maria@laboratoriosanmartin.bo · pharmalab123',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    height: 1.3,
-                    color: AppColors.muted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: onUse,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text(
-              'Usar',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
       ),
     );
   }

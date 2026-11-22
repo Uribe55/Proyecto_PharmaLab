@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/cart_item.dart';
@@ -18,31 +20,15 @@ class StockUnavailableException implements Exception {
       'Stock insuficiente de $productName. Disponible: $available.';
 }
 
-class _Account {
-  _Account({required this.password, required this.profile});
-
-  final String password;
-  PharmacyProfile profile;
-}
-
-/// Servicio central de catálogo, sesión y pedidos.
-///
-/// Mantiene la lógica fuera de los widgets (RNF-10 y RNF-11) para poder
-/// reemplazar los datos locales por Firebase sin reescribir las pantallas.
+/// Fase 1: autenticación y perfil reales; catálogo y pedidos aún locales.
 class PharmaService extends ChangeNotifier {
-  PharmaService._() {
-    final profile = demoProfile;
-    _accounts[demoEmail] = _Account(
-      password: demoPassword,
-      profile: profile,
-    );
-  }
+  PharmaService._();
 
   static final PharmaService instance = PharmaService._();
 
+  // Perfil de respaldo para widgets que consultan pharmacy sin sesión.
+  // No es una cuenta de acceso y no contiene credenciales.
   static const String demoEmail = 'maria@laboratoriosanmartin.bo';
-  static const String demoPassword = 'pharmalab123';
-
   static const PharmacyProfile demoProfile = PharmacyProfile(
     commercialName: 'Laboratorio San Martín',
     nit: '1023456789',
@@ -52,24 +38,29 @@ class PharmaService extends ChangeNotifier {
     email: demoEmail,
   );
 
-  final List<Product> _products = buildSeedProducts();
-  late final List<PharmacyOrder> _orders = buildSeedOrders(demoProfile);
-  final Map<String, _Account> _accounts = {};
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
+  final List<Product> _products = buildSeedProducts();
+  final List<PharmacyOrder> _orders = [];
   PharmacyProfile? _currentUser;
+  String? _uid;
+  String? _role;
+  String? _pharmacyId;
+  Future<void>? _pendingLogout;
 
   PharmacyProfile get pharmacy => _currentUser ?? demoProfile;
-
   bool get isLoggedIn => _currentUser != null;
+  String? get uid => _uid;
+  String? get role => _role;
+  String? get pharmacyId => _pharmacyId;
 
   List<Product> get products => List.unmodifiable(_products);
-
   List<PharmacyOrder> get orders => List.unmodifiable(_orders);
-
   List<Product> get featuredProducts =>
       _products.where((product) => product.isFeatured).toList();
-
-  int get productsInStock => _products.where((product) => product.isAvailable).length;
+  int get productsInStock =>
+      _products.where((product) => product.isAvailable).length;
 
   Product? productById(String id) {
     for (final product in _products) {
@@ -78,22 +69,156 @@ class PharmaService extends ChangeNotifier {
     return null;
   }
 
-  /// Devuelve `null` si el acceso fue correcto o un mensaje de error.
-  String? login({required String email, required String password}) {
-    final account = _accounts[email.trim().toLowerCase()];
-    if (account == null) {
-      return 'No encontramos una cuenta con ese correo electrónico.';
-    }
-    if (account.password != password) {
-      return 'La contraseña no es correcta. Inténtalo nuevamente.';
-    }
-
-    _currentUser = account.profile;
-    notifyListeners();
-    return null;
+  void _clearLocalSession() {
+    _currentUser = null;
+    _uid = null;
+    _role = null;
+    _pharmacyId = null;
+    _orders.clear();
+    _products
+      ..clear()
+      ..addAll(buildSeedProducts());
   }
 
-  /// Devuelve `null` si el registro fue correcto o un mensaje de error.
+  String _text(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    return value is String ? value.trim() : '';
+  }
+
+  String _authError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-credential':
+      case 'invalid-login-credentials':
+      case 'user-not-found':
+      case 'wrong-password':
+        return 'Correo o contraseña incorrectos.';
+      case 'invalid-email':
+        return 'El correo electrónico no es válido.';
+      case 'user-disabled':
+        return 'Esta cuenta está deshabilitada.';
+      case 'too-many-requests':
+        return 'Demasiados intentos. Inténtalo más tarde.';
+      case 'network-request-failed':
+        return 'No se pudo conectar. Revisa tu conexión a Internet.';
+      case 'operation-not-allowed':
+        return 'El inicio de sesión por correo y contraseña no está habilitado.';
+      default:
+        return 'No se pudo completar la autenticación (${e.code}).';
+    }
+  }
+
+  /// Devuelve null si el acceso del cliente fue correcto.
+  /// Los roles de empleados se verifican, pero aún no tienen navegación.
+  Future<String?> login({required String email, required String password}) async {
+    var success = false;
+    try {
+      final pendingLogout = _pendingLogout;
+      if (pendingLogout != null) await pendingLogout;
+      _clearLocalSession();
+      if (_auth.currentUser != null) await _auth.signOut();
+
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final user = credential.user;
+      if (user == null) return 'No se pudo identificar la cuenta.';
+
+      final account = await _db.collection('usuarios').doc(user.uid).get(
+        const GetOptions(source: Source.server),
+      );
+      final accountData = account.data();
+      if (accountData == null) {
+        return 'La cuenta existe, pero falta su perfil en usuarios.';
+      }
+      if (accountData['estado'] != true) {
+        return 'Tu perfil de PharmaLab está inactivo.';
+      }
+      final role = _text(accountData, 'rol');
+      if (role != 'cliente') {
+        if (const ['vendedor', 'repartidor', 'administrador'].contains(role)) {
+          return 'Credenciales correctas. Rol: $role. '
+              'Su interfaz todavía no está habilitada.';
+        }
+        return 'El perfil no tiene un rol válido.';
+      }
+
+      // Se utiliza el nombre real de la colección visto en tu consola.
+      final pharmacies = await _db
+          .collection('farmacia_cliente')
+          .where('usuario_id', isEqualTo: user.uid)
+          .limit(2)
+          .get(const GetOptions(source: Source.server));
+      if (pharmacies.docs.isEmpty) {
+        return 'Tu cuenta no tiene una farmacia asociada.';
+      }
+      if (pharmacies.docs.length != 1) {
+        return 'La cuenta tiene más de una farmacia asociada. '
+            'Debe revisarse la vinculación.';
+      }
+      final pharmacyDoc = pharmacies.docs.single;
+      final data = pharmacyDoc.data();
+      if (data['estado'] != true) {
+        return 'La farmacia asociada está inactiva.';
+      }
+      final name = _text(data, 'nombre_farmacia');
+      if (name.isEmpty) return 'Falta el nombre de la farmacia.';
+      final responsible = _text(data, 'responsable');
+      _currentUser = PharmacyProfile(
+        commercialName: name,
+        nit: _text(data, 'nit'),
+        responsible: responsible.isEmpty ? 'Sin registrar' : responsible,
+        phone: _text(data, 'telefono'),
+        address: _text(data, 'direccion_fiscal'),
+        email: user.email ?? email.trim(),
+      );
+      _uid = user.uid;
+      _role = role;
+      _pharmacyId = pharmacyDoc.id;
+      success = true;
+      notifyListeners();
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return _authError(e);
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        return 'Firestore denegó el acceso. Revisa las reglas de seguridad.';
+      }
+      if (e.code == 'unavailable' || e.code == 'deadline-exceeded') {
+        return 'No se pudo consultar Firestore. Revisa tu conexión.';
+      }
+      return 'No se pudo consultar el perfil (${e.code}).';
+    } catch (e) {
+      debugPrint('Error de inicio de sesión: ${e.runtimeType}');
+      return 'Ocurrió un error al iniciar sesión.';
+    } finally {
+      if (!success) {
+        _clearLocalSession();
+        try {
+          await _auth.signOut();
+        } catch (e) {
+          debugPrint('No se pudo cerrar la sesión de Firebase: ${e.runtimeType}');
+        }
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<String?> recoverPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+      return null;
+    } on FirebaseAuthException catch (e) {
+      // Evita confirmar si un correo tiene cuenta registrada.
+      if (e.code == 'user-not-found') return null;
+      return _authError(e);
+    } catch (_) {
+      return 'No se pudo solicitar la recuperación de contraseña.';
+    }
+  }
+
+  /// Se conserva la firma síncrona para no romper RegisterScreen todavía.
+  /// No se guardan cuentas ni contraseñas locales.
   String? register({
     required String commercialName,
     required String nit,
@@ -103,68 +228,55 @@ class PharmaService extends ChangeNotifier {
     required String email,
     required String password,
   }) {
-    final normalizedEmail = email.trim().toLowerCase();
-    if (_accounts.containsKey(normalizedEmail)) {
-      return 'Ya existe una cuenta registrada con este correo electrónico.';
+    return 'El registro real de farmacias se habilitará en la siguiente fase.';
+  }
+
+  Future<void> logout() async {
+    _clearLocalSession();
+    notifyListeners();
+    final operation = _auth.signOut();
+    _pendingLogout = operation;
+    try {
+      await operation;
+    } catch (e) {
+      debugPrint('Error al cerrar sesión: ${e.runtimeType}');
+    } finally {
+      if (identical(_pendingLogout, operation)) _pendingLogout = null;
     }
-
-    final profile = PharmacyProfile(
-      commercialName: commercialName.trim(),
-      nit: nit.trim(),
-      responsible: responsible.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-      email: normalizedEmail,
-    );
-
-    _accounts[normalizedEmail] = _Account(
-      password: password,
-      profile: profile,
-    );
-    _currentUser = profile;
-    notifyListeners();
-    return null;
   }
 
-  void logout() {
-    _currentUser = null;
-    notifyListeners();
-  }
-
+  /// Solo modifica la dirección de la sesión de prueba, no Firestore.
   void updateAddress(String address) {
     final current = _currentUser;
     if (current == null) return;
-
-    final updated = current.copyWith(address: address.trim());
-    _currentUser = updated;
-    final account = _accounts[updated.email.toLowerCase()];
-    if (account != null) {
-      account.profile = updated;
-    }
+    _currentUser = current.copyWith(address: address.trim());
     notifyListeners();
   }
 
-  /// Confirma un pedido: valida stock, lo descuenta y genera el número único.
+  /// Pedido local de demostración. No escribe ni descuenta stock en Firestore.
   PharmacyOrder createOrder({
     required List<CartItem> items,
     String notes = '',
   }) {
-    if (items.isEmpty) {
-      throw StateError('El carrito está vacío.');
-    }
+    if (!isLoggedIn) throw StateError('No hay una sesión activa.');
+    if (items.isEmpty) throw StateError('El carrito está vacío.');
 
-    // Primera pasada: validar todo antes de tocar el stock.
+    final requested = <String, int>{};
     for (final item in items) {
-      final product = _products.firstWhere((p) => p.id == item.product.id);
-      if (item.quantity <= 0 || item.quantity > product.stock) {
+      if (item.quantity <= 0) {
+        throw StateError('La cantidad debe ser mayor a cero.');
+      }
+      requested.update(item.product.id, (n) => n + item.quantity,
+          ifAbsent: () => item.quantity);
+    }
+    for (final entry in requested.entries) {
+      final product = _products.firstWhere((p) => p.id == entry.key);
+      if (entry.value > product.stock) {
         throw StockUnavailableException(product.name, product.stock);
       }
     }
-
-    // Segunda pasada: descontar stock (RF-08).
-    for (final item in items) {
-      final product = _products.firstWhere((p) => p.id == item.product.id);
-      product.stock -= item.quantity;
+    for (final entry in requested.entries) {
+      _products.firstWhere((p) => p.id == entry.key).stock -= entry.value;
     }
 
     final customer = pharmacy;
@@ -177,20 +289,15 @@ class PharmaService extends ChangeNotifier {
       contactName: customer.responsible,
       contactPhone: customer.phone,
       notes: notes.trim(),
-      items: items
-          .map(
-            (item) => OrderLine(
-              productId: item.product.id,
-              name: item.product.name,
-              brand: item.product.brand,
-              presentation: item.product.presentation,
-              unitPrice: item.product.price,
-              quantity: item.quantity,
-            ),
-          )
-          .toList(),
+      items: items.map((item) => OrderLine(
+        productId: item.product.id,
+        name: item.product.name,
+        brand: item.product.brand,
+        presentation: item.product.presentation,
+        unitPrice: item.product.price,
+        quantity: item.quantity,
+      )).toList(),
     );
-
     _orders.insert(0, order);
     notifyListeners();
     return order;
@@ -202,7 +309,6 @@ class PharmaService extends ChangeNotifier {
       final sequence = int.tryParse(order.number.split('-').last) ?? 0;
       if (sequence > maxSequence) maxSequence = sequence;
     }
-
     final next = (maxSequence + 1).toString().padLeft(4, '0');
     return 'PL-${DateTime.now().year}-$next';
   }
