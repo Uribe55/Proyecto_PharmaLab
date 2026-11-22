@@ -1,3 +1,4 @@
+import '../models/app_user.dart';
 import '../models/order.dart';
 import '../models/pharmacy.dart';
 import '../models/product.dart';
@@ -245,6 +246,8 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       contactName: pharmacy.responsible,
       contactPhone: pharmacy.phone,
       notes: 'Entregar en horario de la mañana.',
+      driverId: 'u-carlos',
+      driverName: 'Carlos Mendoza',
       items: const [
         OrderLine(
           productId: 'p-001',
@@ -307,6 +310,9 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       address: pharmacy.address,
       contactName: pharmacy.responsible,
       contactPhone: pharmacy.phone,
+      driverId: 'u-carlos',
+      driverName: 'Carlos Mendoza',
+      deliveredAt: DateTime(2026, 6, 8, 12, 40),
       items: const [
         OrderLine(
           productId: 'p-003',
@@ -353,6 +359,113 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
           quantity: 3,
         ),
       ],
+    ),
+    PharmacyOrder(
+      number: 'PL-2026-0839',
+      createdAt: DateTime(2026, 6, 12, 15, 20),
+      status: OrderStatus.pendiente,
+      pharmacyName: 'Farmacia San Rafael',
+      address: 'Av. Ballivián 1250, Calacoto, La Paz',
+      contactName: 'Juan Flores',
+      contactPhone: '+591 712-45890',
+      notes: 'Facturar a nombre de la farmacia.',
+      items: const [
+        OrderLine(
+          productId: 'p-009',
+          name: 'Tiras reactivas de glucosa',
+          brand: 'Accu-Chek',
+          presentation: 'Frasco x 50 tiras',
+          unitPrice: 145.00,
+          quantity: 2,
+        ),
+        OrderLine(
+          productId: 'p-010',
+          name: 'Gasas estériles 10x10',
+          brand: 'Cureband',
+          presentation: 'Paquete x 10 unidades',
+          unitPrice: 12.50,
+          quantity: 6,
+        ),
+        OrderLine(
+          productId: 'p-013',
+          name: 'Vitamina C 1000 mg',
+          brand: 'Bayer',
+          presentation: 'Frasco x 60 tabletas',
+          unitPrice: 48.00,
+          quantity: 1,
+        ),
+      ],
+    ),
+    PharmacyOrder(
+      number: 'PL-2026-0838',
+      createdAt: DateTime(2026, 6, 10, 9, 15),
+      status: OrderStatus.entregado,
+      pharmacyName: 'Farmacia San Rafael',
+      address: 'Av. Ballivián 1250, Calacoto, La Paz',
+      contactName: 'Juan Flores',
+      contactPhone: '+591 712-45890',
+      driverId: 'u-daniela',
+      driverName: 'Daniela Ríos',
+      deliveredAt: DateTime(2026, 6, 10, 11, 5),
+      items: const [
+        OrderLine(
+          productId: 'p-002',
+          name: 'Ibuprofeno 400 mg',
+          brand: 'Bagó',
+          presentation: 'Caja x 20 tabletas',
+          unitPrice: 12.00,
+          quantity: 4,
+        ),
+        OrderLine(
+          productId: 'p-007',
+          name: 'Guantes de nitrilo M',
+          brand: 'Medline',
+          presentation: 'Caja x 100 unidades',
+          unitPrice: 95.00,
+          quantity: 1,
+        ),
+      ],
+    ),
+  ];
+}
+
+/// Usuarios internos de PharmaLab para la demostración local (RF-19).
+List<AppUser> buildSeedEmployees() {
+  return const [
+    AppUser(
+      id: 'u-ana',
+      name: 'Ana Vargas',
+      email: 'ana@pharmalab.bo',
+      phone: '+591 707-22110',
+      role: UserRole.vendedor,
+    ),
+    AppUser(
+      id: 'u-carlos',
+      name: 'Carlos Mendoza',
+      email: 'carlos@pharmalab.bo',
+      phone: '+591 707-33441',
+      role: UserRole.repartidor,
+    ),
+    AppUser(
+      id: 'u-luis',
+      name: 'Luis Quispe',
+      email: 'luis@pharmalab.bo',
+      phone: '+591 707-44552',
+      role: UserRole.repartidor,
+    ),
+    AppUser(
+      id: 'u-daniela',
+      name: 'Daniela Ríos',
+      email: 'daniela@pharmalab.bo',
+      phone: '+591 707-55663',
+      role: UserRole.repartidor,
+    ),
+    AppUser(
+      id: 'u-laura',
+      name: 'Laura Rojas',
+      email: 'laura@pharmalab.bo',
+      phone: '+591 707-66774',
+      role: UserRole.administrador,
     ),
   ];
 }
