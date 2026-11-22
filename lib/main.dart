@@ -56,11 +56,11 @@ class PharmaLabApp extends StatelessWidget {
                       child: SizedBox(
                         width: double.infinity,
                         child: Text(
-                          'Sesión real · Catálogo, stock, pedidos y cambios '
-                          'de dirección solo de prueba (sin guardar en Firebase).',
+                          'Sesión real ·, stock, pedidos y cambios '
+                          'de dirección de prueba ',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF704C12),
+                            color: Color.fromARGB(255, 13, 32, 68),
                             fontSize: 12,
                           ),
                         ),
