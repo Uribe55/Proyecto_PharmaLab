@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/app_user.dart';
@@ -19,6 +21,13 @@ class AdminUsersScreen extends StatefulWidget {
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final _searchController = TextEditingController();
   UserRole? _roleFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresca la lista con los perfiles de `usuarios` en Firestore (RF-19).
+    unawaited(PharmaService.instance.refreshUsers());
+  }
 
   @override
   void dispose() {

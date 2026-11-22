@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:proyecto_final_movil/main.dart';
+import 'package:proyecto_final_movil/screens/administrador/admin_user_form_screen.dart';
 import 'package:proyecto_final_movil/services/pharma_service.dart';
 
 Future<void> _loginAs(WidgetTester tester, String name) async {
@@ -37,23 +38,43 @@ void main() {
 
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'Pedro Quisbert');
-    await tester.enterText(fields.at(1), 'pedro@pharmalab.bo');
-    await tester.enterText(fields.at(2), '+591 700-11223');
-    await tester.enterText(fields.at(3), 'pharmalab123');
+    await tester.enterText(fields.at(1), '+591 700-11223');
+    await tester.enterText(fields.at(2), 'pharmalab123');
 
-    await tester.ensureVisible(find.text('Repartidor'));
+    await tester.scrollUntilVisible(
+      find.text('Repartidor'),
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byType(AdminUserFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Repartidor'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Crear usuario'));
+    // El correo se genera con la convención institucional.
+    expect(find.text('pedroq@rep.pharma.com'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Crear usuario'),
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byType(AdminUserFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Crear usuario'));
     await tester.pumpAndSettle();
 
     expect(
       PharmaService.instance.users.any(
-        (user) => user.email == 'pedro@pharmalab.bo',
+        (user) => user.email == 'pedroq@rep.pharma.com',
       ),
       isTrue,
     );
@@ -73,12 +94,30 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Cuenta activa'));
+    await tester.scrollUntilVisible(
+      find.text('Cuenta activa'),
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byType(AdminUserFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cuenta activa'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Guardar cambios'));
+    await tester.scrollUntilVisible(
+      find.text('Guardar cambios'),
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byType(AdminUserFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Guardar cambios'));
     await tester.pumpAndSettle();

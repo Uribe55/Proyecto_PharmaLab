@@ -98,6 +98,49 @@ class AppUser {
     return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
   }
 
+  /// Dominio interno que corresponde a cada rol según la convención de
+  /// correos del sistema: nombre + inicial del apellido + dominio.
+  static const Map<UserRole, String> employeeDomains = {
+    UserRole.vendedor: 'ven',
+    UserRole.repartidor: 'rep',
+    UserRole.administrador: 'admin',
+  };
+
+  static const String _accents = 'áàäâãéèëêíìïîóòöôõúùüûñç';
+  static const String _plain = 'aaaaaeeeeiiiiooooouuuunc';
+
+  static String _withoutAccents(String value) {
+    final buffer = StringBuffer();
+    for (final rune in value.runes) {
+      final character = String.fromCharCode(rune);
+      final index = _accents.indexOf(character);
+      buffer.write(index == -1 ? character : _plain[index]);
+    }
+    return buffer.toString();
+  }
+
+  /// Genera el correo institucional de un empleado.
+  ///
+  /// Ejemplos: `Ana Vargas` + vendedor → `anav@ven.pharma.com`,
+  /// `Carlos Mendoza` + repartidor → `carlosm@rep.pharma.com` y
+  /// `Laura Rojas` + administrador → `laurar@admin.pharma.com`.
+  /// Devuelve `null` para el rol cliente, que usa el correo de su farmacia.
+  static String? employeeEmail(String name, UserRole role) {
+    final domain = employeeDomains[role];
+    if (domain == null) return null;
+
+    final normalized = _withoutAccents(name.trim().toLowerCase());
+    final parts = normalized
+        .split(RegExp(r'[^a-z]+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return null;
+
+    final firstName = parts.first;
+    final lastInitial = parts.length > 1 ? parts.last[0] : '';
+    return '$firstName$lastInitial@$domain.pharma.com';
+  }
+
   AppUser copyWith({
     String? name,
     String? email,

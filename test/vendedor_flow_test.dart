@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:proyecto_final_movil/main.dart';
+import 'package:proyecto_final_movil/screens/vendedor/seller_review_screen.dart';
 import 'package:proyecto_final_movil/services/pharma_service.dart';
 
 Future<void> _loginAs(WidgetTester tester, String name) async {
@@ -31,8 +32,26 @@ void main() {
     await tester.tap(find.text('PL-2026-0841'));
     await tester.pumpAndSettle();
     expect(find.text('Revisión y aprobación'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Verificación de stock'),
+      160,
+      scrollable: find.descendant(
+        of: find.byType(SellerReviewScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Verificación de stock'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('Aprobar pedido'),
+      160,
+      scrollable: find.descendant(
+        of: find.byType(SellerReviewScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Aprobar pedido'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Aprobar'));

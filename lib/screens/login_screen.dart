@@ -7,7 +7,6 @@ import '../widgets/app_text_field.dart';
 import '../widgets/pharma_logo.dart';
 import 'administrador/admin_shell.dart';
 import 'cliente_farmacia/client_shell.dart';
-import 'register_screen.dart';
 import 'repartidor/driver_shell.dart';
 import 'vendedor/seller_shell.dart';
 
@@ -41,9 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    final error = PharmaService.instance.login(
+    final error = await PharmaService.instance.login(
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -132,8 +129,14 @@ class _LoginScreenState extends State<LoginScreen> {
     controller.dispose();
     if (!mounted || email == null || email.isEmpty) return;
 
+    final error = await PharmaService.instance.recoverPassword(email);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Enviamos las instrucciones a $email.')),
+      SnackBar(
+        content: Text(
+          error ?? 'Si existe una cuenta, recibirás las instrucciones.',
+        ),
+      ),
     );
   }
 
@@ -167,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const PharmaLogo(),
                             const SizedBox(height: 30),
                             const Text(
-                              'TU ALIADO EN DIAGNÓSTICO',
+                              'TU ALIADO EN ABASTECIMIENTO',
                               style: AppText.eyebrow,
                             ),
                             const SizedBox(height: 9),
@@ -177,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Todo lo que tu laboratorio necesita, '
+                              'Todo lo que tu farmacia necesita, '
                               'en un solo lugar.',
                               style: AppText.muted,
                             ),
@@ -323,8 +326,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                               ),
                             ),
-                            const SizedBox(height: 18),
-                            _DemoAccountCard(onUse: _showDemoAccounts),
+                            // Las cuentas de prueba solo tienen sentido cuando
+                            // la app trabaja sin Firebase (pruebas/demostración).
+                            if (!PharmaService.instance.usesFirebase) ...[
+                              const SizedBox(height: 18),
+                              _DemoAccountCard(onUse: _showDemoAccounts),
+                            ],
                             const SizedBox(height: 18),
                             Wrap(
                               alignment: WrapAlignment.center,
@@ -336,9 +343,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => const RegisterScreen(),
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Registro real pendiente de habilitar.',
+                                        ),
                                       ),
                                     );
                                   },

@@ -21,7 +21,6 @@ class AdminUserFormScreen extends StatefulWidget {
 class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   final _passwordController = TextEditingController();
 
@@ -33,12 +32,18 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
 
   bool get _isClient => widget.user?.role == UserRole.cliente;
 
+  /// Correo institucional generado desde el nombre y el rol (RF-19).
+  String get _generatedEmail {
+    final current = widget.user;
+    if (current != null) return current.email;
+    return AppUser.employeeEmail(_nameController.text, _role) ?? '';
+  }
+
   @override
   void initState() {
     super.initState();
     final user = widget.user;
     _nameController = TextEditingController(text: user?.name ?? '');
-    _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _role = user?.role ?? UserRole.vendedor;
     _active = user?.active ?? true;
@@ -47,7 +52,6 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -65,10 +69,10 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
 
     if (widget.isEditing) {
       final original = widget.user!;
-      error = service.updateUser(
+      error = await service.updateUser(
         user: original,
         name: _nameController.text,
-        email: _emailController.text,
+        email: original.email,
         phone: _phoneController.text,
         role: _isClient ? UserRole.cliente : _role,
       );
@@ -83,9 +87,8 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
         }
       }
     } else {
-      error = service.createUser(
+      error = await service.createUser(
         name: _nameController.text,
-        email: _emailController.text,
         phone: _phoneController.text,
         role: _role,
         password: _passwordController.text,
@@ -136,8 +139,8 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
             Text(
               widget.isEditing
                   ? 'Los cambios se aplican de inmediato en el sistema.'
-                  : 'La cuenta podrá iniciar sesión con el correo y la '
-                        'contraseña que definas.',
+                  : 'El correo institucional se genera automáticamente. La '
+                        'cuenta usará ese correo y la contraseña que definas.',
               style: AppText.muted,
             ),
             const SizedBox(height: 20),
@@ -147,6 +150,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               controller: _nameController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
+              onChanged: (_) => setState(() {}),
               validator: (value) {
                 if ((value ?? '').trim().isEmpty) {
                   return 'Ingresa el nombre completo.';
@@ -155,20 +159,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
               },
             ),
             const SizedBox(height: 16),
-            AppTextField(
-              label: 'Correo electrónico',
-              hint: 'nombre@pharmalab.bo',
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              validator: (value) {
-                final email = (value ?? '').trim();
-                if (email.isEmpty) return 'Ingresa el correo electrónico.';
-                final valid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                    .hasMatch(email);
-                return valid ? null : 'Ingresa un correo válido.';
-              },
-            ),
+            _EmailPreview(email: _generatedEmail, editing: widget.isEditing),
             const SizedBox(height: 16),
             AppTextField(
               label: 'Teléfono',
@@ -320,6 +311,71 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _EmailPreview extends StatelessWidget {
+  const _EmailPreview({required this.email, required this.editing});
+
+  final String email;
+  final bool editing;
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = email.isEmpty ? 'Completa el nombre y el rol' : email;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Correo institucional',
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.ink,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.alternate_email_rounded,
+                size: 17,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  visible,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: email.isEmpty ? AppColors.muted : AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          editing
+              ? 'El correo se fijó al crear la cuenta y no se modifica.'
+              : 'Se genera con nombre + inicial del apellido y el dominio del '
+                    'rol: @ven, @rep o @admin.pharma.com.',
+          style: AppText.meta.copyWith(fontSize: 9.5),
+        ),
+      ],
     );
   }
 }

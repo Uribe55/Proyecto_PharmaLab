@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:proyecto_final_movil/main.dart';
+import 'package:proyecto_final_movil/screens/repartidor/driver_delivery_detail_screen.dart';
 import 'package:proyecto_final_movil/services/pharma_service.dart';
 import 'package:proyecto_final_movil/services/sync_service.dart';
 
@@ -69,7 +70,7 @@ void main() {
       (item) => item.number == 'PL-2026-0809',
     );
     final carlos = service.users.firstWhere(
-      (user) => user.email == 'carlos@pharmalab.bo',
+      (user) => user.email == 'carlosm@rep.pharma.com',
     );
     expect(service.assignDelivery(order, carlos), isTrue);
 
@@ -137,7 +138,7 @@ void main() {
       (item) => item.number == 'PL-2026-0839',
     );
     final carlos = service.users.firstWhere(
-      (user) => user.email == 'carlos@pharmalab.bo',
+      (user) => user.email == 'carlosm@rep.pharma.com',
     );
     expect(service.approveOrder(order), isTrue);
     expect(service.assignDelivery(order, carlos), isTrue);
@@ -160,6 +161,15 @@ void main() {
     await tester.tap(find.text('Registrar'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Entrega fallida: La farmacia estaba cerrada'),
+      160,
+      scrollable: find.descendant(
+        of: find.byType(DriverDeliveryDetailScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
     expect(
       find.text('Entrega fallida: La farmacia estaba cerrada'),
       findsOneWidget,
