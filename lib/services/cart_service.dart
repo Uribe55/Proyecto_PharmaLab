@@ -76,7 +76,7 @@ class CartService extends ChangeNotifier {
     final index = _items.indexWhere((item) => item.product.id == product.id);
     if (index == -1) return;
 
-    if (quantity <= 0) {
+    if (quantity <= 0 || product.stock <= 0) {
       _items.removeAt(index);
       notifyListeners();
       return;
