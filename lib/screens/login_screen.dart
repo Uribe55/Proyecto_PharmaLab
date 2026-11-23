@@ -7,6 +7,7 @@ import '../widgets/app_text_field.dart';
 import '../widgets/pharma_logo.dart';
 import 'administrador/admin_shell.dart';
 import 'cliente_farmacia/client_shell.dart';
+import 'register_screen.dart';
 import 'repartidor/driver_shell.dart';
 import 'vendedor/seller_shell.dart';
 
@@ -343,11 +344,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Registro real pendiente de habilitar.',
-                                        ),
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const RegisterScreen(),
                                       ),
                                     );
                                   },

@@ -52,9 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!formValid || !_acceptedTerms) return;
 
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-
-    final error = PharmaService.instance.register(
+    final error = await PharmaService.instance.register(
       commercialName: _commercialNameController.text,
       nit: _nitController.text,
       responsible: _responsibleController.text,
@@ -174,8 +172,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             validator: (value) {
                               final nit = value?.trim() ?? '';
                               if (nit.isEmpty) return 'Ingresa el NIT.';
-                              if (nit.length < 7) {
-                                return 'El NIT debe tener al menos 7 dígitos.';
+                              if (!RegExp(r'^[0-9]{7,15}$').hasMatch(nit)) {
+                                return 'El NIT debe contener entre 7 y 15 dígitos, sin espacios ni guiones.';
                               }
                               return null;
                             },
