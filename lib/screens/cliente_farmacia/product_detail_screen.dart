@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
-import '../../services/pharma_service.dart';
-import '../../services/cart_service.dart';
+
+import '../../viewmodels/cart_view_model.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/availability_chip.dart';
@@ -12,28 +12,30 @@ import '../../widgets/product_image.dart';
 import '../../widgets/quantity_stepper.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({super.key, required this.product, this.cart});
 
   final Product product;
+  final CartViewModel? cart;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  CartViewModel get _cart => widget.cart ?? CartViewModel.instance;
   int _quantity = 1;
 
-  Product get _product => widget.product;
+  Product get _product =>
+      _cart.currentProduct(widget.product) ?? widget.product;
 
-  // En Firebase el selector es SOLO una simulacion: el carrito no interviene.
-  int get _maxQuantity =>
-    CartService.instance.remainingFor(_product);
+  // La selección respeta las unidades comerciales disponibles fuera del carrito.
+  int get _maxQuantity => _cart.remainingFor(_product);
 
   void _addToCart() {
     final quantity = _quantity > _maxQuantity ? _maxQuantity : _quantity;
     if (quantity <= 0) return;
 
-    final added = CartService.instance.add(_product, quantity: quantity);
+    final added = _cart.add(_product, quantity: quantity);
     if (!mounted) return;
 
     if (!added) {
@@ -61,9 +63,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _cart,
+    builder: (context, _) => _buildContent(context),
+  );
+
+  Widget _buildContent(BuildContext context) {
     final maxQuantity = _maxQuantity;
-    final remote = PharmaService.instance.usesFirebase;
+    final remote = _cart.isRemote;
     final canAdd = maxQuantity > 0;
     final quantity = _quantity.clamp(1, maxQuantity > 0 ? maxQuantity : 1);
     final tint = categoryTint(_product.category);
@@ -73,19 +80,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 120),
         children: [
-          ProductImage(
-            product: _product,
-            height: 220,
-            iconSize: 62,
-          ),
+          ProductImage(product: _product, height: 220, iconSize: 62),
           const SizedBox(height: 18),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: categoryBackground(_product.category),
                   borderRadius: BorderRadius.circular(20),
@@ -159,17 +159,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 const Divider(),
                 _InfoRow(label: 'Presentación', value: _product.presentation),
                 const Divider(),
-                _InfoRow(
-                  label: 'Unidad de venta',
-                  value: _product.saleUnit,
-                ),
+                _InfoRow(label: 'Unidad de venta', value: _product.saleUnit),
                 const Divider(),
                 if (_product.brand.isNotEmpty) ...[
                   _InfoRow(label: 'Laboratorio', value: _product.brand),
                   const Divider(),
                 ],
                 if (_product.concentration.isNotEmpty) ...[
-                  _InfoRow(label: 'Concentración', value: _product.concentration),
+                  _InfoRow(
+                    label: 'Concentración',
+                    value: _product.concentration,
+                  ),
                   const Divider(),
                 ],
                 if (_product.material.isNotEmpty) ...[
@@ -279,12 +279,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    remote
-                        ? 'Pedidos disponibles próximamente'
-                        : canAdd
-                            ? 'Añadir al carrito · '
-                                '${formatBs(_product.estimatedTotal(quantity))}'
-                            : 'Producto agotado',
+                    canAdd
+                        ? 'Añadir al carrito · '
+                              '${formatBs(_product.estimatedTotal(quantity))}'
+                        : 'Producto agotado',
                   ),
                 ),
               ),
@@ -309,10 +307,7 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 108,
-            child: Text(label, style: AppText.meta),
-          ),
+          SizedBox(width: 108, child: Text(label, style: AppText.meta)),
           Expanded(
             child: Text(
               value,

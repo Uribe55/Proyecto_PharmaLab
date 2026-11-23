@@ -10,6 +10,28 @@ class CartService extends ChangeNotifier {
   static final CartService instance = CartService._();
 
   final List<CartItem> _items = [];
+  String? _ownerId;
+
+  void bindSession(String? ownerId) {
+    if (_ownerId == ownerId) return;
+    _ownerId = ownerId;
+    clear();
+  }
+
+  /// Actualiza datos sin cambiar silenciosamente las cantidades seleccionadas.
+  void reconcile(List<Product> products) {
+    final byId = {for (final product in products) product.id: product};
+    for (final item in _items) {
+      final latest = byId[item.product.id];
+      item.availableInCatalog = latest != null;
+      if (latest != null) {
+        item.priceChanged =
+            item.priceChanged || latest.price != item.product.price;
+        item.product = latest;
+      }
+    }
+    if (_items.isNotEmpty) notifyListeners();
+  }
 
   List<CartItem> get items => List.unmodifiable(_items);
 
@@ -19,11 +41,9 @@ class CartService extends ChangeNotifier {
 
   int get lineCount => _items.length;
 
-  int get totalUnits =>
-      _items.fold(0, (sum, item) => sum + item.quantity);
+  int get totalUnits => _items.fold(0, (sum, item) => sum + item.quantity);
 
-  double get subtotal =>
-      _items.fold(0.0, (sum, item) => sum + item.subtotal);
+  double get subtotal => _items.fold(0.0, (sum, item) => sum + item.subtotal);
 
   int quantityFor(Product product) {
     for (final item in _items) {
@@ -50,6 +70,7 @@ class CartService extends ChangeNotifier {
     if (index == -1) {
       _items.add(CartItem(product: product, quantity: quantity));
     } else {
+      _items[index].product = product;
       _items[index].quantity += quantity;
     }
 
