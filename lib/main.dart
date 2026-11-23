@@ -10,7 +10,7 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const PharmaLabApp());
+  runApp(const PharmaLabApp());   
 }
 
 class PharmaLabApp extends StatelessWidget {

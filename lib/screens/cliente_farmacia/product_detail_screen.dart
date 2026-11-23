@@ -26,9 +26,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Product get _product => widget.product;
 
   // En Firebase el selector es SOLO una simulacion: el carrito no interviene.
-  int get _maxQuantity => PharmaService.instance.usesFirebase
-      ? _product.stock
-      : CartService.instance.remainingFor(_product);
+  int get _maxQuantity =>
+    CartService.instance.remainingFor(_product);
 
   void _addToCart() {
     final quantity = _quantity > _maxQuantity ? _maxQuantity : _quantity;
@@ -65,7 +64,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final maxQuantity = _maxQuantity;
     final remote = PharmaService.instance.usesFirebase;
-    final canAdd = maxQuantity > 0 && !remote;
+    final canAdd = maxQuantity > 0;
     final quantity = _quantity.clamp(1, maxQuantity > 0 ? maxQuantity : 1);
     final tint = categoryTint(_product.category);
 
