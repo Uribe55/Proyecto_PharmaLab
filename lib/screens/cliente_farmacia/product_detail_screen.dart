@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
+import '../../services/pharma_service.dart';
 import '../../services/cart_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
@@ -24,7 +25,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Product get _product => widget.product;
 
-  int get _maxQuantity => CartService.instance.remainingFor(_product);
+  // En Firebase el selector es SOLO una simulacion: el carrito no interviene.
+  int get _maxQuantity => PharmaService.instance.usesFirebase
+      ? _product.stock
+      : CartService.instance.remainingFor(_product);
 
   void _addToCart() {
     final quantity = _quantity > _maxQuantity ? _maxQuantity : _quantity;
@@ -40,7 +44,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           SnackBar(
             content: Text(
               'No hay stock suficiente de ${_product.name}. '
-              'Disponible: ${_product.stock} unidades.',
+              'Disponible: ${_product.quantityLabel(_product.stock)}.',
             ),
           ),
         );
@@ -60,7 +64,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final maxQuantity = _maxQuantity;
-    final canAdd = maxQuantity > 0;
+    final remote = PharmaService.instance.usesFirebase;
+    final canAdd = maxQuantity > 0 && !remote;
     final quantity = _quantity.clamp(1, maxQuantity > 0 ? maxQuantity : 1);
     final tint = categoryTint(_product.category);
 
@@ -87,7 +92,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _product.category.label,
+                  _product.displayCategory,
                   style: TextStyle(
                     fontSize: 9,
                     height: 1,
@@ -130,13 +135,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const SizedBox(width: 12),
               Flexible(
                 child: Text(
-                  'Stock: ${_product.stock} unidades',
+                  'Stock: ${_product.quantityLabel(_product.stock)}',
                   textAlign: TextAlign.right,
                   style: AppText.meta,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 6),
+          Text('Precio por ${_product.saleUnit}', style: AppText.meta),
           const SizedBox(height: 18),
           Text(_product.description, style: AppText.body),
           const SizedBox(height: 20),
@@ -149,16 +156,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             child: Column(
               children: [
-                _InfoRow(label: 'Categoría', value: _product.category.label),
+                _InfoRow(label: 'Categoría', value: _product.displayCategory),
                 const Divider(),
                 _InfoRow(label: 'Presentación', value: _product.presentation),
                 const Divider(),
-                _InfoRow(label: 'Laboratorio', value: _product.brand),
+                _InfoRow(
+                  label: 'Unidad de venta',
+                  value: _product.saleUnit,
+                ),
+                const Divider(),
+                if (_product.brand.isNotEmpty) ...[
+                  _InfoRow(label: 'Laboratorio', value: _product.brand),
+                  const Divider(),
+                ],
+                if (_product.concentration.isNotEmpty) ...[
+                  _InfoRow(label: 'Concentración', value: _product.concentration),
+                  const Divider(),
+                ],
+                if (_product.material.isNotEmpty) ...[
+                  _InfoRow(label: 'Material', value: _product.material),
+                  const Divider(),
+                ],
+                if (_product.size.isNotEmpty) ...[
+                  _InfoRow(label: 'Talla', value: _product.size),
+                  const Divider(),
+                ],
                 const Divider(),
                 _InfoRow(
                   label: 'Disponibilidad',
                   value: _product.isAvailable
-                      ? '${_product.stock} unidades'
+                      ? _product.quantityLabel(_product.stock)
                       : 'Sin stock',
                 ),
               ],
@@ -174,14 +201,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Cantidad', style: AppText.label),
-                      SizedBox(height: 3),
                       Text(
-                        'Según el stock disponible',
+                        'Cantidad de ${_product.unitForQuantity(2)}',
+                        style: AppText.label,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        maxQuantity > 0
+                            ? 'Puedes seleccionar hasta $maxQuantity'
+                            : 'Sin existencias disponibles',
                         style: AppText.meta,
                       ),
                     ],
@@ -190,9 +222,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 QuantityStepper(
                   value: quantity,
                   max: maxQuantity > 0 ? maxQuantity : 1,
-                  onChanged: canAdd
+                  onChanged: maxQuantity > 0
                       ? (value) => setState(() => _quantity = value)
-                      : (value) {},
+                      : (_) {},
                 ),
               ],
             ),
@@ -207,20 +239,57 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             color: AppColors.surface,
             border: Border(top: BorderSide(color: AppColors.border)),
           ),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: canAdd ? _addToCart : null,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  canAdd
-                      ? 'Añadir al carrito · '
-                          '${formatBs(_product.price * quantity)}'
-                      : 'Producto agotado',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          remote ? 'Total estimado' : 'Total',
+                          style: AppText.label,
+                        ),
+                        Text(
+                          _product.quantityLabel(quantity),
+                          style: AppText.meta,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    formatBs(_product.estimatedTotal(quantity)),
+                    style: AppText.h2,
+                  ),
+                ],
+              ),
+              if (remote) ...[
+                const SizedBox(height: 5),
+                const Text(
+                  'Cálculo informativo. No se genera un pedido ni se descuenta stock.',
+                  style: AppText.meta,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: canAdd ? _addToCart : null,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    remote
+                        ? 'Pedidos disponibles próximamente'
+                        : canAdd
+                            ? 'Añadir al carrito · '
+                                '${formatBs(_product.estimatedTotal(quantity))}'
+                            : 'Producto agotado',
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),

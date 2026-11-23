@@ -52,9 +52,8 @@ class PharmaLabApp extends StatelessWidget {
                           width: double.infinity,
                           child: Text(
                             service.usesFirebase
-                                ? 'Firebase activo · Usuarios y cuentas se '
-                                      'guardan en Firestore. Catálogo y '
-                                      'pedidos son de demostración.'
+                                ? 'Firebase activo · Catálogo real en Firestore. '
+                                      'Los pedidos aún no están habilitados.'
                                 : 'Modo local de demostración · Catálogo, '
                                       'pedidos y usuarios de prueba.',
                             textAlign: TextAlign.center,

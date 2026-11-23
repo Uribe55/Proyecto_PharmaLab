@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
+import '../../viewmodels/catalog_view_model.dart';
 import '../../services/cart_service.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
@@ -10,9 +11,10 @@ import '../../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
-  const CatalogScreen({super.key, this.initialCategory});
+  const CatalogScreen({super.key, this.initialCategory, this.initialCategoryId});
 
   final ProductCategory? initialCategory;
+  final String? initialCategoryId;
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -22,7 +24,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
   final _searchController = TextEditingController();
 
   late ProductCategory? _selectedCategory = widget.initialCategory;
+  String? _selectedCategoryId;
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategoryId = widget.initialCategoryId;
+  }
 
   @override
   void dispose() {
@@ -32,14 +41,17 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   List<Product> _filterProducts(List<Product> products) {
     final query = _query.trim().toLowerCase();
+    final remote = PharmaService.instance.usesFirebase;
 
     return products.where((product) {
-      final matchesCategory = _selectedCategory == null ||
-          product.category == _selectedCategory;
+      final matchesCategory = remote
+          ? _selectedCategoryId == null || product.categoryId == _selectedCategoryId
+          : _selectedCategory == null || product.category == _selectedCategory;
       final matchesQuery = query.isEmpty ||
           product.name.toLowerCase().contains(query) ||
           product.brand.toLowerCase().contains(query) ||
-          product.presentation.toLowerCase().contains(query);
+          product.presentation.toLowerCase().contains(query) ||
+          product.code.toLowerCase().contains(query);
       return matchesCategory && matchesQuery;
     }).toList();
   }
@@ -67,17 +79,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = CatalogViewModel.instance;
     return ListenableBuilder(
-      listenable: PharmaService.instance,
+      listenable: Listenable.merge([PharmaService.instance, vm]),
       builder: (context, _) {
-        final products = _filterProducts(PharmaService.instance.products);
+        final remote = PharmaService.instance.usesFirebase;
+        final products = _filterProducts(
+          remote ? vm.products : PharmaService.instance.products,
+        );
 
         return Scaffold(
           appBar: const ClientPageAppBar(
             title: 'Catálogo',
             showAvatar: true,
           ),
-          body: Column(
+          body: remote && vm.loading
+              ? const Center(child: CircularProgressIndicator())
+              : remote && vm.error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(vm.error!, textAlign: TextAlign.center),
+                      ),
+                    )
+                  : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
@@ -118,18 +143,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   children: [
                     _FilterChip(
                       label: 'Todos',
-                      selected: _selectedCategory == null,
-                      onTap: () => setState(() => _selectedCategory = null),
+                      selected: remote ? _selectedCategoryId == null : _selectedCategory == null,
+                      onTap: () => setState(() {
+                        _selectedCategory = null;
+                        _selectedCategoryId = null;
+                      }),
                     ),
-                    for (final category in ProductCategory.values) ...[
-                      const SizedBox(width: 8),
-                      _FilterChip(
-                        label: category.label,
-                        selected: _selectedCategory == category,
-                        onTap: () =>
-                            setState(() => _selectedCategory = category),
-                      ),
-                    ],
+                    if (remote)
+                      for (final category in vm.categories) ...[
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: category.name,
+                          selected: _selectedCategoryId == category.id,
+                          onTap: () => setState(() => _selectedCategoryId = category.id),
+                        ),
+                      ]
+                    else
+                      for (final category in ProductCategory.values) ...[
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: category.label,
+                          selected: _selectedCategory == category,
+                          onTap: () => setState(() => _selectedCategory = category),
+                        ),
+                      ],
                   ],
                 ),
               ),
@@ -146,7 +183,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       ),
                     ),
                     const Spacer(),
-                    if (_selectedCategory != null)
+                    if (!remote && _selectedCategory != null)
                       Text(
                         _selectedCategory!.label,
                         style: AppText.meta,
@@ -170,6 +207,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                 setState(() {
                                   _query = '';
                                   _selectedCategory = null;
+                                  _selectedCategoryId = null;
                                 });
                               },
                               child: const Text('Limpiar filtros'),
@@ -195,7 +233,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           return ProductCard(
                             product: product,
                             onTap: () => _openProduct(product),
-                            onAdd: () => _addToCart(product),
+                            onAdd: remote ? null : () => _addToCart(product),
                           );
                         },
                       ),

@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
 import '../../services/cart_service.dart';
 import '../../services/pharma_service.dart';
+import '../../viewmodels/catalog_view_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/category_card.dart';
 import '../../widgets/client_avatar.dart';
@@ -15,10 +16,10 @@ import 'product_detail_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  void _openCatalog(BuildContext context, [ProductCategory? category]) {
+  void _openCatalog(BuildContext context, [ProductCategory? category, String? categoryId]) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CatalogScreen(initialCategory: category),
+        builder: (_) => CatalogScreen(initialCategory: category, initialCategoryId: categoryId),
       ),
     );
   }
@@ -46,11 +47,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vm = CatalogViewModel.instance;
     return ListenableBuilder(
-      listenable: PharmaService.instance,
+      listenable: Listenable.merge([PharmaService.instance, vm]),
       builder: (context, _) {
         final pharmacy = PharmaService.instance.pharmacy;
-        final featured = PharmaService.instance.featuredProducts;
+        final remote = PharmaService.instance.usesFirebase;
+        final featured = remote ? vm.featuredProducts : PharmaService.instance.featuredProducts;
 
         return Scaffold(
           body: SafeArea(
@@ -139,21 +142,41 @@ class HomeScreen extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final category in ProductCategory.values) ...[
-                        Expanded(
-                          child: CategoryCard(
-                            category: category,
-                            onTap: () => _openCatalog(context, category),
+                  child: remote
+                      ? SizedBox(
+                          height: 108,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: vm.categories.length,
+                            separatorBuilder: (_, _) => const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final item = vm.categories[index];
+                              return SizedBox(
+                                width: 122,
+                                child: CategoryCard(
+                                  category: item.visualCategory,
+                                  labelOverride: item.name,
+                                  onTap: () => _openCatalog(context, null, item.id),
+                                ),
+                              );
+                            },
                           ),
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final category in ProductCategory.values) ...[
+                              Expanded(
+                                child: CategoryCard(
+                                  category: category,
+                                  onTap: () => _openCatalog(context, category),
+                                ),
+                              ),
+                              if (category != ProductCategory.values.last)
+                                const SizedBox(width: 10),
+                            ],
+                          ],
                         ),
-                        if (category != ProductCategory.values.last)
-                          const SizedBox(width: 10),
-                      ],
-                    ],
-                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
@@ -162,6 +185,22 @@ class HomeScreen extends StatelessWidget {
                     caption: '${featured.length} productos',
                   ),
                 ),
+                if (remote && vm.loading)
+                  const Padding(
+                    padding: EdgeInsets.all(22),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (remote && vm.error != null)
+                  Padding(
+                    padding: const EdgeInsets.all(22),
+                    child: Text(vm.error!, textAlign: TextAlign.center),
+                  )
+                else if (featured.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(22),
+                    child: Text('No hay productos disponibles por ahora.'),
+                  )
+                else
                 GridView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   shrinkWrap: true,
@@ -179,13 +218,13 @@ class HomeScreen extends StatelessWidget {
                     return ProductCard(
                       product: product,
                       onTap: () => _openProduct(context, product),
-                      onAdd: () => _addToCart(context, product),
+                      onAdd: remote ? null : () => _addToCart(context, product),
                     );
                   },
                 ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 24, 20, 0),
-                  child: _QualityNote(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                  child: _QualityNote(remote: remote),
                 ),
                 const SizedBox(height: 28),
               ],
@@ -325,13 +364,15 @@ class _PromoBanner extends StatelessWidget {
 }
 
 class _QualityNote extends StatelessWidget {
-  const _QualityNote();
+  const _QualityNote({required this.remote});
+
+  final bool remote;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
@@ -351,9 +392,11 @@ class _QualityNote extends StatelessWidget {
         ),
         SizedBox(height: 5),
         Text(
-          'Precios y existencias de demostración.',
+          remote
+              ? 'Catálogo desde Firebase · pedidos todavía no habilitados.'
+              : 'Precios y existencias de demostración.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 9.5, color: AppColors.muted),
+          style: const TextStyle(fontSize: 9.5, color: AppColors.muted),
         ),
       ],
     );

@@ -272,6 +272,8 @@ class PharmaService extends ChangeNotifier {
         remote: true,
       );
       _resetDemoData();
+      // No mostrar pedidos ficticios como historial de una farmacia real.
+      _orders.clear();
       success = true;
       notifyListeners();
       return null;
@@ -462,6 +464,7 @@ class PharmaService extends ChangeNotifier {
         pharmacy: profile,
         remote: true,
       );
+      _orders.clear();
       completed = true;
       notifyListeners();
       return null;
@@ -604,6 +607,9 @@ class PharmaService extends ChangeNotifier {
     String notes = '',
   }) {
     if (!isLoggedIn) throw StateError('No hay una sesión activa.');
+    if (usesFirebase && _uid != null) {
+      throw StateError('Los pedidos reales se habilitarán en la siguiente etapa.');
+    }
     if (items.isEmpty) throw StateError('El carrito está vacío.');
 
     // Primera pasada: validar todo antes de tocar el stock.

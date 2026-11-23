@@ -1,6 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../services/cart_service.dart';
+import '../../services/pharma_service.dart';
+import '../../viewmodels/catalog_view_model.dart';
 import '../../theme/app_theme.dart';
 import 'cart_screen.dart';
 import 'home_screen.dart';
@@ -24,11 +26,15 @@ class _ClientShellState extends State<ClientShell> {
   void initState() {
     super.initState();
     CartService.instance.addListener(_onCartChanged);
+    if (PharmaService.instance.usesFirebase) {
+      CatalogViewModel.instance.start();
+    }
   }
 
   @override
   void dispose() {
     CartService.instance.removeListener(_onCartChanged);
+    CatalogViewModel.instance.stop();
     super.dispose();
   }
 
