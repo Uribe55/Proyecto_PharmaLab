@@ -29,7 +29,13 @@ class DriverDeliveriesScreen extends StatelessWidget {
             ? <PharmacyOrder>[]
             : service.ordersForDriver(driver.id);
 
-        final active = orders.where((order) => order.isInTransit).toList();
+        final active = orders
+            .where(
+              (order) =>
+                  order.driverId == driver?.id &&
+                  (order.isInTransit || order.isApproved),
+            )
+            .toList();
         final delivered = orders
             .where((order) => order.status.isDelivered)
             .length;

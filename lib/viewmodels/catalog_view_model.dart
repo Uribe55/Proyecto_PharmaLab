@@ -28,8 +28,17 @@ class CatalogViewModel extends ChangeNotifier {
   String? _error;
   bool _started = false;
 
-  bool get loading => _started && !(_hasProducts && _hasCategories && _hasBatches) && _error == null;
+  bool get loading =>
+      _started &&
+      !(_hasProducts && _hasCategories && _hasBatches) &&
+      _error == null;
   String? get error => _error;
+  bool get ready =>
+      _started &&
+      _hasProducts &&
+      _hasCategories &&
+      _hasBatches &&
+      _error == null;
   List<Product> get products => List.unmodifiable(_products);
   List<CatalogCategory> get categories => List.unmodifiable(_categories);
   List<Product> get featuredProducts {

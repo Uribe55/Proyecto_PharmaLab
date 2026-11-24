@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
-import '../../services/cart_service.dart';
+import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../viewmodels/catalog_view_model.dart';
 import '../../theme/app_theme.dart';
@@ -16,10 +16,17 @@ import 'product_detail_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  void _openCatalog(BuildContext context, [ProductCategory? category, String? categoryId]) {
+  void _openCatalog(
+    BuildContext context, [
+    ProductCategory? category,
+    String? categoryId,
+  ]) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CatalogScreen(initialCategory: category, initialCategoryId: categoryId),
+        builder: (_) => CatalogScreen(
+          initialCategory: category,
+          initialCategoryId: categoryId,
+        ),
       ),
     );
   }
@@ -31,7 +38,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _addToCart(BuildContext context, Product product) {
-    final added = CartService.instance.add(product);
+    final added = CartViewModel.instance.add(product);
     final message = added
         ? '${product.name} se agregó al carrito.'
         : product.isAvailable
@@ -51,7 +58,9 @@ class HomeScreen extends StatelessWidget {
       builder: (context, _) {
         final pharmacy = PharmaService.instance.pharmacy;
         final remote = PharmaService.instance.usesFirebase;
-        final featured = remote ? vm.featuredProducts : PharmaService.instance.featuredProducts;
+        final featured = remote
+            ? vm.featuredProducts
+            : PharmaService.instance.featuredProducts;
 
         return Scaffold(
           body: SafeArea(
@@ -149,7 +158,8 @@ class HomeScreen extends StatelessWidget {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: vm.categories.length,
-                            separatorBuilder: (_, _) => const SizedBox(width: 10),
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 10),
                             itemBuilder: (context, index) {
                               final item = vm.categories[index];
                               return SizedBox(
@@ -157,7 +167,8 @@ class HomeScreen extends StatelessWidget {
                                 child: CategoryCard(
                                   category: item.visualCategory,
                                   labelOverride: item.name,
-                                  onTap: () => _openCatalog(context, null, item.id),
+                                  onTap: () =>
+                                      _openCatalog(context, null, item.id),
                                 ),
                               );
                             },
@@ -202,28 +213,28 @@ class HomeScreen extends StatelessWidget {
                     child: Text('No hay productos disponibles por ahora.'),
                   )
                 else
-                GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: MediaQuery.sizeOf(context).width >= 720
-                        ? 3
-                        : 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 248,
+                  GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: MediaQuery.sizeOf(context).width >= 720
+                          ? 3
+                          : 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 248,
+                    ),
+                    itemCount: featured.length,
+                    itemBuilder: (context, index) {
+                      final product = featured[index];
+                      return ProductCard(
+                        product: product,
+                        onTap: () => _openProduct(context, product),
+                        onAdd: () => _addToCart(context, product),
+                      );
+                    },
                   ),
-                  itemCount: featured.length,
-                  itemBuilder: (context, index) {
-                    final product = featured[index];
-                    return ProductCard(
-                      product: product,
-                      onTap: () => _openProduct(context, product),
-                      onAdd: remote ? null : () => _addToCart(context, product),
-                    );
-                  },
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                   child: _QualityNote(remote: remote),

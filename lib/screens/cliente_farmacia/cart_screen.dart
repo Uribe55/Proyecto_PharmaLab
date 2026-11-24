@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/cart_item.dart';
-import '../../services/cart_service.dart';
+import '../../viewmodels/cart_view_model.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/client_header.dart';
@@ -18,9 +18,9 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: CartService.instance,
+      listenable: CartViewModel.instance,
       builder: (context, _) {
-        final cart = CartService.instance;
+        final cart = CartViewModel.instance;
 
         return Scaffold(
           body: SafeArea(
@@ -28,6 +28,32 @@ class CartScreen extends StatelessWidget {
             child: Column(
               children: [
                 const ClientTabHeader(title: 'Mi carrito'),
+                if (cart.isNotEmpty)
+                  TextButton(
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('¿Vaciar el carrito?'),
+                          content: const Text(
+                            'Se eliminarán todos los productos seleccionados.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Vaciar'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) cart.clear();
+                    },
+                    child: const Text('Vaciar carrito'),
+                  ),
                 Expanded(
                   child: cart.isEmpty
                       ? Center(
@@ -45,7 +71,8 @@ class CartScreen extends StatelessWidget {
                                 EmptyState(
                                   icon: Icons.inventory_2_outlined,
                                   title: 'Tu carrito está vacío',
-                                  description: 'Encuentra los productos que tu '
+                                  description:
+                                      'Encuentra los productos que tu '
                                       'laboratorio necesita y añádelos aquí.',
                                   action: OutlinedButton(
                                     onPressed: onBrowse,
@@ -59,24 +86,26 @@ class CartScreen extends StatelessWidget {
                       : Column(
                           children: [
                             Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                               child: _CartIntro(
-                                subtitle: '${cart.lineCount} '
+                                subtitle:
+                                    '${cart.lineCount} '
                                     '${cart.lineCount == 1 ? 'producto seleccionado' : 'productos seleccionados'}',
                               ),
                             ),
                             Expanded(
                               child: ListView.separated(
-                                padding:
-                                    const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  16,
+                                  20,
+                                  24,
+                                ),
                                 itemCount: cart.items.length,
                                 separatorBuilder: (_, _) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  return _CartItemCard(
-                                    item: cart.items[index],
-                                  );
+                                  return _CartItemCard(item: cart.items[index]);
                                 },
                               ),
                             ),
@@ -164,26 +193,49 @@ class _CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formatBs(product.price),
+                  '${formatBs(product.price)} por ${product.saleUnit}',
                   style: AppText.meta.copyWith(
                     fontSize: 11.5,
                     color: AppColors.muted,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                Text(product.presentation, style: AppText.meta),
+                Text(
+                  'Subtotal: ${formatBs(item.subtotal)}',
+                  style: AppText.label,
+                ),
+                Text(
+                  item.issue ??
+                      'Disponible: ${product.quantityLabel(product.stock)}',
+                  style: AppText.meta,
+                ),
+                if (item.priceChanged)
+                  const Text(
+                    'Precio actualizado desde el catálogo.',
+                    style: AppText.meta,
+                  ),
+                if (item.needsAdjustment &&
+                    item.availableInCatalog &&
+                    product.stock > 0)
+                  TextButton(
+                    onPressed: () => CartViewModel.instance.adjust(item),
+                    child: const Text('Ajustar al stock disponible'),
+                  ),
+                Wrap(
+                  spacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     QuantityStepper(
                       compact: true,
+                      min: 0,
                       value: item.quantity,
                       max: product.stock,
                       onChanged: (value) =>
-                          CartService.instance.setQuantity(product, value),
+                          CartViewModel.instance.setQuantity(product, value),
                     ),
-                    const Spacer(),
                     TextButton(
-                      onPressed: () =>
-                          CartService.instance.remove(product),
+                      onPressed: () => CartViewModel.instance.remove(product),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.danger,
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -200,6 +252,11 @@ class _CartItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (item.quantity >= product.stock && item.availableInCatalog)
+                  const Text(
+                    'Alcanzaste el stock máximo disponible.',
+                    style: AppText.meta,
+                  ),
               ],
             ),
           ),
@@ -216,7 +273,7 @@ class _CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = CartService.instance;
+    final cart = CartViewModel.instance;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
@@ -225,7 +282,27 @@ class _CartSummary extends StatelessWidget {
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Text(
+            '${cart.totalUnits} unidades comerciales · ${cart.lineCount} productos',
+            style: AppText.meta,
+          ),
+          if (cart.isRemote)
+            const Text(
+              'Importe estimado según el último catálogo recibido. Los productos no disponibles conservan su último precio conocido.',
+              style: AppText.meta,
+            ),
+          if (!cart.catalogReady)
+            const Text(
+              'Esperando el catálogo vigente. Revisa tu conexión.',
+              style: AppText.meta,
+            ),
+          if (cart.items.any((item) => item.needsAdjustment))
+            const Text(
+              'Corrige los productos no disponibles antes de continuar.',
+              style: AppText.meta,
+            ),
           Row(
             children: [
               const Text(
@@ -252,20 +329,25 @@ class _CartSummary extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const CheckoutScreen(),
-                  ),
-                );
-              },
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Continuar pedido'),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded, size: 18),
-                ],
+              onPressed: !cart.canReview
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CheckoutScreen(),
+                        ),
+                      );
+                    },
+              child: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Continuar pedido'),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_rounded, size: 18),
+                  ],
+                ),
               ),
             ),
           ),

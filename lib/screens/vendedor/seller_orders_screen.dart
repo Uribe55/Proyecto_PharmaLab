@@ -24,7 +24,7 @@ enum _SellerFilter {
   pendientes('Pendientes'),
   porAsignar('Por asignar'),
   enRuta('En ruta'),
-  finalizados('Finalizados');
+  finalizados('Cerrados o con fallos');
 
   const _SellerFilter(this.label);
 
@@ -36,7 +36,8 @@ enum _SellerFilter {
       _SellerFilter.pendientes => order.isPending,
       _SellerFilter.porAsignar => order.isApproved,
       _SellerFilter.enRuta => order.isInTransit,
-      _SellerFilter.finalizados => order.status.isFinal,
+      _SellerFilter.finalizados =>
+        order.status.isFinal || order.status.isFailure,
     };
   }
 }
@@ -185,6 +186,9 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
   }
 
   String _captionFor(PharmacyOrder order) {
+    if (order.status == OrderStatus.cancelado) {
+      return 'Cancelado · ${order.cancellationReason ?? ''}';
+    }
     if (order.isPending) return 'Esperando revisión y aprobación';
     if (order.isApproved) return 'Aprobado · pendiente de asignación';
     if (order.isInTransit) {
