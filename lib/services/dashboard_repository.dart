@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'firebase_environment.dart';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/dashboard_models.dart';
@@ -28,7 +31,7 @@ class DashboardRepository {
   final int maxOrders;
   final int maxLots;
 
-  FirebaseFirestore get _db => FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseEnvironment.firestore;
 
   static const int defaultLowStockThreshold = 10;
 
@@ -671,10 +674,7 @@ class DashboardRepository {
   }
 
   Future<
-    ({
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-      Object? error,
-    })
+    ({List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, Object? error})
   >
   _readCollection(String name, int limit) async {
     try {
@@ -749,9 +749,7 @@ class DashboardRepository {
         hasLotData: false,
         productsWithoutLots: productsWithoutLots,
         lowStockThreshold: lowStockThreshold,
-        note: additionalNote == null
-            ? emptyNote
-            : '$emptyNote $additionalNote',
+        note: additionalNote == null ? emptyNote : '$emptyNote $additionalNote',
       );
     }
 

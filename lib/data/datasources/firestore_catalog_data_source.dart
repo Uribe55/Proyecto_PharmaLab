@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../services/firebase_environment.dart';
+
 /// Fuente remota, exclusivamente de lectura. Ningún widget usa Firestore.
 class FirestoreCatalogDataSource {
   FirestoreCatalogDataSource({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseEnvironment.firestore;
 
   final FirebaseFirestore _firestore;
 

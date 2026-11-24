@@ -2,10 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'services/pharma_service.dart';
+import 'services/firebase_environment.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -52,7 +52,9 @@ class PharmaLabApp extends StatelessWidget {
                         child: SizedBox(
                           width: double.infinity,
                           child: Text(
-                            service.usesFirebase
+                            FirebaseEnvironment.emulatorOrdersEnabled
+                                ? 'Entorno local de pruebas · Pedidos e inventario simulados en Firebase Emulator Suite.'
+                                : service.usesFirebase
                                 ? 'Firebase activo · Catálogo real en Firestore. '
                                       'Los pedidos aún no están habilitados.'
                                 : 'Modo local de demostración · Catálogo, '

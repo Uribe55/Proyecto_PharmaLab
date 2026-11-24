@@ -209,9 +209,15 @@ mixin _PharmaUsers on _PharmaServiceState {
     try {
       secondary = await Firebase.initializeApp(
         name: 'pharmalab-admin-${DateTime.now().microsecondsSinceEpoch}',
-        options: Firebase.app().options,
+        options: _auth.app.options,
       );
       final secondaryAuth = FirebaseAuth.instanceFor(app: secondary);
+      if (FirebaseEnvironment.emulatorOrdersEnabled) {
+        await secondaryAuth.useAuthEmulator(
+          FirebaseEnvironment.emulatorHost!,
+          9099,
+        );
+      }
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
         email: user.email,
         password: password,

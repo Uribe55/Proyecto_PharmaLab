@@ -40,8 +40,8 @@ abstract class _PharmaServiceState extends ChangeNotifier {
     }
   }
 
-  FirebaseAuth get _auth => FirebaseAuth.instance;
-  FirebaseFirestore get _db => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseEnvironment.auth;
+  FirebaseFirestore get _db => FirebaseEnvironment.firestore;
 
   void _resetDemoData() {
     _products

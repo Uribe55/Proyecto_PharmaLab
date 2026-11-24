@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
+import '../../viewmodels/order_history_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
@@ -20,13 +21,20 @@ class OrderHistoryScreen extends StatefulWidget {
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   OrderStatus? _filter;
+  late final _history = OrderHistoryViewModel();
+
+  @override
+  void dispose() {
+    _history.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: PharmaService.instance,
+      listenable: _history,
       builder: (context, _) {
-        final allOrders = PharmaService.instance.orders;
+        final allOrders = _history.orders;
         final orders = _filter == null
             ? allOrders
             : allOrders.where((order) => order.status == _filter).toList();
@@ -93,6 +101,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      if (_history.loading)
+                        const Center(child: CircularProgressIndicator()),
+                      if (_history.error != null)
+                        Text(_history.error!, style: AppText.muted),
+                      if (PharmaService.instance.usesFirebase)
+                        const Text(
+                          'Últimos 50 pedidos de tu farmacia.',
+                          style: AppText.meta,
+                        ),
+                      if (orders.any((order) => order.fromCache))
+                        const Text(
+                          'Datos guardados en este dispositivo; pueden estar desactualizados.',
+                          style: AppText.meta,
+                        ),
                       if (orders.isEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 30),
@@ -101,9 +123,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                             title: 'Sin pedidos por aquí',
                             description: _filter == null
                                 ? 'Todavía no realizaste ningún pedido. '
-                                    'Explora el catálogo para comenzar.'
+                                      'Explora el catálogo para comenzar.'
                                 : 'No tienes pedidos con el estado '
-                                    '“${_filter!.label}”.',
+                                      '“${_filter!.label}”.',
                             action: OutlinedButton(
                               onPressed: widget.onBrowse,
                               child: const Text('Explorar catálogo'),
@@ -123,8 +145,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                               );
                             },
                           ),
-                          if (order != orders.last)
-                            const SizedBox(height: 12),
+                          if (order != orders.last) const SizedBox(height: 12),
                         ],
                     ],
                   ),

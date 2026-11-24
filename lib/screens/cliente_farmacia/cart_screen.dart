@@ -28,6 +28,14 @@ class CartScreen extends StatelessWidget {
             child: Column(
               children: [
                 const ClientTabHeader(title: 'Mi carrito'),
+                if (cart.isRemote)
+                  TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                    ),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: const Text('Consultar confirmación pendiente'),
+                  ),
                 if (cart.isNotEmpty)
                   TextButton(
                     onPressed: () async {

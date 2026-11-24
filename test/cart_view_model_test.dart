@@ -203,7 +203,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Tu carrito está listo. La confirmación de pedidos estará disponible próximamente.',
+          'Las compras de producción permanecen deshabilitadas. La confirmación está disponible únicamente en el entorno de pruebas.',
         ),
         findsOneWidget,
       );

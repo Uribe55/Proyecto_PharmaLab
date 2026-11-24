@@ -161,6 +161,71 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Etapa 5: propuesta local, no publicada. El backend es el único escritor
+    // de pedidos, operaciones y existencias.
+    function activeStaff() {
+      return signedIn()
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in ['vendedor', 'administrador'];
+    }
+
+    function ownsFarm(farmId) {
+      return activeClient()
+        && get(/databases/$(database)/documents/farmacia_cliente/$(farmId)).data.usuario_id == request.auth.uid
+        && get(/databases/$(database)/documents/farmacia_cliente/$(farmId)).data.estado == true;
+    }
+
+    function readsOrder(data) {
+      return ownsFarm(data.id_cliente) || activeStaff()
+        || (signedIn()
+          && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == true
+          && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'repartidor'
+          && data.get('repartidor_uid', '') == request.auth.uid);
+    }
+
+    match /pedidos/{pedidoId} {
+      allow read: if readsOrder(resource.data);
+      allow write: if false;
+      match /detalle_pedido/{detalleId} {
+        allow read: if readsOrder(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data);
+        allow write: if false;
+      }
+      match /historial_estado/{eventoId} {
+        allow read: if readsOrder(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data);
+        allow write: if false;
+      }
+    }
+
+    match /usuarios/{uid}/operaciones_pedido/{operacionId} {
+      allow get: if activeClient() && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    match /configuracion/contadores_pedidos {
+      allow read, write: if false;
+    }
+
+    function validAddress(data) {
+      return data.keys().hasOnly(['id_cliente', 'nombre', 'direccion', 'referencia', 'latitud', 'longitud', 'estado'])
+        && data.keys().hasAll(['id_cliente', 'nombre', 'direccion', 'referencia', 'latitud', 'longitud', 'estado'])
+        && data.id_cliente is string && ownsFarm(data.id_cliente)
+        && data.nombre is string && data.nombre.size() > 0 && data.nombre.size() <= 80
+        && data.direccion is string && data.direccion.size() > 0 && data.direccion.size() <= 300
+        && data.referencia is string && data.referencia.size() <= 300
+        && (data.latitud == null || (data.latitud is number && data.latitud >= -90 && data.latitud <= 90))
+        && (data.longitud == null || (data.longitud is number && data.longitud >= -180 && data.longitud <= 180))
+        && data.estado is bool;
+    }
+
+    match /direcciones/{direccionId} {
+      allow read: if ownsFarm(resource.data.id_cliente) || activeStaff();
+      allow create: if validAddress(request.resource.data);
+      allow update: if ownsFarm(resource.data.id_cliente)
+        && request.resource.data.id_cliente == resource.data.id_cliente
+        && validAddress(request.resource.data);
+      allow delete: if false;
+    }
+
     // El resto continúa cerrado hasta integrar cada módulo con permisos.
     match /{document=**} {
       allow read, write: if false;

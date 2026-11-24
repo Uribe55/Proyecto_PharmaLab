@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/cart_item.dart';
 import '../../viewmodels/cart_view_model.dart';
+import '../../viewmodels/checkout_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
@@ -10,9 +11,10 @@ import '../../widgets/client_header.dart';
 import 'order_tracking_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key, this.cart});
+  const CheckoutScreen({super.key, this.cart, this.checkout});
 
   final CartViewModel? cart;
+  final CheckoutViewModel? checkout;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -23,6 +25,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _notesController = TextEditingController();
 
   bool _loading = false;
+  late final CheckoutViewModel? _checkout =
+      widget.checkout ??
+      (_cart.isRemote && PharmaService.instance.usesFirebase
+          ? CheckoutViewModel.instance
+          : null);
+  double get _total => (_checkout?.hasPending ?? false)
+      ? _checkout!.pendingTotal
+      : _checkout?.total ?? _cart.subtotal;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkout?.initialize();
+  }
+
+  Future<void> _registerAddress() async {
+    final name = TextEditingController(text: 'Entrega');
+    final address = TextEditingController();
+    final reference = TextEditingController();
+    final save = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Registrar dirección de entrega'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: name,
+                maxLength: 80,
+                decoration: const InputDecoration(labelText: 'Nombre'),
+              ),
+              TextField(
+                controller: address,
+                maxLength: 300,
+                decoration: const InputDecoration(labelText: 'Dirección'),
+              ),
+              TextField(
+                controller: reference,
+                maxLength: 300,
+                decoration: const InputDecoration(labelText: 'Referencia'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (save == true && mounted) {
+      try {
+        await _checkout!.addAddress(name.text, address.text, reference.text);
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No se pudo registrar la dirección. Completa los datos y revisa la conexión.',
+              ),
+            ),
+          );
+        }
+      }
+    }
+    name.dispose();
+    address.dispose();
+    reference.dispose();
+  }
 
   @override
   void dispose() {
@@ -31,6 +109,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _editAddress() async {
+    if (_checkout != null) {
+      await _registerAddress();
+      return;
+    }
     final controller = TextEditingController(
       text: PharmaService.instance.pharmacy.address,
     );
@@ -67,6 +149,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _confirmOrder() async {
+    if (_loading || (_checkout?.busy ?? false)) return;
+    if (_checkout != null) {
+      await _confirmRemote();
+      return;
+    }
     final cart = _cart;
     if (!cart.canConfirm) return;
 
@@ -120,9 +207,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  Future<void> _confirmRemote({bool consultOnly = false}) async {
+    final order = await _checkout!.confirm(
+      notes: _notesController.text,
+      consultOnly: consultOnly,
+    );
+    if (order == null || !mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) =>
+            OrderTrackingScreen(order: order, showConfirmation: true),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: _cart,
+    listenable: Listenable.merge([_cart, ?_checkout]),
     builder: (context, _) => _buildContent(context),
   );
 
@@ -135,17 +236,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: cart.isRemote ? 'Revisar carrito' : 'Confirmar pedido',
       ),
       body: cart.isEmpty
-          ? const Center(
-              child: Text('Tu carrito está vacío.', style: AppText.muted),
+          ? ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                const Text(
+                  'Tu carrito está vacío. Si hay una confirmación pendiente, consulta su resultado antes de comprar nuevamente.',
+                  style: AppText.muted,
+                ),
+                if (_checkout?.error != null)
+                  Text(_checkout!.error!, style: AppText.label),
+                if (_checkout?.hasPending ?? false)
+                  _PendingCheckoutCard(checkout: _checkout!),
+              ],
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
               children: [
+                if (_checkout?.hasPending ?? false)
+                  _PendingCheckoutCard(checkout: _checkout!),
                 if (cart.isRemote)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
-                      'Tu carrito está listo. La confirmación de pedidos estará disponible próximamente.',
+                      'Las compras de producción permanecen deshabilitadas. La confirmación está disponible únicamente en el entorno de pruebas.',
                       style: AppText.label,
                     ),
                   ),
@@ -168,7 +281,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         index++
                       ) ...[
                         if (index > 0) const Divider(height: 20),
-                        _ItemLine(item: cart.items[index]),
+                        _ItemLine(
+                          item: cart.items[index],
+                          price: _checkout == null
+                              ? null
+                              : _checkout.priceCents(
+                                      cart.items[index].product.id,
+                                      cart.items[index].product.price,
+                                    ) /
+                                    100,
+                        ),
                       ],
                       const Divider(height: 20),
                       Row(
@@ -184,7 +306,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           const SizedBox(width: 10),
                           Flexible(
                             child: Text(
-                              formatBs(cart.subtotal),
+                              formatBs(_total),
                               textAlign: TextAlign.right,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -197,10 +319,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                if (_checkout != null) ...[
+                  if (_checkout.error != null)
+                    Text(_checkout.error!, style: AppText.label),
+                  if (_checkout.hasPending)
+                    Text(
+                      'Confirmación pendiente: ${_checkout.operationId}. Se conserva su contenido original.',
+                      style: AppText.meta,
+                    ),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey(_checkout.selectedAddress?.id),
+                    initialValue: _checkout.selectedAddress?.id,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Dirección activa de entrega',
+                    ),
+                    items: [
+                      for (final address in _checkout.addresses)
+                        DropdownMenuItem(
+                          value: address.id,
+                          child: Text(
+                            '${address.name}: ${address.address}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: _checkout.busy || _checkout.hasPending
+                        ? null
+                        : _checkout.selectAddress,
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 _CheckoutCard(
                   title: 'Datos de entrega',
                   trailingAction: TextButton(
-                    onPressed: _editAddress,
+                    onPressed:
+                        (_checkout?.busy ?? false) ||
+                            (_checkout?.hasPending ?? false)
+                        ? null
+                        : _editAddress,
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       minimumSize: Size.zero,
@@ -230,7 +387,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              pharmacy.address,
+                              _checkout == null
+                                  ? pharmacy.address
+                                  : _checkout.selectedAddress?.address ?? 'Registra una dirección para continuar.',
                               style: AppText.muted.copyWith(fontSize: 11.5),
                             ),
                           ],
@@ -331,18 +490,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const Text('Total', style: AppText.meta),
                   const SizedBox(height: 2),
                   Text(
-                    formatBs(cart.subtotal),
+                    formatBs(_total),
                     style: AppText.h3.copyWith(fontSize: 18),
                   ),
                 ],
               ),
               const SizedBox(width: 18),
+              if (_checkout?.hasPending ?? false)
+                IconButton(
+                  tooltip: 'Consultar confirmación pendiente',
+                  onPressed: _checkout!.busy
+                      ? null
+                      : () => _confirmRemote(consultOnly: true),
+                  icon: const Icon(Icons.refresh),
+                ),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: !cart.canConfirm || _loading
+                  onPressed:
+                      !(_checkout?.canConfirm ?? cart.canConfirm) || _loading
                       ? null
                       : _confirmOrder,
-                  child: _loading
+                  child: _loading || (_checkout?.busy ?? false)
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -351,14 +519,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const FittedBox(
+                      : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Confirmar pedido'),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward_rounded, size: 18),
+                              Text(
+                                (_checkout?.hasPending ?? false)
+                                    ? 'Reintentar misma operación'
+                                    : 'Confirmar pedido',
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_rounded, size: 18),
                             ],
                           ),
                         ),
@@ -370,6 +542,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
+}
+
+class _PendingCheckoutCard extends StatelessWidget {
+  const _PendingCheckoutCard({required this.checkout});
+  final CheckoutViewModel checkout;
+  @override
+  Widget build(BuildContext context) => _CheckoutCard(
+    title: 'Confirmación pendiente',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Este es el contenido original que se consultará o reintentará, aunque hayas cambiado el carrito.',
+        ),
+        for (final item in checkout.pendingItems)
+          Text(
+            '${item['productId']}: ${item['quantity']} unidades comerciales × ${formatBs((item['expectedPriceCents'] as num) / 100)}',
+          ),
+        Text('Total revisado: ${formatBs(checkout.pendingTotal)}'),
+        Text('Dirección: ${checkout.pendingAddressId}'),
+        if (checkout.pendingNotes.isNotEmpty) Text(checkout.pendingNotes),
+        Text('Operación: ${checkout.operationId}', style: AppText.meta),
+      ],
+    ),
+  );
 }
 
 class _CheckoutCard extends StatelessWidget {
@@ -430,9 +627,10 @@ class _CheckoutCard extends StatelessWidget {
 }
 
 class _ItemLine extends StatelessWidget {
-  const _ItemLine({required this.item});
+  const _ItemLine({required this.item, this.price});
 
   final CartItem item;
+  final double? price;
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +653,7 @@ class _ItemLine extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${item.product.quantityLabel(item.quantity)} × ${formatBs(item.product.price)}',
+                '${item.product.quantityLabel(item.quantity)} × ${formatBs(price ?? item.product.price)}',
                 style: AppText.meta.copyWith(fontSize: 10.5),
               ),
             ],
@@ -463,7 +661,7 @@ class _ItemLine extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Text(
-          formatBs(item.subtotal),
+          formatBs((price ?? item.product.price) * item.quantity),
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
