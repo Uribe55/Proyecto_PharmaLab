@@ -74,7 +74,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
             bottom: false,
             child: Column(
               children: [
-                const AppTabHeader(title: 'Panel de pedidos'),
+                const AppTabHeader(title: 'Panel de pedidos', showLogo: true),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/account_navigation.dart';
+
 import '../../services/pharma_service.dart';
 import '../../services/sync_service.dart';
 import '../../theme/app_theme.dart';
@@ -49,13 +51,16 @@ class _DriverShellState extends State<DriverShell> {
             _selectTab(0);
           },
           child: Scaffold(
-            body: IndexedStack(
-              index: _index,
-              children: const [
-                DriverDeliveriesScreen(),
-                DriverHistoryScreen(),
-                DriverAccountScreen(),
-              ],
+            body: AccountNavigation(
+              onOpenAccount: () => _selectTab(2),
+              child: IndexedStack(
+                index: _index,
+                children: const [
+                  DriverDeliveriesScreen(),
+                  DriverHistoryScreen(),
+                  DriverAccountScreen(),
+                ],
+              ),
             ),
             bottomNavigationBar: DecoratedBox(
               decoration: const BoxDecoration(

@@ -6,6 +6,7 @@ import '../../services/pharma_service.dart';
 import '../../viewmodels/catalog_view_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/category_card.dart';
+import '../../widgets/account_navigation.dart';
 import '../../widgets/client_avatar.dart';
 import '../../widgets/pharma_logo.dart';
 import '../../widgets/product_card.dart';
@@ -21,11 +22,18 @@ class HomeScreen extends StatelessWidget {
     ProductCategory? category,
     String? categoryId,
   ]) {
+    final openAccount = AccountNavigation.of(context);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CatalogScreen(
-          initialCategory: category,
-          initialCategoryId: categoryId,
+        builder: (routeContext) => AccountNavigation(
+          onOpenAccount: () {
+            Navigator.of(routeContext).pop();
+            openAccount?.call();
+          },
+          child: CatalogScreen(
+            initialCategory: category,
+            initialCategoryId: categoryId,
+          ),
         ),
       ),
     );

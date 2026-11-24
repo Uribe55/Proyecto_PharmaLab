@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/app_user.dart';
 import '../services/pharma_service.dart';
 import '../theme/app_theme.dart';
+import 'account_navigation.dart';
 
 /// Avatar con las iniciales del usuario en sesión.
 ///
@@ -28,7 +29,7 @@ class UserAvatar extends StatelessWidget {
         final initials =
             current?.initials ?? PharmaService.instance.pharmacy.initials;
 
-        return Container(
+        final avatar = Container(
           width: size,
           height: size,
           alignment: Alignment.center,
@@ -56,6 +57,7 @@ class UserAvatar extends StatelessWidget {
             ),
           ),
         );
+        return user == null ? AccountAvatarButton(child: avatar) : avatar;
       },
     );
   }

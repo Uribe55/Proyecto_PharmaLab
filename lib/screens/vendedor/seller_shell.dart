@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/account_navigation.dart';
+
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import 'seller_account_screen.dart';
@@ -38,13 +40,16 @@ class _SellerShellState extends State<SellerShell> {
             _selectTab(0);
           },
           child: Scaffold(
-            body: IndexedStack(
-              index: _index,
-              children: const [
-                SellerOrdersScreen(),
-                SellerAssignmentsScreen(),
-                SellerAccountScreen(),
-              ],
+            body: AccountNavigation(
+              onOpenAccount: () => _selectTab(2),
+              child: IndexedStack(
+                index: _index,
+                children: const [
+                  SellerOrdersScreen(),
+                  SellerAssignmentsScreen(),
+                  SellerAccountScreen(),
+                ],
+              ),
             ),
             bottomNavigationBar: DecoratedBox(
               decoration: const BoxDecoration(

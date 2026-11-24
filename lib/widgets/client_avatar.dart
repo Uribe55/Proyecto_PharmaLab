@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../services/pharma_service.dart';
 import '../theme/app_theme.dart';
+import 'account_navigation.dart';
 
 class ClientAvatar extends StatelessWidget {
-  const ClientAvatar({
-    super.key,
-    this.size = 38,
-    this.showBorder = true,
-  });
+  const ClientAvatar({super.key, this.size = 38, this.showBorder = true});
 
   final double size;
   final bool showBorder;
@@ -20,7 +17,7 @@ class ClientAvatar extends StatelessWidget {
       builder: (context, _) {
         final initials = PharmaService.instance.pharmacy.initials;
 
-        return Container(
+        final avatar = Container(
           width: size,
           height: size,
           alignment: Alignment.center,
@@ -48,6 +45,7 @@ class ClientAvatar extends StatelessWidget {
             ),
           ),
         );
+        return AccountAvatarButton(child: avatar);
       },
     );
   }

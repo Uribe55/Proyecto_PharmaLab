@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/account_navigation.dart';
+
 import '../../models/app_user.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
@@ -68,14 +70,17 @@ class _AdminShellState extends State<AdminShell> {
         _selectTab(0);
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: _index,
-          children: [
-            AdminDashboardScreen(viewModel: _viewModel),
-            const AdminUsersScreen(),
-            const AdminAccountScreen(),
-            const OrderOperationsScreen(),
-          ],
+        body: AccountNavigation(
+          onOpenAccount: () => _selectTab(2),
+          child: IndexedStack(
+            index: _index,
+            children: [
+              AdminDashboardScreen(viewModel: _viewModel),
+              const AdminUsersScreen(),
+              const AdminAccountScreen(),
+              const OrderOperationsScreen(),
+            ],
+          ),
         ),
         bottomNavigationBar: DecoratedBox(
           decoration: const BoxDecoration(

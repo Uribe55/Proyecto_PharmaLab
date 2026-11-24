@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/account_navigation.dart';
+
 import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../viewmodels/catalog_view_model.dart';
@@ -58,14 +60,17 @@ class _ClientShellState extends State<ClientShell> {
         _selectTab(0);
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: _index,
-          children: [
-            const HomeScreen(),
-            OrderHistoryScreen(onBrowse: () => _selectTab(0)),
-            CartScreen(onBrowse: () => _selectTab(0)),
-            const ProfileScreen(),
-          ],
+        body: AccountNavigation(
+          onOpenAccount: () => _selectTab(3),
+          child: IndexedStack(
+            index: _index,
+            children: [
+              const HomeScreen(),
+              OrderHistoryScreen(onBrowse: () => _selectTab(0)),
+              CartScreen(onBrowse: () => _selectTab(0)),
+              const ProfileScreen(),
+            ],
+          ),
         ),
         bottomNavigationBar: DecoratedBox(
           decoration: const BoxDecoration(

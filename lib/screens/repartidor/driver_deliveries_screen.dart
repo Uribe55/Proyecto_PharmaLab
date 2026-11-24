@@ -46,7 +46,7 @@ class DriverDeliveriesScreen extends StatelessWidget {
             bottom: false,
             child: Column(
               children: [
-                const AppTabHeader(title: 'Mis entregas'),
+                const AppTabHeader(title: 'Mis entregas', showLogo: true),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
