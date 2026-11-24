@@ -54,9 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const ClientShell()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const ClientShell()));
   }
 
   void _fillDemoAccount() {
@@ -68,7 +68,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _showRecoveryDialog() async {
-    final controller = TextEditingController(text: _emailController.text.trim());
+    final controller = TextEditingController(
+      text: _emailController.text.trim(),
+    );
 
     final email = await showDialog<String>(
       context: context,
@@ -98,9 +100,8 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(
-              controller.text.trim(),
-            ),
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(controller.text.trim()),
             child: const Text('Enviar'),
           ),
         ],
@@ -111,9 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted || email == null || email.isEmpty) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Enviamos las instrucciones a $email.'),
-      ),
+      SnackBar(content: Text('Enviamos las instrucciones a $email.')),
     );
   }
 
@@ -127,7 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(16),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 32,
+                  minHeight: (constraints.maxHeight - 32).clamp(
+                    0.0,
+                    double.infinity,
+                  ),
                 ),
                 child: Center(
                   child: ConstrainedBox(
@@ -138,14 +140,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: AppColors.border),
+                        boxShadow: AppTheme.formShadow,
                       ),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const PharmaLogo(),
-                            const SizedBox(height: 30),
+                            const Center(child: PharmaLogo(height: 84)),
+                            const SizedBox(height: 24),
                             const Text(
                               'TU ALIADO EN DIAGNÓSTICO',
                               style: AppText.eyebrow,
@@ -293,7 +296,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          Text('Iniciar sesión'),
+                                          Flexible(
+                                            child: Text(
+                                              'Iniciar sesión',
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
                                           SizedBox(width: 8),
                                           Icon(
                                             Icons.arrow_forward_rounded,

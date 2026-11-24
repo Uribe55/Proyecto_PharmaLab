@@ -110,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
-        title: const PharmaLogo(compact: true),
+        title: const PharmaLogo(height: 40),
         centerTitle: true,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
@@ -132,6 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: AppColors.border),
+                      boxShadow: AppTheme.formShadow,
                     ),
                     child: Form(
                       key: _formKey,
@@ -201,7 +202,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             validator: (value) {
                               final phone = value?.trim() ?? '';
                               if (phone.isEmpty) return 'Ingresa un teléfono.';
-                              if (phone.replaceAll(RegExp(r'\D'), '').length < 7) {
+                              if (phone.replaceAll(RegExp(r'\D'), '').length <
+                                  7) {
                                 return 'Ingresa un teléfono válido.';
                               }
                               return null;
@@ -390,7 +392,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Text('Crear cuenta'),
+                                        Flexible(
+                                          child: Text(
+                                            'Crear cuenta',
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
                                         SizedBox(width: 8),
                                         Icon(
                                           Icons.arrow_forward_rounded,

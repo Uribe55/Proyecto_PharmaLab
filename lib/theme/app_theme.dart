@@ -11,7 +11,8 @@ class AppColors {
   static const Color background = Color(0xFFF5F8FA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color mint = Color(0xFFE5F4F2);
-  static const Color muted = Color(0xFF738591);
+  static const Color brandGreenTint = Color(0xFFF0FAF0);
+  static const Color muted = Color(0xFF526773);
   static const Color border = Color(0xFFDFE8ED);
 
   // Estados de pedido.
@@ -101,6 +102,10 @@ class AppText {
 class AppTheme {
   const AppTheme._();
 
+  static const formShadow = [
+    BoxShadow(color: Color(0x0D0928A6), blurRadius: 24, offset: Offset(0, 8)),
+  ];
+
   // Alias conservado para compatibilidad con pantallas existentes.
   static const Color primaryColor = AppColors.primary;
   static const Color darkText = AppColors.ink;
@@ -121,10 +126,8 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
     );
 
-    final textTheme = GoogleFonts.interTextTheme(base.textTheme).apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
-    );
+    final textTheme = GoogleFonts.interTextTheme(base.textTheme)
+        .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink);
 
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -152,7 +155,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationThemeData(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 15,
+          vertical: 15,
+        ),
         hintStyle: TextStyle(
           fontSize: 13,
           color: AppColors.muted.withValues(alpha: 0.75),
@@ -203,19 +209,13 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
       ),
       cardTheme: CardThemeData(
@@ -257,9 +257,7 @@ class AppTheme {
         space: 1,
       ),
       checkboxTheme: CheckboxThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         side: const BorderSide(color: AppColors.border, width: 1.4),
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -274,18 +272,14 @@ class AppTheme {
         contentTextStyle: const TextStyle(color: Colors.white, fontSize: 13),
         actionTextColor: AppColors.mint,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: AppText.h3,
         contentTextStyle: AppText.body,
       ),

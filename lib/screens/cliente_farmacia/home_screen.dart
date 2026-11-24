@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
 import '../../services/cart_service.dart';
@@ -25,9 +25,7 @@ class HomeScreen extends StatelessWidget {
 
   void _openProduct(BuildContext context, Product product) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProductDetailScreen(product: product),
-      ),
+      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
     );
   }
 
@@ -36,8 +34,8 @@ class HomeScreen extends StatelessWidget {
     final message = added
         ? '${product.name} se agregó al carrito.'
         : product.isAvailable
-            ? 'No hay más unidades disponibles de ${product.name}.'
-            : '${product.name} no tiene stock disponible.';
+        ? 'No hay más unidades disponibles de ${product.name}.'
+        : '${product.name} no tiene stock disponible.';
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -59,11 +57,16 @@ class HomeScreen extends StatelessWidget {
               padding: EdgeInsets.zero,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   child: Row(
                     children: const [
-                      PharmaLogo(),
-                      Spacer(),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: PharmaLogo(height: 46),
+                        ),
+                      ),
+                      SizedBox(width: 12),
                       ClientAvatar(),
                     ],
                   ),
@@ -126,9 +129,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                _PromoBanner(
-                  onExplore: () => _openCatalog(context),
-                ),
+                _PromoBanner(onExplore: () => _openCatalog(context)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                   child: SectionHeader(
@@ -167,8 +168,9 @@ class HomeScreen extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.sizeOf(context).width >= 720 ? 3 : 2,
+                    crossAxisCount: MediaQuery.sizeOf(context).width >= 720
+                        ? 3
+                        : 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                     mainAxisExtent: 248,
@@ -209,14 +211,12 @@ class _PromoBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(18, 18, 12, 18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.mint, Color(0xFFF1FAF8)],
+          colors: [AppColors.mint, AppColors.brandGreenTint],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.14),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.14)),
       ),
       child: Row(
         children: [
