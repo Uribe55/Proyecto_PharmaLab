@@ -13,18 +13,19 @@ class StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (background, foreground) = switch (status) {
       OrderStatus.pendiente => (
-          AppColors.pendingBackground,
-          AppColors.pendingText,
-        ),
+        AppColors.pendingBackground,
+        AppColors.pendingText,
+      ),
       OrderStatus.aprobado => (
-          AppColors.approvedBackground,
-          AppColors.approvedText,
-        ),
+        AppColors.approvedBackground,
+        AppColors.approvedText,
+      ),
       OrderStatus.enRuta => (AppColors.mint, AppColors.primary),
       OrderStatus.entregado => (
-          AppColors.successBackground,
-          AppColors.successText,
-        ),
+        AppColors.successBackground,
+        AppColors.successText,
+      ),
+      OrderStatus.fallida => (AppColors.dangerBackground, AppColors.danger),
     };
 
     return Container(

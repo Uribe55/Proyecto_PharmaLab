@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../models/cart_item.dart';
 import '../../services/cart_service.dart';
@@ -312,7 +312,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(width: 18),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: cart.isEmpty || _loading ? null : _confirmOrder,
+                  onPressed: cart.isEmpty || _loading || PharmaService.instance.usesFirebase
+                      ? null
+                      : _confirmOrder,
                   child: _loading
                       ? const SizedBox(
                           width: 20,

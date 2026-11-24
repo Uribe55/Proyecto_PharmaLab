@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../models/order.dart';
@@ -91,9 +91,7 @@ class _ConfirmationBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.mint,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.16),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.16)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,12 +207,12 @@ class _Timeline extends StatelessWidget {
       ),
       child: Column(
         children: [
-          for (var index = 0; index < OrderStatus.values.length; index++)
+          for (var index = 0; index < OrderStatus.deliverySteps.length; index++)
             _TimelineStep(
-              status: OrderStatus.values[index],
+              status: OrderStatus.deliverySteps[index],
               index: index,
               currentIndex: order.statusIndex,
-              isLast: index == OrderStatus.values.length - 1,
+              isLast: index == OrderStatus.deliverySteps.length - 1,
             ),
         ],
       ),
@@ -260,8 +258,8 @@ class _TimelineStep extends StatelessWidget {
                   color: isActive
                       ? AppColors.primary
                       : isDone
-                          ? AppColors.mint
-                          : AppColors.surface,
+                      ? AppColors.mint
+                      : AppColors.surface,
                   border: Border.all(
                     color: isFuture ? AppColors.border : AppColors.primary,
                     width: 1.5,
@@ -274,22 +272,17 @@ class _TimelineStep extends StatelessWidget {
                         color: AppColors.primary,
                       )
                     : isActive
-                        ? Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        : null,
+                    ? Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : null,
               ),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: 38,
-                  color: lineColor,
-                ),
+              if (!isLast) Container(width: 2, height: 38, color: lineColor),
             ],
           ),
         ),
@@ -309,8 +302,8 @@ class _TimelineStep extends StatelessWidget {
                     color: isFuture
                         ? AppColors.muted
                         : isActive
-                            ? AppColors.primary
-                            : AppColors.ink,
+                        ? AppColors.primary
+                        : AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -487,10 +480,7 @@ class _DetailRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: AppText.meta.copyWith(fontSize: 10.5),
-              ),
+              Text(subtitle, style: AppText.meta.copyWith(fontSize: 10.5)),
             ],
           ),
         ),
@@ -570,9 +560,7 @@ class _SummarySheet extends StatelessWidget {
                 if (context.mounted) Navigator.of(context).pop();
                 messenger.showSnackBar(
                   const SnackBar(
-                    content: Text(
-                      'Resumen copiado. Ya puedes compartirlo.',
-                    ),
+                    content: Text('Resumen copiado. Ya puedes compartirlo.'),
                   ),
                 );
               },

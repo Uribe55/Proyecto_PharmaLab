@@ -9,10 +9,12 @@ class CategoryCard extends StatelessWidget {
     super.key,
     required this.category,
     required this.onTap,
+    this.labelOverride,
   });
 
   final ProductCategory category;
   final VoidCallback onTap;
+  final String? labelOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class CategoryCard extends StatelessWidget {
               ),
               const SizedBox(height: 9),
               Text(
-                category.label,
+                labelOverride ?? category.label,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

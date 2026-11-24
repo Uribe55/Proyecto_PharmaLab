@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../models/app_user.dart';
 import '../services/pharma_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/pharma_logo.dart';
+import 'administrador/admin_shell.dart';
 import 'cliente_farmacia/client_shell.dart';
 import 'register_screen.dart';
+import 'repartidor/driver_shell.dart';
+import 'vendedor/seller_shell.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,9 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    final error = PharmaService.instance.login(
+    final error = await PharmaService.instance.login(
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -54,14 +56,31 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const ClientShell()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => switch (PharmaService.instance.role) {
+          UserRole.cliente => const ClientShell(),
+          UserRole.vendedor => const SellerShell(),
+          UserRole.repartidor => const DriverShell(),
+          UserRole.administrador => const AdminShell(),
+        },
+      ),
+    );
   }
 
-  void _fillDemoAccount() {
+  Future<void> _showDemoAccounts() async {
+    final selected = await showModalBottomSheet<AppUser>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => _DemoAccountsSheet(
+        onSelected: (user) => Navigator.of(sheetContext).pop(user),
+      ),
+    );
+
+    if (selected == null || !mounted) return;
+
     setState(() {
-      _emailController.text = PharmaService.demoEmail;
+      _emailController.text = selected.email;
       _passwordController.text = PharmaService.demoPassword;
       _error = null;
     });
@@ -111,8 +130,14 @@ class _LoginScreenState extends State<LoginScreen> {
     controller.dispose();
     if (!mounted || email == null || email.isEmpty) return;
 
+    final error = await PharmaService.instance.recoverPassword(email);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Enviamos las instrucciones a $email.')),
+      SnackBar(
+        content: Text(
+          error ?? 'Si existe una cuenta, recibirás las instrucciones.',
+        ),
+      ),
     );
   }
 
@@ -150,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const Center(child: PharmaLogo(height: 84)),
                             const SizedBox(height: 24),
                             const Text(
-                              'TU ALIADO EN DIAGNÓSTICO',
+                              'TU ALIADO EN ABASTECIMIENTO',
                               style: AppText.eyebrow,
                             ),
                             const SizedBox(height: 9),
@@ -160,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Todo lo que tu laboratorio necesita, '
+                              'Todo lo que tu farmacia necesita, '
                               'en un solo lugar.',
                               style: AppText.muted,
                             ),
@@ -311,8 +336,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                               ),
                             ),
-                            const SizedBox(height: 18),
-                            _DemoAccountCard(onUse: _fillDemoAccount),
+                            // Las cuentas de prueba solo tienen sentido cuando
+                            // la app trabaja sin Firebase (pruebas/demostración).
+                            if (!PharmaService.instance.usesFirebase) ...[
+                              const SizedBox(height: 18),
+                              _DemoAccountCard(onUse: _showDemoAccounts),
+                            ],
                             const SizedBox(height: 18),
                             Wrap(
                               alignment: WrapAlignment.center,
@@ -377,7 +406,7 @@ class _DemoAccountCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Cuenta de prueba local',
+                  'Cuentas de prueba locales',
                   style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
@@ -386,7 +415,7 @@ class _DemoAccountCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'maria@laboratoriosanmartin.bo · pharmalab123',
+                  'Cliente, vendedor, repartidor y administrador',
                   style: TextStyle(
                     fontSize: 9.5,
                     height: 1.3,
@@ -404,11 +433,173 @@ class _DemoAccountCard extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: const Text(
-              'Usar',
+              'Ver',
               style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DemoAccountsSheet extends StatelessWidget {
+  const _DemoAccountsSheet({required this.onSelected});
+
+  final ValueChanged<AppUser> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Cuentas de prueba', style: AppText.h3),
+            const SizedBox(height: 4),
+            const Text(
+              'Datos ficticios para probar el flujo de cada rol. La contraseña '
+              'es la misma en todas las cuentas.',
+              style: AppText.muted,
+            ),
+            const SizedBox(height: 14),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: PharmaService.demoUsers.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final user = PharmaService.demoUsers[index];
+                  return _DemoUserTile(
+                    user: user,
+                    onTap: () => onSelected(user),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: AppColors.mint.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Contraseña: ${PharmaService.demoPassword}',
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DemoUserTile extends StatelessWidget {
+  const _DemoUserTile({required this.user, required this.onTap});
+
+  final AppUser user;
+  final VoidCallback onTap;
+
+  IconData get _icon => switch (user.role) {
+    UserRole.cliente => Icons.storefront_outlined,
+    UserRole.vendedor => Icons.point_of_sale_rounded,
+    UserRole.repartidor => Icons.local_shipping_outlined,
+    UserRole.administrador => Icons.admin_panel_settings_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.background,
+      borderRadius: BorderRadius.circular(13),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: const BoxDecoration(
+                  color: AppColors.mint,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(_icon, size: 17, color: AppColors.primary),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          user.role.label,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.meta.copyWith(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: AppColors.muted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

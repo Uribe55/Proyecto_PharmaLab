@@ -1,0 +1,169 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function activeClient() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'cliente';
+    }
+
+    // Identificador legible y consecutivo, con relleno de ceros.
+    function farmCode(n) {
+      return n < 10 ? 'FARM00' + string(n)
+        : n < 100 ? 'FARM0' + string(n)
+        : 'FARM' + string(n);
+    }
+
+    // Estado posterior a la transacción del registro.
+    function nextFarmCounter() {
+      return getAfter(/databases/$(database)/documents/configuracion/contadores_farmacia).data;
+    }
+
+    match /usuarios/{uid} {
+      // Se mantiene el acceso de cada cuenta a su propio perfil.
+      allow get: if signedIn() && request.auth.uid == uid;
+
+      // Un cliente nuevo solo puede crear su propio perfil mínimo.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'correo', 'nombre', 'rol', 'estado', 'fecha_registro'
+        ])
+        && request.resource.data.keys().hasAll([
+          'correo', 'nombre', 'rol', 'estado', 'fecha_registro'
+        ])
+        && request.resource.data.correo is string
+        && request.resource.data.correo == request.auth.token.email
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.rol == 'cliente'
+        && request.resource.data.estado == true
+        && request.resource.data.fecha_registro == request.time
+        && nextFarmCounter().ultimo_uid == uid
+        && getAfter(/databases/$(database)/documents/farmacia_cliente/$(nextFarmCounter().ultimo_id)).data.usuario_id == uid
+        && getAfter(/databases/$(database)/documents/nits_farmacia/$(getAfter(/databases/$(database)/documents/farmacia_cliente/$(nextFarmCounter().ultimo_id)).data.nit)).data.usuario_id == uid;
+    }
+
+    match /farmacia_cliente/{farmaciaId} {
+      // Solo el cliente activo puede consultar su propia farmacia.
+      allow read: if activeClient()
+        && resource.data.usuario_id == request.auth.uid;
+
+      // Se requiere crear la farmacia en la misma transacción que el usuario
+      // y la actualización del contador. Otros roles no pueden autogenerarse.
+      allow create: if signedIn()
+        && farmaciaId.matches('^FARM[0-9]{3,}$')
+        && farmaciaId == farmCode(nextFarmCounter().ultimo_numero)
+        && request.resource.data.keys().hasOnly([
+          'usuario_id', 'nombre_farmacia', 'nit', 'responsable',
+          'telefono', 'direccion_fiscal', 'estado', 'fecha_registro'
+        ])
+        && request.resource.data.keys().hasAll([
+          'usuario_id', 'nombre_farmacia', 'nit', 'responsable',
+          'telefono', 'direccion_fiscal', 'estado', 'fecha_registro'
+        ])
+        && request.resource.data.usuario_id == request.auth.uid
+        && request.resource.data.nombre_farmacia is string
+        && request.resource.data.nombre_farmacia.size() > 0
+        && request.resource.data.nit is string
+        && request.resource.data.nit.matches('^[0-9]{7,15}$')
+        && request.resource.data.responsable is string
+        && request.resource.data.responsable.size() > 0
+        && request.resource.data.telefono is string
+        && request.resource.data.direccion_fiscal is string
+        && request.resource.data.estado == true
+        && request.resource.data.fecha_registro == request.time
+        && nextFarmCounter().ultimo_id == farmaciaId
+        && nextFarmCounter().ultimo_uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'cliente'
+        // La farmacia solo puede crearse junto con la reserva de su NIT.
+        && getAfter(/databases/$(database)/documents/nits_farmacia/$(request.resource.data.nit)).data.farmacia_id == farmaciaId
+        && getAfter(/databases/$(database)/documents/nits_farmacia/$(request.resource.data.nit)).data.usuario_id == request.auth.uid;
+    }
+
+    match /configuracion/contadores_farmacia {
+      // El documento de control NO contiene datos comerciales ni credenciales.
+      allow get: if signedIn();
+
+      // Se incrementa exactamente una unidad, solo como parte del alta de
+      // un cliente y su farmacia vinculada. No se permite reiniciar el contador.
+      allow update: if signedIn()
+        && resource.data.keys().hasAll([
+          'ultimo_numero', 'ultimo_id', 'ultimo_uid'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ultimo_numero', 'ultimo_id', 'ultimo_uid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'ultimo_numero', 'ultimo_id', 'ultimo_uid'
+        ])
+        && resource.data.ultimo_numero is int
+        && request.resource.data.ultimo_numero is int
+        && request.resource.data.ultimo_numero == resource.data.ultimo_numero + 1
+        && request.resource.data.ultimo_uid == request.auth.uid
+        && request.resource.data.ultimo_id is string
+        && request.resource.data.ultimo_id.matches('^FARM[0-9]{3,}$')
+        && request.resource.data.ultimo_id == farmCode(request.resource.data.ultimo_numero)
+        && !exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'cliente'
+        && getAfter(/databases/$(database)/documents/farmacia_cliente/$(request.resource.data.ultimo_id)).data.usuario_id == request.auth.uid
+        && getAfter(/databases/$(database)/documents/nits_farmacia/$(getAfter(/databases/$(database)/documents/farmacia_cliente/$(request.resource.data.ultimo_id)).data.nit)).data.farmacia_id == request.resource.data.ultimo_id;
+    }
+
+    match /nits_farmacia/{nit} {
+      // Solo se puede consultar un NIT concreto estando autenticado.
+      // No se permite listar los NIT de otras farmacias.
+      allow get: if signedIn();
+
+      // Una reserva se crea una única vez, y necesariamente al mismo tiempo
+      // que su farmacia FARM###, el perfil del usuario y el contador.
+      allow create: if signedIn()
+        && nit.matches('^[0-9]{7,15}$')
+        && request.resource.data.keys().hasOnly([
+          'farmacia_id', 'usuario_id'
+        ])
+        && request.resource.data.keys().hasAll([
+          'farmacia_id', 'usuario_id'
+        ])
+        && request.resource.data.usuario_id == request.auth.uid
+        && request.resource.data.farmacia_id is string
+        && request.resource.data.farmacia_id == nextFarmCounter().ultimo_id
+        && nextFarmCounter().ultimo_uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'cliente'
+        && getAfter(/databases/$(database)/documents/farmacia_cliente/$(request.resource.data.farmacia_id)).data.nit == nit
+        && getAfter(/databases/$(database)/documents/farmacia_cliente/$(request.resource.data.farmacia_id)).data.usuario_id == request.auth.uid;
+
+      // Un NIT reservado no puede reasignarse ni eliminarse desde Flutter.
+      allow list, update, delete: if false;
+    }
+
+    // Catálogo en lectura para farmacias autenticadas y activas.
+    // Al consultar productos se exige el filtro estado == true.
+    match /productos/{productoId} {
+      allow get, list: if activeClient() && resource.data.estado == true;
+      allow create, update, delete: if false;
+    }
+
+    match /categorias/{categoriaId} {
+      allow get, list: if activeClient();
+      allow create, update, delete: if false;
+    }
+
+    // Los lotes se leen para calcular la disponibilidad; no se modifican.
+    match /lotes_productos/{loteId} {
+      allow get, list: if activeClient();
+      allow create, update, delete: if false;
+    }
+
+    // El resto continúa cerrado hasta integrar cada módulo con permisos.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

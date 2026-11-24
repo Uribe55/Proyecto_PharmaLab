@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "215888682452",
+    "project_id": "proyecto-pharmalab",
+    "storage_bucket": "proyecto-pharmalab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215888682452:android:3abc7a88a75d64852d0a41",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_final_movil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCk8cuJY7x71MP0SHfq8JOGdgKvtq4J1OY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:proyecto_final_movil/main.dart';
@@ -14,8 +14,10 @@ void main() {
     await tester.pumpWidget(const PharmaLabApp());
     await tester.pumpAndSettle();
 
-    // Acceso con la cuenta de prueba.
-    await tester.tap(find.text('Usar'));
+    // Acceso con la cuenta de prueba del cliente.
+    await tester.tap(find.text('Ver'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('María Fernández'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pumpAndSettle();
@@ -62,9 +64,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Resumen de compra'), findsOneWidget);
 
-    await tester.tap(
-      find.widgetWithText(ElevatedButton, 'Confirmar pedido'),
-    );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Confirmar pedido'));
     await tester.pumpAndSettle();
     expect(find.text('Progreso de entrega'), findsOneWidget);
 
