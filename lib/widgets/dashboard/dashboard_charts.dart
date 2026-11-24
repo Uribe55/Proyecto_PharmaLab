@@ -15,7 +15,7 @@ Color statusColor(OrderStatus status) {
     OrderStatus.aprobado => AppColors.approvedText,
     OrderStatus.enRuta => AppColors.primary,
     OrderStatus.entregado => AppColors.successText,
-    OrderStatus.fallida => AppColors.danger,
+    OrderStatus.cancelado || OrderStatus.fallida => AppColors.danger,
   };
 }
 
@@ -25,7 +25,7 @@ Color statusBackground(OrderStatus status) {
     OrderStatus.aprobado => AppColors.approvedBackground,
     OrderStatus.enRuta => AppColors.mint,
     OrderStatus.entregado => AppColors.successBackground,
-    OrderStatus.fallida => AppColors.dangerBackground,
+    OrderStatus.cancelado || OrderStatus.fallida => AppColors.dangerBackground,
   };
 }
 
@@ -78,9 +78,7 @@ class StatusBarsChart extends StatelessWidget {
             count: counts[OrderStatus.values[i]] ?? 0,
             total: total,
             maxCount: maxCount,
-            onTap: onTap == null
-                ? null
-                : () => onTap!(OrderStatus.values[i]),
+            onTap: onTap == null ? null : () => onTap!(OrderStatus.values[i]),
           ),
           if (i < OrderStatus.values.length - 1) const SizedBox(height: 5),
         ],
@@ -461,7 +459,9 @@ class CategoryDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final withValue = categories.where((category) => category.amount > 0).toList();
+    final withValue = categories
+        .where((category) => category.amount > 0)
+        .toList();
     if (withValue.isEmpty) {
       return const DashboardEmptyText(
         icon: Icons.donut_large_outlined,
@@ -619,8 +619,9 @@ class CriticalStockBars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final critical = products.where((product) => product.needsAttention).toList()
-      ..sort((a, b) => a.thresholdRatio.compareTo(b.thresholdRatio));
+    final critical =
+        products.where((product) => product.needsAttention).toList()
+          ..sort((a, b) => a.thresholdRatio.compareTo(b.thresholdRatio));
     if (critical.isEmpty) {
       return const DashboardEmptyText(
         icon: Icons.check_circle_outline_rounded,
@@ -1027,10 +1028,7 @@ class DeliveryTimeTrendChart extends StatelessWidget {
                   return SideTitleWidget(
                     meta: meta,
                     space: 4,
-                    child: Text(
-                      formatAverageTime(value),
-                      style: _axisStyle,
-                    ),
+                    child: Text(formatAverageTime(value), style: _axisStyle),
                   );
                 },
               ),
@@ -1142,7 +1140,8 @@ class _DonutChartState extends State<_DonutChart> {
                   return;
                 }
                 setState(
-                  () => _touched = response!.touchedSection!.touchedSectionIndex,
+                  () =>
+                      _touched = response!.touchedSection!.touchedSectionIndex,
                 );
               },
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
-import '../../services/pharma_service.dart';
+import '../../viewmodels/delivery_view_model.dart';
 import '../../services/sync_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
@@ -18,6 +18,9 @@ class DriverFailureScreen extends StatefulWidget {
     'El responsable no estaba disponible',
     'La farmacia rechazó el pedido',
     'Problema con el vehículo o la carga',
+    'Producto dañado',
+    'Pedido incompleto',
+    'Problema de conservación',
     'Otro motivo',
   ];
 
@@ -77,31 +80,30 @@ class _DriverFailureScreenState extends State<DriverFailureScreen> {
     }
 
     final sync = SyncService.instance;
-    if (sync.isOffline) {
-      sync.queueDelivery(
-        widget.order,
-        delivered: false,
-        reason: reason,
-        note: _noteController.text,
-      );
+    final delivery = DeliveryViewModel.instance;
+    final ok = delivery.fail(
+      widget.order,
+      reason: reason,
+      note: _noteController.text,
+    );
+    if (!ok) {
+      setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Incidencia guardada sin conexión. Se sincronizará al reconectar.',
-          ),
+        SnackBar(
+          content: Text(delivery.error ?? 'No se pudo registrar el intento.'),
         ),
       );
-    } else {
-      PharmaService.instance.markDeliveryFailed(
-        widget.order,
-        reason: reason,
-        note: _noteController.text,
-      );
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Incidencia registrada.')));
+      return;
     }
-
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          sync.isOffline
+              ? 'Intento fallido guardado sin conexión. Se sincronizará al reconectar.'
+              : 'Intento fallido registrado.',
+        ),
+      ),
+    );
     Navigator.of(context).pop();
   }
 

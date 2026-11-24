@@ -29,12 +29,20 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
         final all = driver == null
             ? <PharmacyOrder>[]
             : service.ordersForDriver(driver.id);
-        final finished = all.where((order) => order.status.isFinal).toList()
-          ..sort((a, b) {
-            final dateA = a.deliveredAt ?? a.createdAt;
-            final dateB = b.deliveredAt ?? b.createdAt;
-            return dateB.compareTo(dateA);
-          });
+        final finished =
+            all
+                .where(
+                  (order) =>
+                      order.status.isFinal ||
+                      order.status.isFailure ||
+                      order.attempts.any((attempt) => attempt.closedAt != null),
+                )
+                .toList()
+              ..sort((a, b) {
+                final dateA = a.deliveredAt ?? a.failedAt ?? a.createdAt;
+                final dateB = b.deliveredAt ?? b.failedAt ?? b.createdAt;
+                return dateB.compareTo(dateA);
+              });
         final orders = _deliveredOnly == null
             ? finished
             : finished

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
+import '../../models/order_lifecycle.dart';
+import '../../viewmodels/order_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
@@ -59,7 +61,7 @@ class SellerReviewScreen extends StatelessWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    final approved = PharmaService.instance.approveOrder(order);
+    final approved = OrderViewModel.instance.act(order, OrderAction.approve);
     if (!approved) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('El pedido ya no está pendiente.')),

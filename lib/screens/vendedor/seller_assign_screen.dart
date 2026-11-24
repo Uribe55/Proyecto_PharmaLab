@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../models/app_user.dart';
 import '../../models/order.dart';
+import '../../models/order_lifecycle.dart';
+import '../../viewmodels/order_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
@@ -28,7 +30,7 @@ class _SellerAssignScreenState extends State<SellerAssignScreen> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Asignar entrega'),
         content: Text(
-          'El pedido ${widget.order.number} quedará en ruta a cargo de '
+          'El pedido ${widget.order.number} quedará asignado, sin iniciar ruta, a cargo de '
           '${driver.name}.',
           style: AppText.muted,
         ),
@@ -47,9 +49,10 @@ class _SellerAssignScreenState extends State<SellerAssignScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final assigned = PharmaService.instance.assignDelivery(
+    final assigned = OrderViewModel.instance.act(
       widget.order,
-      driver,
+      OrderAction.assign,
+      driver: driver,
     );
     if (!assigned) {
       ScaffoldMessenger.of(context).showSnackBar(

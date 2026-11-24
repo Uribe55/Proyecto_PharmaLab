@@ -6,6 +6,7 @@ import '../../widgets/app_header.dart';
 import '../../widgets/order_detail_sheet.dart';
 import '../../widgets/order_list_tile.dart';
 import 'seller_assign_screen.dart';
+import '../shared/order_operations_screen.dart';
 
 /// Seguimiento de entregas del vendedor: pedidos por asignar y en ruta.
 class SellerAssignmentsScreen extends StatelessWidget {
@@ -17,7 +18,12 @@ class SellerAssignmentsScreen extends StatelessWidget {
       listenable: PharmaService.instance,
       builder: (context, _) {
         final service = PharmaService.instance;
-        final toAssign = service.approvedOrders;
+        final toAssign = service.approvedOrders
+            .where((order) => order.driverId == null)
+            .toList();
+        final assigned = service.approvedOrders
+            .where((order) => order.driverId != null)
+            .toList();
         final inTransit = service.orders
             .where((order) => order.isInTransit)
             .toList();
@@ -27,7 +33,20 @@ class SellerAssignmentsScreen extends StatelessWidget {
             bottom: false,
             child: Column(
               children: [
-                const AppTabHeader(title: 'Entregas'),
+                AppTabHeader(
+                  title: 'Entregas',
+                  actions: [
+                    IconButton(
+                      tooltip: 'Cancelaciones e incidencias',
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const OrderOperationsScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.rule_rounded),
+                    ),
+                  ],
+                ),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
@@ -73,6 +92,19 @@ class SellerAssignmentsScreen extends StatelessWidget {
                           if (order != toAssign.last)
                             const SizedBox(height: 11),
                         ],
+                      const SizedBox(height: 24),
+                      _GroupHeader(
+                        title: 'Asignados sin despachar',
+                        count: assigned.length,
+                      ),
+                      for (final order in assigned)
+                        OrderListTile(
+                          order: order,
+                          caption:
+                              'Asignado a ${order.driverName ?? ''} · Sin despachar',
+                          onTap: () =>
+                              showOrderDetailSheet(context, order: order),
+                        ),
                       const SizedBox(height: 24),
                       _GroupHeader(title: 'En ruta', count: inTransit.length),
                       const SizedBox(height: 12),

@@ -66,6 +66,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final service = PharmaService.instance;
+    await service.login(
+      email: service.users.firstWhere((u) => u.role.name == 'vendedor').email,
+      password: PharmaService.demoPassword,
+    );
     final order = service.orders.firstWhere(
       (item) => item.number == 'PL-2026-0809',
     );
@@ -73,6 +77,7 @@ void main() {
       (user) => user.email == 'carlosm@rep.pharma.com',
     );
     expect(service.assignDelivery(order, carlos), isTrue);
+    await service.logout();
 
     await tester.pumpWidget(const PharmaLabApp());
     await tester.pumpAndSettle();
@@ -95,6 +100,8 @@ void main() {
     await tester.tap(find.text('Mis entregas').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('PL-2026-0809'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Iniciar ruta'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Confirmar entrega'));
     await tester.pumpAndSettle();
@@ -134,6 +141,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final service = PharmaService.instance;
+    await service.login(
+      email: service.users.firstWhere((u) => u.role.name == 'vendedor').email,
+      password: PharmaService.demoPassword,
+    );
     final order = service.orders.firstWhere(
       (item) => item.number == 'PL-2026-0839',
     );
@@ -142,12 +153,15 @@ void main() {
     );
     expect(service.approveOrder(order), isTrue);
     expect(service.assignDelivery(order, carlos), isTrue);
+    await service.logout();
 
     await tester.pumpWidget(const PharmaLabApp());
     await tester.pumpAndSettle();
     await _loginAs(tester, 'Carlos Mendoza');
 
     await tester.tap(find.text('PL-2026-0839'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Iniciar ruta'));
     await tester.pumpAndSettle();
     expect(find.text('No se pudo entregar'), findsOneWidget);
     await tester.tap(find.text('No se pudo entregar'));

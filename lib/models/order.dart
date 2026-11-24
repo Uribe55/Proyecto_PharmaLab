@@ -1,10 +1,13 @@
-/// Estados del pedido definidos en el RF-15 y el RF-17.
+import 'order_lifecycle.dart';
+
+/// Estados originales más cancelado, ampliación propuesta RF-21.
 enum OrderStatus {
   pendiente('Pendiente', 'Pedido recibido'),
   aprobado('Aprobado', 'Disponibilidad verificada'),
-  enRuta('En ruta', 'Asignado a un repartidor'),
+  enRuta('En ruta', 'Transporte iniciado'),
   entregado('Entregado', 'Recibido por la farmacia'),
-  fallida('Entrega fallida', 'No se pudo completar la entrega');
+  fallida('Entrega fallida', 'Intento fallido; pendiente de coordinación'),
+  cancelado('Cancelado', 'Pedido cancelado antes del despacho');
 
   const OrderStatus(this.label, this.description);
 
@@ -24,7 +27,7 @@ enum OrderStatus {
   bool get isFailure => this == OrderStatus.fallida;
 
   bool get isFinal =>
-      this == OrderStatus.entregado || this == OrderStatus.fallida;
+      this == OrderStatus.entregado || this == OrderStatus.cancelado;
 }
 
 class OrderLine {
@@ -63,7 +66,33 @@ class PharmacyOrder {
     this.deliveredAt,
     this.failureReason,
     this.failureNote,
-  });
+    this.customerId,
+    this.remote = false,
+    this.failedAt,
+  }) {
+    // Migración lógica: conserva el fallo histórico sin atribuirle una entrega.
+    if (status == OrderStatus.enRuta || status == OrderStatus.fallida) {
+      hasBeenDispatched = true;
+      if (status == OrderStatus.fallida) {
+        failedAt ??= deliveredAt;
+        deliveredAt = null;
+      }
+      attempts.add(
+        DeliveryAttempt(
+          id: '$number-legacy-1',
+          orderNumber: number,
+          number: 1,
+          driverId: driverId ?? '',
+          closedAt: status == OrderStatus.fallida ? failedAt : null,
+          result: status == OrderStatus.fallida
+              ? AttemptResult.failed
+              : AttemptResult.inProgress,
+          reason: failureReason,
+          note: failureNote ?? '',
+        ),
+      );
+    }
+  }
 
   final String number;
   final DateTime createdAt;
@@ -73,6 +102,28 @@ class PharmacyOrder {
   final String contactName;
   final String contactPhone;
   final String notes;
+  final String? customerId;
+  final bool remote;
+  DateTime? assignedAt, dispatchedAt, failedAt, cancelledAt, rescheduledFor;
+  String? assignedBy, dispatchedBy, cancelledBy, cancellationReason;
+  bool hasBeenDispatched = false;
+  bool stockRestored = false;
+  final Map<String, int> localStockDebits = {};
+  final List<LotStockAllocation> lotAllocations = [];
+  final List<CancellationRequest> cancellationRequests = [];
+  final List<DeliveryAttempt> attempts = [];
+  final List<DeliveryIncident> incidents = [];
+  final List<OrderHistoryEvent> history = [];
+  final Set<String> appliedEventIds = {};
+  CancellationRequest? get pendingCancellation {
+    for (final request in cancellationRequests.reversed) {
+      if (request.status == CancellationStatus.pending) return request;
+    }
+    return null;
+  }
+
+  DeliveryAttempt? get currentAttempt =>
+      attempts.isEmpty ? null : attempts.last;
 
   /// El estado y los datos de entrega cambian durante el flujo operativo
   /// (RF-11, RF-12, RF-14 y RF-17).
@@ -90,6 +141,7 @@ class PharmacyOrder {
   /// Posición dentro de los cuatro pasos del seguimiento. Una entrega fallida
   /// se detiene en el paso "En ruta".
   int get statusIndex {
+    if (status == OrderStatus.cancelado) return -1;
     if (status.isFailure) {
       return OrderStatus.deliverySteps.indexOf(OrderStatus.enRuta);
     }
