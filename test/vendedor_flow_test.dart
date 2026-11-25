@@ -74,7 +74,7 @@ void main() {
           .firstWhere((order) => order.number == 'PL-2026-0841')
           .status
           .label,
-      'En ruta',
+      'Aprobado',
     );
 
     // La entrega aparece en la pestaña de logística.

@@ -79,6 +79,7 @@ class NotificationService extends ChangeNotifier {
             '${order.failureReason ?? 'la entrega no se completó'}. '
             'El vendedor asignará una nueva fecha.',
       OrderStatus.fallida => 'Pedido $number con entrega fallida.',
+      OrderStatus.cancelado => 'Pedido $number cancelado.',
     };
   }
 

@@ -190,6 +190,7 @@ class DashboardRepository {
             contactPhone: order.contactPhone,
             notes: order.notes,
             rawStatus: order.status.name,
+            cancelled: order.status == OrderStatus.cancelado,
             items: [
               for (final line in order.items)
                 DashboardOrderLine(

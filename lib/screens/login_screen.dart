@@ -151,7 +151,10 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(16),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 32,
+                  minHeight: (constraints.maxHeight - 32).clamp(
+                    0.0,
+                    double.infinity,
+                  ),
                 ),
                 child: Center(
                   child: ConstrainedBox(
@@ -162,14 +165,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: AppColors.border),
+                        boxShadow: AppTheme.formShadow,
                       ),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const PharmaLogo(),
-                            const SizedBox(height: 30),
+                            const Center(child: PharmaLogo(height: 84)),
+                            const SizedBox(height: 24),
                             const Text(
                               'TU ALIADO EN ABASTECIMIENTO',
                               style: AppText.eyebrow,
@@ -317,7 +321,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          Text('Iniciar sesión'),
+                                          Flexible(
+                                            child: Text(
+                                              'Iniciar sesión',
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
                                           SizedBox(width: 8),
                                           Icon(
                                             Icons.arrow_forward_rounded,

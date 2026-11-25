@@ -1,6 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-import '../../services/cart_service.dart';
+import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_text_field.dart';
@@ -126,7 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (shouldLogout != true || !mounted) return;
 
     PharmaService.instance.logout();
-    CartService.instance.clear();
+    CartViewModel.instance.clear();
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -149,10 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: AppText.muted,
             ),
             SizedBox(height: 14),
-            _SupportRow(
-              icon: Icons.phone_outlined,
-              text: '+591 4 452-8890',
-            ),
+            _SupportRow(icon: Icons.phone_outlined, text: '+591 4 452-8890'),
             SizedBox(height: 8),
             _SupportRow(
               icon: Icons.mail_outline_rounded,
@@ -383,9 +380,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           SwitchListTile(
                             value: _notificationsEnabled,
-                            onChanged: (value) => setState(
-                              () => _notificationsEnabled = value,
-                            ),
+                            onChanged: (value) =>
+                                setState(() => _notificationsEnabled = value),
                             activeThumbColor: AppColors.surface,
                             activeTrackColor: AppColors.primary,
                             secondary: const Icon(
@@ -599,10 +595,7 @@ class _SupportRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: AppColors.ink,
-            ),
+            style: const TextStyle(fontSize: 11.5, color: AppColors.ink),
           ),
         ),
       ],

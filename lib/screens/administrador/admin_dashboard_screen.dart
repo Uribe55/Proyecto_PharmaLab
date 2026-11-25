@@ -40,13 +40,12 @@ enum AdminDashboardTab {
   final IconData selectedIcon;
 }
 
-typedef _OpenOrders =
-    void Function({
-      OrderStatus? status,
-      DateRange? range,
-      bool byDelivery,
-      bool attention,
-    });
+typedef _OpenOrders = void Function({
+  OrderStatus? status,
+  DateRange? range,
+  bool byDelivery,
+  bool attention,
+});
 
 /// Dashboard administrativo (RF-19).
 ///
@@ -178,16 +177,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             bottom: false,
             child: Column(
               children: [
-                const AppTabHeader(title: 'Panel administrativo'),
+                const AppTabHeader(
+                  title: 'Panel administrativo',
+                  showLogo: true,
+                ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'SUPERVISIÓN GENERAL',
-                        style: AppText.eyebrow,
-                      ),
+                      const Text('SUPERVISIÓN GENERAL', style: AppText.eyebrow),
                       const SizedBox(height: 4),
                       const Text(
                         'Todo PharmaLab, a la vista.',
@@ -506,8 +505,7 @@ class _ResumenTab extends StatelessWidget {
                 accent: AppColors.pendingText,
                 background: AppColors.pendingBackground,
                 caption: 'Requieren aprobación',
-                onTap: () =>
-                    onOpenOrders(status: OrderStatus.pendiente),
+                onTap: () => onOpenOrders(status: OrderStatus.pendiente),
               ),
               DashboardKpiCard(
                 label: 'Aprobados',
@@ -1168,7 +1166,10 @@ class _RecentOrdersCard extends StatelessWidget {
           DashboardCardHeader(
             title: 'Actividad reciente',
             caption: 'Últimos pedidos registrados',
-            action: TextButton(onPressed: onOpenAll, child: const Text('Ver todos')),
+            action: TextButton(
+              onPressed: onOpenAll,
+              child: const Text('Ver todos'),
+            ),
           ),
           const SizedBox(height: 8),
           if (orders.isEmpty)
@@ -1205,8 +1206,9 @@ class CriticalStockList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final critical = products.where((product) => product.needsAttention).toList()
-      ..sort((a, b) => a.thresholdRatio.compareTo(b.thresholdRatio));
+    final critical =
+        products.where((product) => product.needsAttention).toList()
+          ..sort((a, b) => a.thresholdRatio.compareTo(b.thresholdRatio));
     if (critical.isEmpty) {
       return const DashboardEmptyText(
         icon: Icons.check_circle_outline_rounded,

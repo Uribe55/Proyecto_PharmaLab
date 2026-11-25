@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import 'user_avatar.dart';
+import 'pharma_logo.dart';
 
 /// Encabezado de las pantallas que viven dentro de la navegación inferior.
 class AppTabHeader extends StatelessWidget {
@@ -11,15 +12,42 @@ class AppTabHeader extends StatelessWidget {
     this.showAvatar = true,
     this.leading,
     this.actions,
+    this.showLogo = false,
   });
 
   final String title;
   final bool showAvatar;
   final Widget? leading;
   final List<Widget>? actions;
+  final bool showLogo;
 
   @override
   Widget build(BuildContext context) {
+    if (showLogo) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: PharmaLogo(height: 46),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (showAvatar) const UserAvatar(),
+                ...?actions,
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(title, style: AppText.h2),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
@@ -49,7 +77,7 @@ class AppTabHeader extends StatelessWidget {
             ...actions!
           else
             SizedBox(
-              width: 40,
+              width: 48,
               child: showAvatar
                   ? const Align(
                       alignment: Alignment.centerRight,

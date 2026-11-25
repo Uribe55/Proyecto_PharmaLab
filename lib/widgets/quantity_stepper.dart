@@ -9,12 +9,14 @@ class QuantityStepper extends StatelessWidget {
     required this.max,
     required this.onChanged,
     this.compact = false,
+    this.min = 1,
   });
 
   final int value;
   final int max;
   final ValueChanged<int> onChanged;
   final bool compact;
+  final int min;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class QuantityStepper extends StatelessWidget {
         _StepButton(
           size: size,
           icon: Icons.remove_rounded,
-          enabled: value > 1,
+          enabled: value > min,
           onTap: () => onChanged(value - 1),
         ),
         SizedBox(

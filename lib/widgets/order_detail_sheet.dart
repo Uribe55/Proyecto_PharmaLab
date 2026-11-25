@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/order.dart';
+import '../services/pharma_service.dart';
+import '../domain/order_policy.dart';
+import 'order_lifecycle_panel.dart';
 import '../theme/app_theme.dart';
 import 'order_detail_card.dart';
 
@@ -10,6 +13,9 @@ Future<void> showOrderDetailSheet(
   required PharmacyOrder order,
   bool showPrices = true,
 }) {
+  if (!OrderPolicy.canRead(order, PharmaService.instance.currentUser)) {
+    return Future<void>.value();
+  }
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -56,6 +62,8 @@ Future<void> showOrderDetailSheet(
                       ),
                       const SizedBox(height: 6),
                       OrderDetailCard(order: order, showPrices: showPrices),
+                      const SizedBox(height: 12),
+                      OrderLifecyclePanel(order: order),
                     ],
                   ),
                 ),

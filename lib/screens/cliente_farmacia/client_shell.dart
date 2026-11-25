@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../services/cart_service.dart';
+import '../../widgets/account_navigation.dart';
+
+import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../viewmodels/catalog_view_model.dart';
 import '../../theme/app_theme.dart';
@@ -25,7 +27,7 @@ class _ClientShellState extends State<ClientShell> {
   @override
   void initState() {
     super.initState();
-    CartService.instance.addListener(_onCartChanged);
+    CartViewModel.instance.addListener(_onCartChanged);
     if (PharmaService.instance.usesFirebase) {
       CatalogViewModel.instance.start();
     }
@@ -33,7 +35,7 @@ class _ClientShellState extends State<ClientShell> {
 
   @override
   void dispose() {
-    CartService.instance.removeListener(_onCartChanged);
+    CartViewModel.instance.removeListener(_onCartChanged);
     CatalogViewModel.instance.stop();
     super.dispose();
   }
@@ -49,7 +51,7 @@ class _ClientShellState extends State<ClientShell> {
 
   @override
   Widget build(BuildContext context) {
-    final cartCount = CartService.instance.lineCount;
+    final cartCount = CartViewModel.instance.lineCount;
 
     return PopScope(
       canPop: _index == 0,
@@ -58,14 +60,17 @@ class _ClientShellState extends State<ClientShell> {
         _selectTab(0);
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: _index,
-          children: [
-            const HomeScreen(),
-            OrderHistoryScreen(onBrowse: () => _selectTab(0)),
-            CartScreen(onBrowse: () => _selectTab(0)),
-            const ProfileScreen(),
-          ],
+        body: AccountNavigation(
+          onOpenAccount: () => _selectTab(3),
+          child: IndexedStack(
+            index: _index,
+            children: [
+              const HomeScreen(),
+              OrderHistoryScreen(onBrowse: () => _selectTab(0)),
+              CartScreen(onBrowse: () => _selectTab(0)),
+              const ProfileScreen(),
+            ],
+          ),
         ),
         bottomNavigationBar: DecoratedBox(
           decoration: const BoxDecoration(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
+import '../../domain/order_policy.dart';
+import '../../viewmodels/delivery_view_model.dart';
+import '../../widgets/order_lifecycle_panel.dart';
 import '../../services/pharma_service.dart';
 import '../../services/sync_service.dart';
 import '../../theme/app_theme.dart';
@@ -40,28 +43,20 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
 
     final sync = SyncService.instance;
-    if (sync.isOffline) {
-      sync.queueDelivery(order, delivered: true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Entrega registrada sin conexión. Se sincronizará al reconectar.',
-          ),
+    final delivery = DeliveryViewModel.instance;
+    final delivered = delivery.deliver(order);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          delivered
+              ? sync.isOffline
+                    ? 'Entrega registrada sin conexión. Se sincronizará al reconectar.'
+                    : 'Pedido ${order.number} entregado.'
+              : delivery.error ?? 'No se pudo actualizar el pedido.',
         ),
-      );
-    } else {
-      final delivered = PharmaService.instance.markDelivered(order);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            delivered
-                ? 'Pedido ${order.number} entregado.'
-                : 'No se pudo actualizar el pedido.',
-          ),
-        ),
-      );
-    }
-
+      ),
+    );
+    if (!delivered) return;
     Navigator.of(context).pop();
   }
 
@@ -110,6 +105,13 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
         SyncService.instance,
       ]),
       builder: (context, _) {
+        if (!OrderPolicy.canRead(order, PharmaService.instance.currentUser)) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Entrega no disponible para esta cuenta.'),
+            ),
+          );
+        }
         final pending = SyncService.instance.pendingFor(order.number);
         final syncOffline = SyncService.instance.isOffline;
 
@@ -131,6 +133,10 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               OrderDetailCard(order: order, showPrices: false),
+              const SizedBox(height: 12),
+              OrderLifecyclePanel(order: order, showActions: false),
+              if (pending?.conflict != null)
+                Text('Conflicto: ${pending!.conflict!}', style: AppText.label),
               const SizedBox(height: 16),
               if (pending != null)
                 Container(
@@ -156,7 +162,7 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
                               pending.delivered
                                   ? 'Entrega registrada sin conexión. Se '
                                         'aplicará al sincronizar.'
-                                  : 'Incidencia registrada sin conexión: '
+                                  : 'Intento fallido pendiente de sincronizar: '
                                         '${pending.reason ?? 'sin motivo'}.',
                               style: const TextStyle(
                                 fontSize: 11,
@@ -217,7 +223,37 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
                 ),
             ],
           ),
-          bottomNavigationBar: order.canDeliver && pending == null
+          bottomNavigationBar:
+              order.isApproved &&
+                  OrderPolicy.driver(order, PharmaService.instance.currentUser!)
+              ? SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final delivery = DeliveryViewModel.instance;
+                        final ok = delivery.start(order);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Ruta iniciada.'
+                                  : delivery.error ??
+                                        'No se pudo iniciar ruta.',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('Iniciar ruta'),
+                    ),
+                  ),
+                )
+              : order.canDeliver &&
+                    pending == null &&
+                    OrderPolicy.driver(
+                      order,
+                      PharmaService.instance.currentUser!,
+                    )
               ? SafeArea(
                   top: false,
                   child: Container(
@@ -235,6 +271,18 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
                           label: const Text('Confirmar entrega'),
                         ),
                         const SizedBox(height: 8),
+                        OutlinedButton(
+                          onPressed: () => showModalBottomSheet<void>(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (_) => SafeArea(
+                              child: SingleChildScrollView(
+                                child: OrderLifecyclePanel(order: order),
+                              ),
+                            ),
+                          ),
+                          child: const Text('Reportar incidencia temporal'),
+                        ),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(

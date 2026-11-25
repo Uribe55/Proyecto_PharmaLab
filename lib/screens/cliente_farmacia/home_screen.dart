@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../models/product.dart';
-import '../../services/cart_service.dart';
+import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../viewmodels/catalog_view_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/category_card.dart';
+import '../../widgets/account_navigation.dart';
 import '../../widgets/client_avatar.dart';
 import '../../widgets/pharma_logo.dart';
 import '../../widgets/product_card.dart';
@@ -16,29 +17,41 @@ import 'product_detail_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  void _openCatalog(BuildContext context, [ProductCategory? category, String? categoryId]) {
+  void _openCatalog(
+    BuildContext context, [
+    ProductCategory? category,
+    String? categoryId,
+  ]) {
+    final openAccount = AccountNavigation.of(context);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CatalogScreen(initialCategory: category, initialCategoryId: categoryId),
+        builder: (routeContext) => AccountNavigation(
+          onOpenAccount: () {
+            Navigator.of(routeContext).pop();
+            openAccount?.call();
+          },
+          child: CatalogScreen(
+            initialCategory: category,
+            initialCategoryId: categoryId,
+          ),
+        ),
       ),
     );
   }
 
   void _openProduct(BuildContext context, Product product) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProductDetailScreen(product: product),
-      ),
+      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
     );
   }
 
   void _addToCart(BuildContext context, Product product) {
-    final added = CartService.instance.add(product);
+    final added = CartViewModel.instance.add(product);
     final message = added
         ? '${product.name} se agregó al carrito.'
         : product.isAvailable
-            ? 'No hay más unidades disponibles de ${product.name}.'
-            : '${product.name} no tiene stock disponible.';
+        ? 'No hay más unidades disponibles de ${product.name}.'
+        : '${product.name} no tiene stock disponible.';
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -53,7 +66,9 @@ class HomeScreen extends StatelessWidget {
       builder: (context, _) {
         final pharmacy = PharmaService.instance.pharmacy;
         final remote = PharmaService.instance.usesFirebase;
-        final featured = remote ? vm.featuredProducts : PharmaService.instance.featuredProducts;
+        final featured = remote
+            ? vm.featuredProducts
+            : PharmaService.instance.featuredProducts;
 
         return Scaffold(
           body: SafeArea(
@@ -62,11 +77,16 @@ class HomeScreen extends StatelessWidget {
               padding: EdgeInsets.zero,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   child: Row(
                     children: const [
-                      PharmaLogo(),
-                      Spacer(),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: PharmaLogo(height: 46),
+                        ),
+                      ),
+                      SizedBox(width: 12),
                       ClientAvatar(),
                     ],
                   ),
@@ -129,9 +149,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                _PromoBanner(
-                  onExplore: () => _openCatalog(context),
-                ),
+                _PromoBanner(onExplore: () => _openCatalog(context)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                   child: SectionHeader(
@@ -148,7 +166,8 @@ class HomeScreen extends StatelessWidget {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: vm.categories.length,
-                            separatorBuilder: (_, _) => const SizedBox(width: 10),
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 10),
                             itemBuilder: (context, index) {
                               final item = vm.categories[index];
                               return SizedBox(
@@ -156,7 +175,8 @@ class HomeScreen extends StatelessWidget {
                                 child: CategoryCard(
                                   category: item.visualCategory,
                                   labelOverride: item.name,
-                                  onTap: () => _openCatalog(context, null, item.id),
+                                  onTap: () =>
+                                      _openCatalog(context, null, item.id),
                                 ),
                               );
                             },
@@ -205,27 +225,28 @@ class HomeScreen extends StatelessWidget {
                     child: Text('No hay productos disponibles por ahora.'),
                   )
                 else
-                GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount:
-                        MediaQuery.sizeOf(context).width >= 720 ? 3 : 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 248,
+                  GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: MediaQuery.sizeOf(context).width >= 720
+                          ? 3
+                          : 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 248,
+                    ),
+                    itemCount: featured.length,
+                    itemBuilder: (context, index) {
+                      final product = featured[index];
+                      return ProductCard(
+                        product: product,
+                        onTap: () => _openProduct(context, product),
+                        onAdd: () => _addToCart(context, product),
+                      );
+                    },
                   ),
-                  itemCount: featured.length,
-                  itemBuilder: (context, index) {
-                    final product = featured[index];
-                    return ProductCard(
-                      product: product,
-                      onTap: () => _openProduct(context, product),
-                      onAdd: remote ? null : () => _addToCart(context, product),
-                    );
-                  },
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                   child: _QualityNote(remote: remote),
@@ -252,14 +273,12 @@ class _PromoBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(18, 18, 12, 18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.mint, Color(0xFFF1FAF8)],
+          colors: [AppColors.mint, AppColors.brandGreenTint],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.14),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.14)),
       ),
       child: Row(
         children: [

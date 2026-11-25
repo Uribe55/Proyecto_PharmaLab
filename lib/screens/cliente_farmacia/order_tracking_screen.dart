@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../models/order.dart';
+import '../../services/pharma_service.dart';
+import '../../domain/order_policy.dart';
+import '../../widgets/order_lifecycle_panel.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/client_header.dart';
@@ -26,7 +29,17 @@ class OrderTrackingScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: PharmaService.instance,
+    builder: (context, _) => _buildPage(context),
+  );
+
+  Widget _buildPage(BuildContext context) {
+    if (!OrderPolicy.canRead(order, PharmaService.instance.currentUser)) {
+      return const Scaffold(
+        body: Center(child: Text('Pedido no disponible para esta cuenta.')),
+      );
+    }
     return Scaffold(
       appBar: ClientPageAppBar(
         title: 'Seguimiento',
@@ -47,10 +60,12 @@ class OrderTrackingScreen extends StatelessWidget {
             const SizedBox(height: 14),
           ],
           _OrderSummaryCard(order: order),
+          const SizedBox(height: 14),
+          OrderLifecyclePanel(order: order),
           const SizedBox(height: 22),
           const Text('Progreso de entrega', style: AppText.h3),
           const SizedBox(height: 14),
-          _Timeline(order: order),
+          if (order.status != OrderStatus.cancelado) _Timeline(order: order),
           const SizedBox(height: 22),
           const Text('Productos', style: AppText.h3),
           const SizedBox(height: 12),

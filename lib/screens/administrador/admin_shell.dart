@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/account_navigation.dart';
+
 import '../../models/app_user.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
@@ -8,6 +10,7 @@ import '../login_screen.dart';
 import 'admin_account_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_users_screen.dart';
+import '../shared/order_operations_screen.dart';
 
 /// Contenedor principal del módulo Administrador.
 ///
@@ -67,13 +70,17 @@ class _AdminShellState extends State<AdminShell> {
         _selectTab(0);
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: _index,
-          children: [
-            AdminDashboardScreen(viewModel: _viewModel),
-            const AdminUsersScreen(),
-            const AdminAccountScreen(),
-          ],
+        body: AccountNavigation(
+          onOpenAccount: () => _selectTab(2),
+          child: IndexedStack(
+            index: _index,
+            children: [
+              AdminDashboardScreen(viewModel: _viewModel),
+              const AdminUsersScreen(),
+              const AdminAccountScreen(),
+              const OrderOperationsScreen(),
+            ],
+          ),
         ),
         bottomNavigationBar: DecoratedBox(
           decoration: const BoxDecoration(
@@ -97,6 +104,11 @@ class _AdminShellState extends State<AdminShell> {
                 icon: Icon(Icons.person_outline_rounded),
                 selectedIcon: Icon(Icons.person_rounded),
                 label: 'Mi cuenta',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.rule_outlined),
+                selectedIcon: Icon(Icons.rule_rounded),
+                label: 'Operaciones',
               ),
             ],
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/cart_item.dart';
-import '../../services/cart_service.dart';
+import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
@@ -10,13 +10,16 @@ import '../../widgets/client_header.dart';
 import 'order_tracking_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  const CheckoutScreen({super.key, this.cart});
+
+  final CartViewModel? cart;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  CartViewModel get _cart => widget.cart ?? CartViewModel.instance;
   final _notesController = TextEditingController();
 
   bool _loading = false;
@@ -64,8 +67,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _confirmOrder() async {
-    final cart = CartService.instance;
-    if (cart.isEmpty) return;
+    final cart = _cart;
+    if (!cart.canConfirm) return;
 
     // RF-07: el estado de cuenta se valida también en el ViewModel/servicio.
     if (PharmaService.instance.currentUser?.tieneDeudaVencida == true) {
@@ -83,21 +86,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _loading = true);
     await Future<void>.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    if (!cart.canConfirm) {
+      setState(() => _loading = false);
+      return;
+    }
 
     try {
-      final order = PharmaService.instance.createOrder(
-        items: List.of(cart.items),
-        notes: _notesController.text,
-      );
-      cart.clear();
+      final order = cart.confirmDemoOrder(notes: _notesController.text);
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => OrderTrackingScreen(
-            order: order,
-            showConfirmation: true,
-          ),
+          builder: (_) =>
+              OrderTrackingScreen(order: order, showConfirmation: true),
         ),
       );
     } on StockUnavailableException catch (error) {
@@ -132,14 +134,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final cart = CartService.instance;
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _cart,
+    builder: (context, _) => _buildContent(context),
+  );
+
+  Widget _buildContent(BuildContext context) {
+    final cart = _cart;
     final pharmacy = PharmaService.instance.pharmacy;
     final hasDebt =
         PharmaService.instance.currentUser?.tieneDeudaVencida == true;
 
     return Scaffold(
-      appBar: const ClientPageAppBar(title: 'Confirmar pedido'),
+      appBar: ClientPageAppBar(
+        title: cart.isRemote ? 'Revisar carrito' : 'Confirmar pedido',
+      ),
       body: cart.isEmpty
           ? const Center(
               child: Text('Tu carrito está vacío.', style: AppText.muted),
@@ -147,18 +156,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
               children: [
+                if (cart.isRemote)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      'Tu carrito está listo. La confirmación de pedidos estará disponible próximamente.',
+                      style: AppText.label,
+                    ),
+                  ),
+                if (!cart.canReview)
+                  const Text(
+                    'Revisa la disponibilidad del catálogo y ajusta el carrito antes de continuar.',
+                    style: AppText.label,
+                  ),
                 _CheckoutCard(
                   title: 'Resumen de compra',
-                  trailing: '${cart.lineCount} '
+                  trailing:
+                      '${cart.lineCount} '
                       '${cart.lineCount == 1 ? 'producto' : 'productos'} · '
                       '${cart.totalUnits} unidades',
                   child: Column(
                     children: [
-                      for (var index = 0; index < cart.items.length; index++)
-                        ...[
-                          if (index > 0) const Divider(height: 20),
-                          _ItemLine(item: cart.items[index]),
-                        ],
+                      for (
+                        var index = 0;
+                        index < cart.items.length;
+                        index++
+                      ) ...[
+                        if (index > 0) const Divider(height: 20),
+                        _ItemLine(item: cart.items[index]),
+                      ],
                       const Divider(height: 20),
                       Row(
                         children: [
@@ -372,8 +398,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       const SizedBox(width: 9),
                       Expanded(
                         child: Text(
-                          'Al confirmar, el stock se descuenta automáticamente '
-                          'y se genera un número único de pedido.',
+                          cart.isRemote
+                              ? 'Resumen previo: no se genera un pedido ni se modifica el inventario.'
+                              : 'Al confirmar, el stock se descuenta automáticamente y se genera un número único de pedido.',
                           style: AppText.meta.copyWith(height: 1.4),
                         ),
                       ),
@@ -408,7 +435,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed:
-                      cart.isEmpty ||
+                      !cart.canConfirm ||
                           _loading ||
                           hasDebt ||
                           PharmaService.instance.usesFirebase
@@ -536,7 +563,7 @@ class _ItemLine extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${item.quantity} × ${formatBs(item.product.price)}',
+                '${item.product.quantityLabel(item.quantity)} × ${formatBs(item.product.price)}',
                 style: AppText.meta.copyWith(fontSize: 10.5),
               ),
             ],
