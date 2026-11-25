@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../models/order.dart';
 import '../../data/datasources/firestore_order_data_source.dart';
+import '../../data/repositories/remote_order_repository.dart';
 import '../../services/pharma_service.dart';
 import '../../domain/order_policy.dart';
 import '../../widgets/order_lifecycle_panel.dart';
@@ -16,10 +17,12 @@ class OrderTrackingScreen extends StatefulWidget {
     super.key,
     required this.order,
     this.showConfirmation = false,
+    this.repository,
   });
 
   final PharmacyOrder order;
   final bool showConfirmation;
+  final RemoteOrderRepository? repository;
 
   @override
   State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
@@ -30,7 +33,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   PharmacyOrder? _latest;
   bool get showConfirmation => widget.showConfirmation;
   late final Stream<PharmacyOrder>? _stream = widget.order.remote
-      ? FirestoreOrderDataSource().watchOrder(widget.order.documentId!)
+      ? (widget.repository ?? FirestoreOrderDataSource()).watchOrder(
+          widget.order.documentId!,
+        )
       : null;
 
   void _openSummary(BuildContext context) {

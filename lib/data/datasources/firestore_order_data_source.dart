@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -7,19 +5,18 @@ import '../../models/delivery_address.dart';
 import '../../models/order.dart';
 import '../../services/pharma_service.dart';
 import '../../services/firebase_environment.dart';
-import '../mappers/firestore_order_mapper.dart';
+import 'firestore_order_reader.dart';
 import '../repositories/remote_order_repository.dart';
 
 class FirestoreOrderDataSource implements RemoteOrderRepository {
   FirestoreOrderDataSource({
     FirebaseFirestore? db,
-    FirebaseFunctions? functions,
+    this.functions,
     PharmaService? session,
   }) : _db = db ?? FirebaseEnvironment.firestore,
-       _functions = functions ?? FirebaseEnvironment.functions,
        _session = session ?? PharmaService.instance;
   final FirebaseFirestore _db;
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? functions;
   final PharmaService _session;
   String get _farm =>
       _session.pharmacyId ?? (throw StateError('Farmacia no identificada.'));
@@ -38,7 +35,10 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
       );
     }
     try {
-      return (await _functions.httpsCallable(name).call<dynamic>(data)).data;
+      return (await (functions ?? FirebaseEnvironment.functions)
+              .httpsCallable(name)
+              .call<dynamic>(data))
+          .data;
     } on FirebaseFunctionsException catch (e) {
       final details = e.details is Map ? e.details as Map : const {};
       final prices = details['prices'] as Map? ?? {};
@@ -81,33 +81,16 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
   }
 
   Future<PharmacyOrder> _load(String id, {bool server = false}) async {
-    final options = GetOptions(
-      source: server ? Source.server : Source.serverAndCache,
-    );
     final uid = _uid;
     final farm = _farm;
-    final ref = _db.collection('pedidos').doc(id);
-    final results = await Future.wait([
-      ref.get(options),
-      ref.collection('detalle_pedido').get(options),
-      ref.collection('historial_estado').get(options),
-    ]);
-    final doc = results[0] as DocumentSnapshot<Map<String, dynamic>>;
-    if (!doc.exists || doc.data()!['id_cliente'] != farm || _uid != uid) {
-      throw StateError('Pedido no disponible para esta farmacia.');
-    }
-    final details = results[1] as QuerySnapshot<Map<String, dynamic>>;
-    final history = results[2] as QuerySnapshot<Map<String, dynamic>>;
-    return FirestoreOrderMapper.fromMaps(
-      documentId: id,
+    return FirestoreOrderReader(_db).load(
+      id,
       ownerUid: uid,
-      data: doc.data()!,
-      details: details.docs.map((d) => d.data()).toList(),
-      history: {for (final d in history.docs) d.id: d.data()},
-      fromCache:
-          doc.metadata.isFromCache ||
-          details.metadata.isFromCache ||
-          history.metadata.isFromCache,
+      server: server,
+      authorized: (data) =>
+          _session.uid == uid &&
+          _session.pharmacyId == farm &&
+          data['id_cliente'] == farm,
     );
   }
 
@@ -128,41 +111,16 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
 
   @override
   Stream<PharmacyOrder> watchOrder(String documentId) {
-    final ref = _db.collection('pedidos').doc(documentId);
-    late StreamController<PharmacyOrder> controller;
-    final subscriptions = <StreamSubscription<dynamic>>[];
-    Future<void> emit() async {
-      try {
-        final order = await _load(documentId);
-        if (!controller.isClosed) controller.add(order);
-      } catch (error, stack) {
-        if (!controller.isClosed) controller.addError(error, stack);
-      }
-    }
-
-    controller = StreamController<PharmacyOrder>(
-      onListen: () {
-        subscriptions.add(
-          ref
-              .snapshots(includeMetadataChanges: true)
-              .listen((_) => emit(), onError: controller.addError),
-        );
-        for (final name in ['detalle_pedido', 'historial_estado']) {
-          subscriptions.add(
-            ref
-                .collection(name)
-                .snapshots()
-                .listen((_) => emit(), onError: controller.addError),
-          );
-        }
-      },
-      onCancel: () async {
-        for (final subscription in subscriptions) {
-          await subscription.cancel();
-        }
-      },
+    final uid = _uid;
+    final farm = _farm;
+    return FirestoreOrderReader(_db).watch(
+      documentId,
+      ownerUid: uid,
+      authorized: (data) =>
+          _session.uid == uid &&
+          _session.pharmacyId == farm &&
+          data['id_cliente'] == farm,
     );
-    return controller.stream;
   }
 
   @override

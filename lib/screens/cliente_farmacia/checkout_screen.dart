@@ -258,7 +258,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
-                      'Las compras de producción permanecen deshabilitadas. La confirmación está disponible únicamente en el entorno de pruebas.',
+                      'La confirmación real todavía no está disponible: falta verificar la protección conjunta del pedido y el descuento por lotes. Tu carrito se conserva.',
                       style: AppText.label,
                     ),
                   ),

@@ -203,7 +203,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Las compras de producción permanecen deshabilitadas. La confirmación está disponible únicamente en el entorno de pruebas.',
+          'La confirmación real todavía no está disponible: falta verificar la protección conjunta del pedido y el descuento por lotes. Tu carrito se conserva.',
         ),
         findsOneWidget,
       );

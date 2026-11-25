@@ -46,6 +46,7 @@ class OrderHistoryViewModel extends ChangeNotifier {
         },
         onError: (_) {
           if (_owner != owner) return;
+          orders = [];
           loading = false;
           error = 'No se pudieron consultar los pedidos. Revisa la conexión y los permisos.';
           notifyListeners();
