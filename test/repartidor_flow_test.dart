@@ -162,7 +162,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('Entrega fallida: La farmacia estaba cerrada'),
+      find.text('Entrega reprogramada: La farmacia estaba cerrada'),
       160,
       scrollable: find.descendant(
         of: find.byType(DriverDeliveryDetailScreen),
@@ -171,10 +171,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      find.text('Entrega fallida: La farmacia estaba cerrada'),
+      find.text('Entrega reprogramada: La farmacia estaba cerrada'),
       findsOneWidget,
     );
-    expect(order.status.label, 'Entrega fallida');
+    expect(order.status.label, 'Reprogramado');
     expect(order.failureReason, 'La farmacia estaba cerrada');
   });
 }

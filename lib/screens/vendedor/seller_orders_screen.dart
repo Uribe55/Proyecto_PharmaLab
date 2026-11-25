@@ -9,6 +9,7 @@ import '../../widgets/order_detail_sheet.dart';
 import '../../widgets/order_list_tile.dart';
 import '../../widgets/stat_card.dart';
 import 'seller_assign_screen.dart';
+import 'seller_reschedule_screen.dart';
 import 'seller_review_screen.dart';
 
 /// Panel de pedidos del vendedor (RF-10).
@@ -23,6 +24,7 @@ enum _SellerFilter {
   todos('Todos'),
   pendientes('Pendientes'),
   porAsignar('Por asignar'),
+  reprogramados('Reprogramados'),
   enRuta('En ruta'),
   finalizados('Finalizados');
 
@@ -35,6 +37,7 @@ enum _SellerFilter {
       _SellerFilter.todos => true,
       _SellerFilter.pendientes => order.isPending,
       _SellerFilter.porAsignar => order.isApproved,
+      _SellerFilter.reprogramados => order.needsReschedule,
       _SellerFilter.enRuta => order.isInTransit,
       _SellerFilter.finalizados => order.status.isFinal,
     };
@@ -54,6 +57,14 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     if (order.canAssignDriver) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => SellerAssignScreen(order: order)),
+      );
+      return;
+    }
+    if (order.needsReschedule) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SellerRescheduleScreen(order: order),
+        ),
       );
       return;
     }
@@ -189,6 +200,12 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     if (order.isApproved) return 'Aprobado · pendiente de asignación';
     if (order.isInTransit) {
       return 'En ruta · ${order.driverName ?? 'sin repartidor'}';
+    }
+    if (order.needsReschedule) {
+      return 'Reprogramado · ${order.failureReason ?? 'asignar nueva fecha'}';
+    }
+    if (order.isApproved && order.scheduledFor != null) {
+      return 'Aprobado · entrega ${_shortDate(order.scheduledFor!)}';
     }
     if (order.status.isFailure) {
       return 'Entrega fallida · ${order.failureReason ?? 'sin detalle'}';

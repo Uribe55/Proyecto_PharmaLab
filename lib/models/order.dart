@@ -4,7 +4,8 @@ enum OrderStatus {
   aprobado('Aprobado', 'Disponibilidad verificada'),
   enRuta('En ruta', 'Asignado a un repartidor'),
   entregado('Entregado', 'Recibido por la farmacia'),
-  fallida('Entrega fallida', 'No se pudo completar la entrega');
+  fallida('Entrega fallida', 'No se pudo completar la entrega'),
+  reprogramado('Reprogramado', 'El vendedor asignará una nueva fecha');
 
   const OrderStatus(this.label, this.description);
 
@@ -22,6 +23,10 @@ enum OrderStatus {
   bool get isDelivered => this == OrderStatus.entregado;
 
   bool get isFailure => this == OrderStatus.fallida;
+
+  /// Una entrega fallida ya no cierra el pedido: queda reprogramada para que
+  /// el vendedor asigne una nueva fecha (RF-17).
+  bool get isRescheduled => this == OrderStatus.reprogramado;
 
   bool get isFinal =>
       this == OrderStatus.entregado || this == OrderStatus.fallida;
@@ -63,6 +68,7 @@ class PharmacyOrder {
     this.deliveredAt,
     this.failureReason,
     this.failureNote,
+    this.scheduledFor,
   });
 
   final String number;
@@ -83,6 +89,10 @@ class PharmacyOrder {
   String? failureReason;
   String? failureNote;
 
+  /// Nueva fecha acordada por el vendedor después de una entrega fallida
+  /// (RF-17). El pedido vuelve a "Aprobado" para asignar al repartidor.
+  DateTime? scheduledFor;
+
   int get totalUnits => items.fold(0, (sum, item) => sum + item.quantity);
 
   double get total => items.fold(0.0, (sum, item) => sum + item.subtotal);
@@ -90,7 +100,7 @@ class PharmacyOrder {
   /// Posición dentro de los cuatro pasos del seguimiento. Una entrega fallida
   /// se detiene en el paso "En ruta".
   int get statusIndex {
-    if (status.isFailure) {
+    if (status.isFailure || status.isRescheduled) {
       return OrderStatus.deliverySteps.indexOf(OrderStatus.enRuta);
     }
     return OrderStatus.deliverySteps.indexOf(status);
@@ -102,7 +112,13 @@ class PharmacyOrder {
 
   bool get isInTransit => status == OrderStatus.enRuta;
 
+  bool get isRescheduled => status.isRescheduled;
+
   bool get canAssignDriver => status == OrderStatus.aprobado;
 
   bool get canDeliver => status == OrderStatus.enRuta;
+
+  /// Un pedido reprogramado debe volver al panel del vendedor para fijar una
+  /// nueva fecha antes de asignar repartidor.
+  bool get needsReschedule => status.isRescheduled || status.isFailure;
 }

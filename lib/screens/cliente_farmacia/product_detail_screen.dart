@@ -81,26 +81,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 18),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: categoryBackground(_product.category),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _product.displayCategory,
-                  style: TextStyle(
-                    fontSize: 9,
-                    height: 1,
-                    fontWeight: FontWeight.w700,
-                    color: tint,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: categoryBackground(_product.category),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _product.displayCategory,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9,
+                        height: 1,
+                        fontWeight: FontWeight.w700,
+                        color: tint,
+                      ),
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               AvailabilityChip(product: _product),
             ],
           ),

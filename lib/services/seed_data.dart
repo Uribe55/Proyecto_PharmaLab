@@ -4,232 +4,271 @@ import '../models/pharmacy.dart';
 import '../models/product.dart';
 
 /// Catálogo ficticio utilizado mientras no existe un backend.
+///
+/// Las cuatro categorías corresponden al alcance corregido del informe:
+/// reactivos de química sanguínea, reactivos de inmunología, equipos de
+/// laboratorio e insumos clínicos (RF-02 y RF-03).
 List<Product> buildSeedProducts() {
   return [
-    // Genéricos
+    // Reactivos de química sanguínea
     Product(
       id: 'p-001',
-      name: 'Paracetamol 500 mg',
-      brand: 'Genfar',
-      presentation: 'Caja x 20 tabletas',
-      category: ProductCategory.genericos,
-      price: 8.50,
-      stock: 120,
+      name: 'Glucosa oxidasa (reactivo)',
+      brand: 'Wiener Lab',
+      presentation: 'Kit x 100 determinaciones',
+      category: ProductCategory.reactivosQuimicaSanguinea,
+      price: 320.00,
+      stock: 45,
       description:
-          'Analgésico y antipirético de uso frecuente. Presentación en tabletas '
-          'de 500 mg para dispensación en farmacia.',
+          'Reactivo líquido listo para usar en la determinación enzimática '
+          'de glucosa en suero o plasma.',
       isFeatured: true,
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
     ),
     Product(
       id: 'p-002',
-      name: 'Ibuprofeno 400 mg',
-      brand: 'Bagó',
-      presentation: 'Caja x 20 tabletas',
-      category: ProductCategory.genericos,
-      price: 12.00,
-      stock: 95,
+      name: 'Colesterol total (reactivo)',
+      brand: 'Wiener Lab',
+      presentation: 'Kit x 200 determinaciones',
+      category: ProductCategory.reactivosQuimicaSanguinea,
+      price: 480.00,
+      stock: 32,
       description:
-          'Antiinflamatorio no esteroideo indicado para dolor y fiebre. '
-          'Caja con 20 tabletas recubiertas de 400 mg.',
+          'Reactivo para la cuantificación colorimétrica de colesterol total '
+          'en suero. Incluye calibrador y control de calidad.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
     ),
     Product(
       id: 'p-003',
-      name: 'Amoxicilina 500 mg',
-      brand: 'Farmindustria',
-      presentation: 'Caja x 21 cápsulas',
-      category: ProductCategory.genericos,
-      price: 28.50,
-      stock: 60,
+      name: 'Creatinina (reactivo)',
+      brand: 'Biosystems',
+      presentation: 'Kit x 100 determinaciones',
+      category: ProductCategory.reactivosQuimicaSanguinea,
+      price: 295.00,
+      stock: 28,
       description:
-          'Antibiótico de amplio espectro. Dispensación bajo receta médica. '
-          'Caja con 21 cápsulas de 500 mg.',
+          'Reactivo de Jaffé modificado para la determinación de creatinina '
+          'sérica y urinaria.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
     ),
     Product(
       id: 'p-004',
-      name: 'Omeprazol 20 mg',
-      brand: 'Inti',
-      presentation: 'Caja x 30 cápsulas',
-      category: ProductCategory.genericos,
-      price: 22.00,
-      stock: 84,
+      name: 'Urea UV (reactivo)',
+      brand: 'Biosystems',
+      presentation: 'Kit x 100 determinaciones',
+      category: ProductCategory.reactivosQuimicaSanguinea,
+      price: 310.00,
+      stock: 22,
       description:
-          'Inhibidor de la bomba de protones para el tratamiento de afecciones '
-          'gástricas. Caja con 30 cápsulas de liberación retardada.',
+          'Reactivo UV para la determinación de urea en suero o plasma. '
+          'Presentación lista para usar en analizadores automáticos.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
     ),
     Product(
       id: 'p-005',
-      name: 'Losartán 50 mg',
-      brand: 'Genfar',
-      presentation: 'Caja x 30 tabletas',
-      category: ProductCategory.genericos,
-      price: 35.00,
-      stock: 45,
+      name: 'ALT/GPT (reactivo)',
+      brand: 'Wiener Lab',
+      presentation: 'Kit x 100 determinaciones',
+      category: ProductCategory.reactivosQuimicaSanguinea,
+      price: 340.00,
+      stock: 18,
       description:
-          'Antihipertensivo indicado para el control de la presión arterial. '
-          'Caja con 30 tabletas recubiertas de 50 mg.',
+          'Reactivo cinético para la determinación de alanina '
+          'aminotransferasa en suero.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
     ),
     Product(
       id: 'p-006',
-      name: 'Metformina 850 mg',
-      brand: 'Bagó',
-      presentation: 'Caja x 30 tabletas',
-      category: ProductCategory.genericos,
-      price: 18.75,
+      name: 'Ácido úrico (reactivo)',
+      brand: 'Biosystems',
+      presentation: 'Kit x 100 determinaciones',
+      category: ProductCategory.reactivosQuimicaSanguinea,
+      price: 285.00,
       stock: 8,
       description:
-          'Antidiabético oral para el control de la glucosa en sangre. '
-          'Caja con 30 tabletas de 850 mg.',
+          'Reactivo colorimétrico para la cuantificación de ácido úrico en '
+          'suero y orina.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
     ),
 
-    // Insumos
+    // Reactivos de inmunología
     Product(
       id: 'p-007',
+      name: 'TSH ELISA',
+      brand: 'DRG Instruments',
+      presentation: 'Kit x 96 pocillos',
+      category: ProductCategory.reactivosInmunologia,
+      price: 890.00,
+      stock: 14,
+      description:
+          'Ensayo inmunoenzimático para la cuantificación de hormona '
+          'estimulante de la tiroides en suero.',
+      isFeatured: true,
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
+    ),
+    Product(
+      id: 'p-008',
+      name: 'Dengue NS1 Ag',
+      brand: 'SD Biosensor',
+      presentation: 'Kit x 25 pruebas',
+      category: ProductCategory.reactivosInmunologia,
+      price: 1150.00,
+      stock: 20,
+      description:
+          'Prueba rápida inmunocromatográfica para la detección del antígeno '
+          'NS1 del virus del dengue.',
+      isFeatured: true,
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
+    ),
+    Product(
+      id: 'p-009',
+      name: 'VIH 1/2 Ag/Ab',
+      brand: 'Abbott',
+      presentation: 'Kit x 50 pruebas',
+      category: ProductCategory.reactivosInmunologia,
+      price: 980.00,
+      stock: 12,
+      description:
+          'Prueba inmunocromatográfica para la detección combinada de '
+          'antígenos y anticuerpos del VIH 1 y 2.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
+    ),
+    Product(
+      id: 'p-010',
+      name: 'HBsAg ELISA',
+      brand: 'DRG Instruments',
+      presentation: 'Kit x 96 pocillos',
+      category: ProductCategory.reactivosInmunologia,
+      price: 760.00,
+      stock: 16,
+      description:
+          'Ensayo inmunoenzimático para la detección del antígeno de '
+          'superficie del virus de la hepatitis B.',
+      unitOfMeasure: 'Kit',
+      requiresExpiry: true,
+    ),
+
+    // Equipos de laboratorio
+    Product(
+      id: 'p-011',
+      name: 'Analizador de química semiautomático',
+      brand: 'Mindray',
+      presentation: 'Equipo · 1 unidad',
+      category: ProductCategory.equiposLaboratorio,
+      price: 38500.00,
+      stock: 2,
+      description:
+          'Analizador semiautomático para pruebas de química clínica con '
+          'lectura de microplacas y gestión de resultados.',
+      unitOfMeasure: 'Equipo',
+      requiresExpiry: false,
+    ),
+    Product(
+      id: 'p-012',
+      name: 'Microscopio binocular',
+      brand: 'Olympus',
+      presentation: 'Equipo · 1 unidad',
+      category: ProductCategory.equiposLaboratorio,
+      price: 12900.00,
+      stock: 3,
+      description:
+          'Microscopio óptico binocular con objetivos de 4x, 10x, 40x y 100x '
+          'para laboratorio clínico.',
+      unitOfMeasure: 'Equipo',
+      requiresExpiry: false,
+    ),
+    Product(
+      id: 'p-013',
+      name: 'Centrífuga de laboratorio',
+      brand: 'Hettich',
+      presentation: 'Equipo · 1 unidad',
+      category: ProductCategory.equiposLaboratorio,
+      price: 8750.00,
+      stock: 4,
+      description:
+          'Centrífuga de mesa con rotor para tubos de 15 mL y control de '
+          'velocidad y tiempo.',
+      isFeatured: true,
+      unitOfMeasure: 'Equipo',
+      requiresExpiry: false,
+    ),
+    Product(
+      id: 'p-014',
+      name: 'Incubadora de microplacas',
+      brand: 'Labnet',
+      presentation: 'Equipo · 1 unidad',
+      category: ProductCategory.equiposLaboratorio,
+      price: 6900.00,
+      stock: 2,
+      description:
+          'Incubadora con control digital de temperatura para microplacas de '
+          '96 pocillos usadas en ELISA.',
+      unitOfMeasure: 'Equipo',
+      requiresExpiry: false,
+    ),
+
+    // Insumos clínicos
+    Product(
+      id: 'p-015',
       name: 'Guantes de nitrilo M',
       brand: 'Medline',
       presentation: 'Caja x 100 unidades',
-      category: ProductCategory.insumos,
+      category: ProductCategory.insumosClinicos,
       price: 95.00,
       stock: 40,
       description:
           'Guantes de examen sin polvo, talla mediana. Caja con 100 unidades '
           'para uso clínico y de laboratorio.',
       isFeatured: true,
+      unitOfMeasure: 'Caja',
     ),
     Product(
-      id: 'p-008',
-      name: 'Jeringas desechables 5 ml',
-      brand: 'Becton Dickinson',
-      presentation: 'Caja x 100 unidades',
-      category: ProductCategory.insumos,
-      price: 68.00,
+      id: 'p-016',
+      name: 'Puntas de micropipeta 200 µL',
+      brand: 'Axygen',
+      presentation: 'Bolsa x 1000 unidades',
+      category: ProductCategory.insumosClinicos,
+      price: 210.00,
       stock: 55,
       description:
-          'Jeringas estériles de 5 ml con aguja. Caja con 100 unidades de un '
-          'solo uso.',
+          'Puntas estériles con filtro para micropipetas de 200 µL. Bolsa con '
+          '1000 unidades.',
+      unitOfMeasure: 'Bolsa',
     ),
     Product(
-      id: 'p-009',
-      name: 'Tiras reactivas de glucosa',
-      brand: 'Accu-Chek',
-      presentation: 'Frasco x 50 tiras',
-      category: ProductCategory.insumos,
-      price: 145.00,
-      stock: 24,
+      id: 'p-017',
+      name: 'Tubos de ensayo 5 mL',
+      brand: 'Falcon',
+      presentation: 'Bolsa x 500 unidades',
+      category: ProductCategory.insumosClinicos,
+      price: 180.00,
+      stock: 36,
       description:
-          'Tiras reactivas para la medición de glucosa capilar. Frasco con '
-          '50 tiras compatibles con glucómetros Accu-Chek.',
-      isFeatured: true,
+          'Tubos de polipropileno de 5 mL con tapa de rosca, aptos para '
+          'centrifugación y almacenamiento de muestras.',
+      unitOfMeasure: 'Bolsa',
     ),
     Product(
-      id: 'p-010',
-      name: 'Gasas estériles 10x10',
-      brand: 'Cureband',
-      presentation: 'Paquete x 10 unidades',
-      category: ProductCategory.insumos,
-      price: 12.50,
-      stock: 130,
-      description:
-          'Gasas de algodón estériles de 10 x 10 cm. Paquete con 10 unidades '
-          'para curaciones.',
-    ),
-    Product(
-      id: 'p-011',
-      name: 'Algodón hidrófilo 500 g',
-      brand: 'Farmex',
-      presentation: 'Bolsa x 500 g',
-      category: ProductCategory.insumos,
-      price: 32.00,
-      stock: 18,
-      description:
-          'Algodón hidrófilo de alta absorbencia. Bolsa de 500 g para uso '
-          'médico y de curación.',
-    ),
-    Product(
-      id: 'p-012',
+      id: 'p-018',
       name: 'Mascarillas quirúrgicas',
       brand: 'Medline',
       presentation: 'Caja x 50 unidades',
-      category: ProductCategory.insumos,
+      category: ProductCategory.insumosClinicos,
       price: 25.00,
       stock: 0,
       description:
           'Mascarillas quirúrgicas de tres capas con sujetador nasal. '
           'Caja con 50 unidades.',
-    ),
-
-    // Vitaminas
-    Product(
-      id: 'p-013',
-      name: 'Vitamina C 1000 mg',
-      brand: 'Bayer',
-      presentation: 'Frasco x 60 tabletas',
-      category: ProductCategory.vitaminas,
-      price: 48.00,
-      stock: 70,
-      description:
-          'Suplemento de vitamina C de 1000 mg por tableta. Frasco con '
-          '60 tabletas efervescentes.',
-      isFeatured: true,
-    ),
-    Product(
-      id: 'p-014',
-      name: 'Complejo B',
-      brand: 'Lafar',
-      presentation: 'Caja x 30 tabletas',
-      category: ProductCategory.vitaminas,
-      price: 26.00,
-      stock: 90,
-      description:
-          'Complejo de vitaminas del grupo B para apoyo del sistema nervioso '
-          'y energético. Caja con 30 tabletas.',
-    ),
-    Product(
-      id: 'p-015',
-      name: 'Vitamina D3 2000 UI',
-      brand: 'Procaps',
-      presentation: 'Frasco x 60 cápsulas',
-      category: ProductCategory.vitaminas,
-      price: 65.00,
-      stock: 32,
-      description:
-          'Suplemento de vitamina D3 de 2000 UI por cápsula. Frasco con '
-          '60 cápsulas blandas.',
-    ),
-    Product(
-      id: 'p-016',
-      name: 'Multivitamínico adulto',
-      brand: 'Bayer',
-      presentation: 'Frasco x 30 tabletas',
-      category: ProductCategory.vitaminas,
-      price: 55.00,
-      stock: 12,
-      description:
-          'Fórmula multivitamínica y mineral para adultos. Frasco con '
-          '30 tabletas de liberación prolongada.',
-    ),
-    Product(
-      id: 'p-017',
-      name: 'Zinc 50 mg',
-      brand: 'Genfar',
-      presentation: 'Caja x 30 tabletas',
-      category: ProductCategory.vitaminas,
-      price: 21.50,
-      stock: 65,
-      description:
-          'Suplemento de zinc de 50 mg por tableta. Caja con 30 tabletas '
-          'para apoyo inmunológico.',
-    ),
-    Product(
-      id: 'p-018',
-      name: 'Omega 3 1000 mg',
-      brand: 'Procaps',
-      presentation: 'Frasco x 60 cápsulas',
-      category: ProductCategory.vitaminas,
-      price: 78.00,
-      stock: 26,
-      description:
-          'Ácidos grasos esenciales omega 3 de 1000 mg por cápsula. Frasco '
-          'con 60 cápsulas blandas.',
+      unitOfMeasure: 'Caja',
     ),
   ];
 }
@@ -251,26 +290,26 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       items: const [
         OrderLine(
           productId: 'p-001',
-          name: 'Paracetamol 500 mg',
-          brand: 'Genfar',
-          presentation: 'Caja x 20 tabletas',
-          unitPrice: 8.50,
+          name: 'Glucosa oxidasa (reactivo)',
+          brand: 'Wiener Lab',
+          presentation: 'Kit x 100 determinaciones',
+          unitPrice: 320.00,
           quantity: 3,
         ),
         OrderLine(
           productId: 'p-013',
-          name: 'Vitamina C 1000 mg',
-          brand: 'Bayer',
-          presentation: 'Frasco x 60 tabletas',
-          unitPrice: 48.00,
+          name: 'Centrífuga de laboratorio',
+          brand: 'Hettich',
+          presentation: 'Equipo · 1 unidad',
+          unitPrice: 8750.00,
           quantity: 2,
         ),
         OrderLine(
           productId: 'p-007',
-          name: 'Guantes de nitrilo M',
-          brand: 'Medline',
-          presentation: 'Caja x 100 unidades',
-          unitPrice: 95.00,
+          name: 'TSH ELISA',
+          brand: 'DRG Instruments',
+          presentation: 'Kit x 96 pocillos',
+          unitPrice: 890.00,
           quantity: 1,
         ),
       ],
@@ -286,18 +325,18 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       items: const [
         OrderLine(
           productId: 'p-009',
-          name: 'Tiras reactivas de glucosa',
-          brand: 'Accu-Chek',
-          presentation: 'Frasco x 50 tiras',
-          unitPrice: 145.00,
+          name: 'VIH 1/2 Ag/Ab',
+          brand: 'Abbott',
+          presentation: 'Kit x 50 pruebas',
+          unitPrice: 980.00,
           quantity: 2,
         ),
         OrderLine(
-          productId: 'p-010',
-          name: 'Gasas estériles 10x10',
-          brand: 'Cureband',
-          presentation: 'Paquete x 10 unidades',
-          unitPrice: 12.50,
+          productId: 'p-017',
+          name: 'Tubos de ensayo 5 mL',
+          brand: 'Falcon',
+          presentation: 'Bolsa x 500 unidades',
+          unitPrice: 180.00,
           quantity: 4,
         ),
       ],
@@ -316,18 +355,18 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       items: const [
         OrderLine(
           productId: 'p-003',
-          name: 'Amoxicilina 500 mg',
-          brand: 'Farmindustria',
-          presentation: 'Caja x 21 cápsulas',
-          unitPrice: 28.50,
+          name: 'Creatinina (reactivo)',
+          brand: 'Biosystems',
+          presentation: 'Kit x 100 determinaciones',
+          unitPrice: 295.00,
           quantity: 5,
         ),
         OrderLine(
-          productId: 'p-014',
-          name: 'Complejo B',
-          brand: 'Lafar',
-          presentation: 'Caja x 30 tabletas',
-          unitPrice: 26.00,
+          productId: 'p-010',
+          name: 'HBsAg ELISA',
+          brand: 'DRG Instruments',
+          presentation: 'Kit x 96 pocillos',
+          unitPrice: 760.00,
           quantity: 2,
         ),
       ],
@@ -343,19 +382,19 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       notes: 'Llamar antes de llegar.',
       items: const [
         OrderLine(
-          productId: 'p-008',
-          name: 'Jeringas desechables 5 ml',
-          brand: 'Becton Dickinson',
-          presentation: 'Caja x 100 unidades',
-          unitPrice: 68.00,
+          productId: 'p-016',
+          name: 'Puntas de micropipeta 200 µL',
+          brand: 'Axygen',
+          presentation: 'Bolsa x 1000 unidades',
+          unitPrice: 210.00,
           quantity: 2,
         ),
         OrderLine(
-          productId: 'p-011',
-          name: 'Algodón hidrófilo 500 g',
-          brand: 'Farmex',
-          presentation: 'Bolsa x 500 g',
-          unitPrice: 32.00,
+          productId: 'p-015',
+          name: 'Guantes de nitrilo M',
+          brand: 'Medline',
+          presentation: 'Caja x 100 unidades',
+          unitPrice: 95.00,
           quantity: 3,
         ),
       ],
@@ -372,26 +411,26 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       items: const [
         OrderLine(
           productId: 'p-009',
-          name: 'Tiras reactivas de glucosa',
-          brand: 'Accu-Chek',
-          presentation: 'Frasco x 50 tiras',
-          unitPrice: 145.00,
+          name: 'VIH 1/2 Ag/Ab',
+          brand: 'Abbott',
+          presentation: 'Kit x 50 pruebas',
+          unitPrice: 980.00,
           quantity: 2,
         ),
         OrderLine(
-          productId: 'p-010',
-          name: 'Gasas estériles 10x10',
-          brand: 'Cureband',
-          presentation: 'Paquete x 10 unidades',
-          unitPrice: 12.50,
+          productId: 'p-017',
+          name: 'Tubos de ensayo 5 mL',
+          brand: 'Falcon',
+          presentation: 'Bolsa x 500 unidades',
+          unitPrice: 180.00,
           quantity: 6,
         ),
         OrderLine(
-          productId: 'p-013',
-          name: 'Vitamina C 1000 mg',
-          brand: 'Bayer',
-          presentation: 'Frasco x 60 tabletas',
-          unitPrice: 48.00,
+          productId: 'p-001',
+          name: 'Glucosa oxidasa (reactivo)',
+          brand: 'Wiener Lab',
+          presentation: 'Kit x 100 determinaciones',
+          unitPrice: 320.00,
           quantity: 1,
         ),
       ],
@@ -410,18 +449,18 @@ List<PharmacyOrder> buildSeedOrders(PharmacyProfile pharmacy) {
       items: const [
         OrderLine(
           productId: 'p-002',
-          name: 'Ibuprofeno 400 mg',
-          brand: 'Bagó',
-          presentation: 'Caja x 20 tabletas',
-          unitPrice: 12.00,
+          name: 'Colesterol total (reactivo)',
+          brand: 'Wiener Lab',
+          presentation: 'Kit x 200 determinaciones',
+          unitPrice: 480.00,
           quantity: 4,
         ),
         OrderLine(
           productId: 'p-007',
-          name: 'Guantes de nitrilo M',
-          brand: 'Medline',
-          presentation: 'Caja x 100 unidades',
-          unitPrice: 95.00,
+          name: 'TSH ELISA',
+          brand: 'DRG Instruments',
+          presentation: 'Kit x 96 pocillos',
+          unitPrice: 890.00,
           quantity: 1,
         ),
       ],
@@ -445,6 +484,7 @@ List<AppUser> buildSeedEmployees() {
       email: 'carlosm@rep.pharma.com',
       phone: '+591 707-33441',
       role: UserRole.repartidor,
+      address: 'Av. Blanco Galindo km 5, Cochabamba',
     ),
     AppUser(
       id: 'u-luis',
@@ -452,6 +492,7 @@ List<AppUser> buildSeedEmployees() {
       email: 'luisq@rep.pharma.com',
       phone: '+591 707-44552',
       role: UserRole.repartidor,
+      address: 'Calle Ayacucho 234, Cochabamba',
     ),
     AppUser(
       id: 'u-daniela',
@@ -459,6 +500,7 @@ List<AppUser> buildSeedEmployees() {
       email: 'danielar@rep.pharma.com',
       phone: '+591 707-55663',
       role: UserRole.repartidor,
+      address: 'Av. América 1450, Cochabamba',
     ),
     AppUser(
       id: 'u-laura',

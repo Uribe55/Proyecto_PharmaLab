@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../models/dashboard_models.dart';
+import '../../models/product.dart';
+import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/formatters.dart';
 import '../../viewmodels/admin_dashboard_viewmodel.dart';
+import '../../viewmodels/admin_inventory_viewmodel.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/app_text_field.dart';
 import '../../widgets/dashboard/dashboard_alerts.dart';
 import '../../widgets/dashboard/dashboard_charts.dart';
 import '../../widgets/dashboard/dashboard_kpi_card.dart';
@@ -32,6 +37,320 @@ class AdminInventoryScreen extends StatefulWidget {
 
 class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
   late InventoryFilter _filter = widget.initialFilter;
+  late final AdminInventoryViewModel _actions = AdminInventoryViewModel(
+    onChanged: widget.viewModel.loadInventory,
+  );
+
+  @override
+  void dispose() {
+    _actions.dispose();
+    super.dispose();
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _showCreateProduct() async {
+    final name = TextEditingController();
+    final brand = TextEditingController();
+    final presentation = TextEditingController();
+    final price = TextEditingController();
+    final stock = TextEditingController(text: '0');
+    final unit = TextEditingController(text: 'Unidad');
+    final description = TextEditingController();
+    var category = ProductCategory.reactivosQuimicaSanguinea;
+    var requiresExpiry = false;
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Nuevo producto'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppTextField(
+                  label: 'Nombre',
+                  hint: 'Ej. TSH ELISA',
+                  controller: name,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  label: 'Marca',
+                  hint: 'Ej. Wiener Lab',
+                  controller: brand,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  label: 'Presentación',
+                  hint: 'Ej. Kit x 96 pocillos',
+                  controller: presentation,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<ProductCategory>(
+                  initialValue: category,
+                  decoration: const InputDecoration(labelText: 'Categoría'),
+                  items: [
+                    for (final item in ProductCategory.values)
+                      DropdownMenuItem(
+                        value: item,
+                        child: Text(
+                          item.label,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => category = value);
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Precio (Bs)',
+                        hint: '0.00',
+                        controller: price,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Stock inicial',
+                        hint: '0',
+                        controller: stock,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  label: 'Unidad de venta',
+                  hint: 'Caja, kit, equipo…',
+                  controller: unit,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  label: 'Descripción',
+                  hint: 'Uso y características del producto',
+                  controller: description,
+                  maxLines: 2,
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: requiresExpiry,
+                  onChanged: (value) =>
+                      setDialogState(() => requiresExpiry = value),
+                  title: const Text(
+                    'Requiere control de vencimiento',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (shouldSave == true) {
+      final ok = await _actions.createProduct(
+        name: name.text,
+        brand: brand.text,
+        presentation: presentation.text,
+        category: category,
+        price: double.tryParse(price.text.replaceAll(',', '.')) ?? 0,
+        stock: int.tryParse(stock.text.trim()) ?? 0,
+        description: description.text,
+        unitOfMeasure: unit.text,
+        requiresExpiry: requiresExpiry,
+      );
+      _showMessage(
+        ok
+            ? 'Producto creado correctamente.'
+            : (_actions.error ?? 'No se pudo crear el producto.'),
+      );
+    }
+
+    name.dispose();
+    brand.dispose();
+    presentation.dispose();
+    price.dispose();
+    stock.dispose();
+    unit.dispose();
+    description.dispose();
+  }
+
+  Future<void> _showPriceDialog(DashboardProductStock product) async {
+    final current = PharmaService.instance.productById(product.productId);
+    final controller = TextEditingController(
+      text: current == null ? '' : current.price.toStringAsFixed(2),
+    );
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Actualizar precio'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(product.name, style: AppText.label),
+            const SizedBox(height: 12),
+            AppTextField(
+              label: 'Nuevo precio (Bs)',
+              hint: '0.00',
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave == true) {
+      final value = double.tryParse(controller.text.replaceAll(',', '.')) ?? 0;
+      final ok = await _actions.updatePrice(product.productId, value);
+      _showMessage(
+        ok
+            ? 'Precio actualizado en ${formatBs(value)}.'
+            : (_actions.error ?? 'No se pudo actualizar el precio.'),
+      );
+    }
+    controller.dispose();
+  }
+
+  Future<void> _showEntryDialog(DashboardProductStock product) async {
+    final quantity = TextEditingController();
+    final lot = TextEditingController();
+    DateTime? expiresAt;
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Ingreso de mercadería'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(product.name, style: AppText.label),
+                const SizedBox(height: 4),
+                Text(
+                  'Stock actual: ${product.usable} u.',
+                  style: AppText.meta,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  label: 'Cantidad que ingresa',
+                  hint: '0',
+                  controller: quantity,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 10),
+                AppTextField(
+                  label: 'Código de lote (opcional)',
+                  hint: 'Ej. L-2026-014',
+                  controller: lot,
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: now.add(const Duration(days: 180)),
+                      firstDate: now,
+                      lastDate: now.add(const Duration(days: 3650)),
+                      helpText: 'Fecha de vencimiento',
+                    );
+                    if (picked == null) return;
+                    setDialogState(() => expiresAt = picked);
+                  },
+                  icon: const Icon(Icons.event_outlined, size: 16),
+                  label: Text(
+                    expiresAt == null
+                        ? 'Agregar vencimiento'
+                        : 'Vence: ${_dateOnly(expiresAt!)}',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Registrar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (shouldSave == true) {
+      final amount = int.tryParse(quantity.text.trim()) ?? 0;
+      final ok = await _actions.registerEntry(
+        product.productId,
+        amount,
+        lotCode: lot.text,
+        expiresAt: expiresAt,
+      );
+      _showMessage(
+        ok
+            ? 'Ingreso registrado: +$amount u. de ${product.name}.'
+            : (_actions.error ?? 'No se pudo registrar el ingreso.'),
+      );
+    }
+    quantity.dispose();
+    lot.dispose();
+  }
+
+  String _dateOnly(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +367,11 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
           appBar: AppPageAppBar(
             title: 'Inventario',
             actions: [
+              IconButton(
+                tooltip: 'Nuevo producto',
+                onPressed: _showCreateProduct,
+                icon: const Icon(Icons.add_box_outlined, size: 21),
+              ),
               IconButton(
                 tooltip: 'Actualizar inventario',
                 onPressed: vm.loadingInventory
@@ -162,6 +486,17 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
                       const Expanded(
                         child: Text('Productos', style: AppText.h3),
                       ),
+                      TextButton.icon(
+                        onPressed: _showCreateProduct,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: const Icon(Icons.add_rounded, size: 16),
+                        label: const Text('Nuevo'),
+                      ),
+                      const SizedBox(width: 6),
                       Text(
                         '${products.length} resultado(s)',
                         style: AppText.meta,
@@ -178,7 +513,11 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
                     )
                   else
                     for (final product in products) ...[
-                      _ProductStockTile(product: product),
+                      _ProductStockTile(
+                        product: product,
+                        onPrice: () => _showPriceDialog(product),
+                        onEntry: () => _showEntryDialog(product),
+                      ),
                       if (product != products.last) const SizedBox(height: 9),
                     ],
                   const SizedBox(height: 20),
@@ -409,9 +748,15 @@ class _SummaryGrid extends StatelessWidget {
 }
 
 class _ProductStockTile extends StatelessWidget {
-  const _ProductStockTile({required this.product});
+  const _ProductStockTile({
+    required this.product,
+    required this.onPrice,
+    required this.onEntry,
+  });
 
   final DashboardProductStock product;
+  final VoidCallback onPrice;
+  final VoidCallback onEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -521,6 +866,40 @@ class _ProductStockTile extends StatelessWidget {
               ],
             ),
           ],
+          const SizedBox(height: 9),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onPrice,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    minimumSize: Size.zero,
+                  ),
+                  icon: const Icon(Icons.sell_outlined, size: 14),
+                  label: const Text(
+                    'Precio',
+                    style: TextStyle(fontSize: 10.5),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onEntry,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    minimumSize: Size.zero,
+                  ),
+                  icon: const Icon(Icons.add_box_outlined, size: 14),
+                  label: const Text(
+                    'Ingreso',
+                    style: TextStyle(fontSize: 10.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

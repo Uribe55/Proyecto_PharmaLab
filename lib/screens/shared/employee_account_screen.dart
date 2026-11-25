@@ -4,6 +4,7 @@ import '../../models/app_user.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/app_text_field.dart';
 import '../../widgets/user_avatar.dart';
 import '../login_screen.dart';
 
@@ -26,6 +27,84 @@ class EmployeeAccountScreen extends StatefulWidget {
 }
 
 class _EmployeeAccountScreenState extends State<EmployeeAccountScreen> {
+  bool _savingProfile = false;
+
+  /// RF-01: el repartidor edita nombre, teléfono y dirección.
+  Future<void> _editProfile(AppUser user) async {
+    final nameController = TextEditingController(text: user.name);
+    final phoneController = TextEditingController(text: user.phone);
+    final addressController = TextEditingController(text: user.address);
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Editar datos de contacto'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                label: 'Nombre completo',
+                hint: 'Nombre y apellido',
+                controller: nameController,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'Teléfono',
+                hint: '+591 700-00000',
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'Dirección',
+                hint: 'Calle, número y ciudad',
+                controller: addressController,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave != true || !mounted) {
+      nameController.dispose();
+      phoneController.dispose();
+      addressController.dispose();
+      return;
+    }
+
+    setState(() => _savingProfile = true);
+    final warning = await PharmaService.instance.updateOwnProfile(
+      name: nameController.text,
+      phone: phoneController.text,
+      address: addressController.text,
+    );
+    nameController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+
+    if (!mounted) return;
+    setState(() => _savingProfile = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(warning ?? 'Datos de contacto actualizados.'),
+      ),
+    );
+  }
+
   Future<void> _confirmLogout() async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -90,7 +169,37 @@ class _EmployeeAccountScreenState extends State<EmployeeAccountScreen> {
                   style: AppText.meta,
                 ),
                 const SizedBox(height: 24),
-                const _SectionTitle('Datos de la cuenta'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text('Datos de la cuenta', style: AppText.h3),
+                      ),
+                      if (user.role == UserRole.repartidor)
+                        TextButton.icon(
+                          onPressed: _savingProfile
+                              ? null
+                              : () => _editProfile(user),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: _savingProfile
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Editar'),
+                        ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 10),
                 _Card(
                   child: Column(
@@ -106,6 +215,14 @@ class _EmployeeAccountScreenState extends State<EmployeeAccountScreen> {
                         label: 'Teléfono',
                         value: user.phone,
                       ),
+                      if (user.address.trim().isNotEmpty) ...[
+                        const Divider(),
+                        _InfoRow(
+                          icon: Icons.location_on_outlined,
+                          label: 'Dirección',
+                          value: user.address,
+                        ),
+                      ],
                       const Divider(),
                       _InfoRow(
                         icon: Icons.badge_outlined,

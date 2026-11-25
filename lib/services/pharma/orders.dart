@@ -79,7 +79,9 @@ mixin _PharmaOrders on _PharmaServiceState {
   /// Aprueba un pedido pendiente (RF-11).
   bool approveOrder(PharmacyOrder order) {
     if (!order.isPending) return false;
+    final previous = order.status;
     order.status = OrderStatus.aprobado;
+    NotificationService.instance.notifyOrderStatus(order, previous);
     notifyListeners();
     return true;
   }
@@ -90,6 +92,7 @@ mixin _PharmaOrders on _PharmaServiceState {
     if (driver.role != UserRole.repartidor || !driver.active) return false;
 
     // El repartidor guarda el correo institucional en lugar de datos de más.
+    final previous = order.status;
     order
       ..driverId = driver.id
       ..driverName = driver.name
@@ -97,6 +100,7 @@ mixin _PharmaOrders on _PharmaServiceState {
       ..deliveredAt = null
       ..failureReason = null
       ..failureNote = null;
+    NotificationService.instance.notifyOrderStatus(order, previous);
     notifyListeners();
     return true;
   }
@@ -104,27 +108,52 @@ mixin _PharmaOrders on _PharmaServiceState {
   /// Marca el pedido como entregado con fecha y hora (RF-14).
   bool markDelivered(PharmacyOrder order) {
     if (!order.canDeliver) return false;
+    final previous = order.status;
     order
       ..status = OrderStatus.entregado
       ..failureReason = null
       ..failureNote = null
       ..deliveredAt = DateTime.now();
+    NotificationService.instance.notifyOrderStatus(order, previous);
     notifyListeners();
     return true;
   }
 
   /// Registra una entrega fallida con su motivo (RF-17).
+  ///
+  /// El pedido no se cancela: queda en estado "Reprogramado" y regresa al
+  /// panel del vendedor para que asigne una nueva fecha de entrega.
   bool markDeliveryFailed(
     PharmacyOrder order, {
     required String reason,
     String note = '',
   }) {
     if (!order.canDeliver) return false;
+    final previous = order.status;
     order
-      ..status = OrderStatus.fallida
+      ..status = OrderStatus.reprogramado
       ..failureReason = reason
       ..failureNote = note.trim()
       ..deliveredAt = DateTime.now();
+    NotificationService.instance.notifyOrderStatus(order, previous);
+    notifyListeners();
+    return true;
+  }
+
+  /// El vendedor fija una nueva fecha para un pedido reprogramado (RF-17).
+  ///
+  /// Al reprogramar, el pedido vuelve a "Aprobado" para que pueda asignarse
+  /// a un repartidor en la nueva fecha.
+  bool rescheduleOrder(PharmacyOrder order, DateTime newDate) {
+    if (!order.needsReschedule) return false;
+    final previous = order.status;
+    order
+      ..status = OrderStatus.aprobado
+      ..scheduledFor = newDate
+      ..deliveredAt = null
+      ..driverId = null
+      ..driverName = null;
+    NotificationService.instance.notifyOrderStatus(order, previous);
     notifyListeners();
     return true;
   }

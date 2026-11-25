@@ -33,7 +33,7 @@ class DriverDeliveriesScreen extends StatelessWidget {
         final delivered = orders
             .where((order) => order.status.isDelivered)
             .length;
-        final failed = orders.where((order) => order.status.isFailure).length;
+        final failed = orders.where((order) => order.needsReschedule).length;
 
         return Scaffold(
           body: SafeArea(

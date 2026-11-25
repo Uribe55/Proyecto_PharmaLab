@@ -98,7 +98,7 @@ class CatalogRepository {
         name: record.name,
         brand: record.brand,
         presentation: record.presentation,
-        category: category?.visualCategory ?? ProductCategory.genericos,
+        category: category?.visualCategory ?? ProductCategory.insumosClinicos,
         categoryId: record.categoryId,
         categoryName: namesById[record.categoryId] ?? 'Sin categoría',
         price: record.price,

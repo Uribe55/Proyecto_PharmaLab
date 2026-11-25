@@ -16,6 +16,7 @@ Color statusColor(OrderStatus status) {
     OrderStatus.enRuta => AppColors.primary,
     OrderStatus.entregado => AppColors.successText,
     OrderStatus.fallida => AppColors.danger,
+    OrderStatus.reprogramado => AppColors.lavenderInk,
   };
 }
 
@@ -26,6 +27,7 @@ Color statusBackground(OrderStatus status) {
     OrderStatus.enRuta => AppColors.mint,
     OrderStatus.entregado => AppColors.successBackground,
     OrderStatus.fallida => AppColors.dangerBackground,
+    OrderStatus.reprogramado => AppColors.lavender,
   };
 }
 

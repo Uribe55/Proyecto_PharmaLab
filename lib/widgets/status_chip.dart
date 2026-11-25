@@ -26,6 +26,10 @@ class StatusChip extends StatelessWidget {
         AppColors.successText,
       ),
       OrderStatus.fallida => (AppColors.dangerBackground, AppColors.danger),
+      OrderStatus.reprogramado => (
+        AppColors.lavender,
+        AppColors.lavenderInk,
+      ),
     };
 
     return Container(

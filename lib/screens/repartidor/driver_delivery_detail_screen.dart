@@ -190,13 +190,13 @@ class DriverDeliveryDetailScreen extends StatelessWidget {
                     ],
                   ),
                 )
-              else if (order.status.isFailure)
+              else if (order.needsReschedule)
                 _StatusNote(
-                  icon: Icons.report_gmailerrorred_rounded,
-                  background: AppColors.dangerBackground,
-                  foreground: AppColors.danger,
+                  icon: Icons.event_repeat_rounded,
+                  background: AppColors.lavender,
+                  foreground: AppColors.lavenderInk,
                   text:
-                      'Entrega fallida: ${order.failureReason ?? 'sin motivo'}'
+                      'Entrega reprogramada: ${order.failureReason ?? 'sin motivo'}'
                       '${(order.failureNote ?? '').trim().isEmpty ? '' : ' · ${(order.failureNote ?? '').trim()}'}',
                 )
               else if (order.status.isDelivered)

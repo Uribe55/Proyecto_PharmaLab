@@ -41,7 +41,7 @@ void main() {
     expect(find.text('Productos destacados'), findsOneWidget);
     expect(find.byType(ProductCard), findsWidgets);
 
-    final productTitle = find.text('Paracetamol 500 mg').first;
+    final productTitle = find.text('Glucosa oxidasa (reactivo)').first;
     await tester.ensureVisible(productTitle);
     await tester.pumpAndSettle();
     await tester.tap(productTitle);
