@@ -62,8 +62,9 @@ mixin _PharmaOrders on _PharmaServiceState {
     DateTime? occurredAt,
   }) {
     lastOrderError = null;
+    final previous = order.status;
     try {
-      return _orderStore.execute(
+      final changed = _orderStore.execute(
         order,
         currentUser,
         action,
@@ -75,6 +76,11 @@ mixin _PharmaOrders on _PharmaServiceState {
         expectedAttemptId: expectedAttemptId,
         occurredAt: occurredAt,
       );
+      // RF-15: cada transición de estado produce un aviso local.
+      if (changed && order.status != previous) {
+        NotificationService.instance.notifyOrderStatus(order, previous);
+      }
+      return changed;
     } on StateError catch (error) {
       lastOrderError = error.message.toString();
       notifyListeners();
@@ -84,15 +90,31 @@ mixin _PharmaOrders on _PharmaServiceState {
 
   bool approveOrder(PharmacyOrder order) =>
       performOrderAction(order, OrderAction.approve);
+
   bool assignDelivery(PharmacyOrder order, AppUser driver) =>
       performOrderAction(order, OrderAction.assign, driver: driver);
+
   bool startDelivery(PharmacyOrder order) =>
       performOrderAction(order, OrderAction.dispatch);
+
   bool markDelivered(PharmacyOrder order) =>
       performOrderAction(order, OrderAction.deliver);
+
   bool markDeliveryFailed(
     PharmacyOrder order, {
     required String reason,
     String note = '',
   }) => performOrderAction(order, OrderAction.fail, reason: reason, note: note);
+
+  /// El vendedor fija una nueva fecha para un pedido reprogramado (RF-17).
+  ///
+  /// Al reprogramar, el pedido vuelve a "Aprobado" para que pueda asignarse
+  /// a un repartidor en la nueva fecha.
+  bool rescheduleOrder(PharmacyOrder order, DateTime newDate) =>
+      performOrderAction(
+        order,
+        OrderAction.reschedule,
+        reason: 'Reprogramación de entrega',
+        scheduledFor: newDate,
+      );
 }

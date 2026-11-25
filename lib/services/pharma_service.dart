@@ -10,6 +10,7 @@ import '../models/cart_item.dart';
 import '../models/order.dart';
 import '../models/pharmacy.dart';
 import '../models/product.dart';
+import 'notification_service.dart';
 import 'seed_data.dart';
 import '../data/datasources/local_order_data_source.dart';
 import '../data/repositories/order_repository.dart';
@@ -69,6 +70,7 @@ class PharmaService extends _PharmaServiceState
       email: demoEmail,
       phone: demoProfile.phone,
       role: UserRole.cliente,
+      address: demoProfile.address,
     ),
     ...buildSeedEmployees(),
   ];

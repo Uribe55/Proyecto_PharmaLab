@@ -60,11 +60,13 @@ class OrderPolicy {
       OrderAction.fail ||
       OrderAction.deliver => driver(order, actor) && order.isInTransit,
       OrderAction.reschedule =>
-        manager(actor) && order.status == OrderStatus.fallida,
+        manager(actor) &&
+            (order.status == OrderStatus.fallida || order.isRescheduled),
       OrderAction.coordinate || OrderAction.escalate =>
         manager(actor) &&
             (order.isInTransit ||
                 order.status == OrderStatus.fallida ||
+                order.isRescheduled ||
                 order.isApproved),
     };
     return allowed

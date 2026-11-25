@@ -152,8 +152,8 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
   }
 
   String _captionFor(PharmacyOrder order) {
-    if (order.status.isFailure) {
-      return 'Entrega fallida · ${order.failureReason ?? 'sin motivo'}';
+    if (order.needsReschedule) {
+      return 'Reprogramado · ${order.failureReason ?? 'sin motivo'}';
     }
     final date = order.deliveredAt;
     if (date == null) return 'Entregado';

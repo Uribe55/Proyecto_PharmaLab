@@ -69,6 +69,8 @@ class AppUser {
     required this.phone,
     required this.role,
     this.active = true,
+    this.address = '',
+    this.tieneDeudaVencida = false,
   });
 
   final String id;
@@ -77,6 +79,13 @@ class AppUser {
   final String phone;
   final UserRole role;
   final bool active;
+
+  /// Dirección de entrega editable por el cliente y el repartidor (RF-01).
+  final String address;
+
+  /// Estado de cuenta simulado: Firestore aún no registra facturación real.
+  /// Cuando es `true`, el checkout bloquea la confirmación (RF-07).
+  final bool tieneDeudaVencida;
 
   String get firstName {
     final parts = name.trim().split(RegExp(r'\s+'));
@@ -147,6 +156,8 @@ class AppUser {
     String? phone,
     UserRole? role,
     bool? active,
+    String? address,
+    bool? tieneDeudaVencida,
   }) {
     return AppUser(
       id: id,
@@ -155,6 +166,8 @@ class AppUser {
       phone: phone ?? this.phone,
       role: role ?? this.role,
       active: active ?? this.active,
+      address: address ?? this.address,
+      tieneDeudaVencida: tieneDeudaVencida ?? this.tieneDeudaVencida,
     );
   }
 }

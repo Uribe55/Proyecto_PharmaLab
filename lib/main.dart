@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
+import 'services/notification_service.dart';
 import 'services/pharma_service.dart';
 import 'theme/app_theme.dart';
 
@@ -14,14 +15,54 @@ Future<void> main() async {
   runApp(const PharmaLabApp());
 }
 
-class PharmaLabApp extends StatelessWidget {
+class PharmaLabApp extends StatefulWidget {
   const PharmaLabApp({super.key});
+
+  @override
+  State<PharmaLabApp> createState() => _PharmaLabAppState();
+}
+
+class _PharmaLabAppState extends State<PharmaLabApp> {
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
+  @override
+  void initState() {
+    super.initState();
+    NotificationService.instance.addListener(_onNotification);
+  }
+
+  @override
+  void dispose() {
+    NotificationService.instance.removeListener(_onNotification);
+    super.dispose();
+  }
+
+  /// RF-15: muestra la notificación simulada de cambio de estado.
+  void _onNotification() {
+    final notification = NotificationService.instance.latest;
+    if (notification == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final messenger = _messengerKey.currentState;
+      if (messenger == null) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(notification.message),
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PharmaLab',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: _messengerKey,
       theme: AppTheme.lightTheme,
       locale: const Locale('es', 'BO'),
       supportedLocales: const [Locale('es', 'BO'), Locale('es'), Locale('en')],

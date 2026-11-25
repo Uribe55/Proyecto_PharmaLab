@@ -15,7 +15,8 @@ Color statusColor(OrderStatus status) {
     OrderStatus.aprobado => AppColors.approvedText,
     OrderStatus.enRuta => AppColors.primary,
     OrderStatus.entregado => AppColors.successText,
-    OrderStatus.cancelado || OrderStatus.fallida => AppColors.danger,
+    OrderStatus.fallida || OrderStatus.cancelado => AppColors.danger,
+    OrderStatus.reprogramado => AppColors.lavenderInk,
   };
 }
 
@@ -25,7 +26,8 @@ Color statusBackground(OrderStatus status) {
     OrderStatus.aprobado => AppColors.approvedBackground,
     OrderStatus.enRuta => AppColors.mint,
     OrderStatus.entregado => AppColors.successBackground,
-    OrderStatus.cancelado || OrderStatus.fallida => AppColors.dangerBackground,
+    OrderStatus.fallida || OrderStatus.cancelado => AppColors.dangerBackground,
+    OrderStatus.reprogramado => AppColors.lavender,
   };
 }
 

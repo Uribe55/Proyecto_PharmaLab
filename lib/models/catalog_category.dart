@@ -10,12 +10,19 @@ class CatalogCategory {
   /// La categoría visual no reemplaza el identificador real de Firestore.
   ProductCategory get visualCategory {
     final lower = name.toLowerCase();
-    if (lower.contains('insumo') || lower.contains('material')) {
-      return ProductCategory.insumos;
+    if (lower.contains('quimica') ||
+        lower.contains('química') ||
+        lower.contains('sanguin')) {
+      return ProductCategory.reactivosQuimicaSanguinea;
     }
-    if (lower.contains('vitamina') || lower.contains('suplemento')) {
-      return ProductCategory.vitaminas;
+    if (lower.contains('inmuno') || lower.contains('serolog')) {
+      return ProductCategory.reactivosInmunologia;
     }
-    return ProductCategory.genericos;
+    if (lower.contains('equipo') ||
+        lower.contains('instrument') ||
+        lower.contains('analizador')) {
+      return ProductCategory.equiposLaboratorio;
+    }
+    return ProductCategory.insumosClinicos;
   }
 }

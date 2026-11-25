@@ -182,20 +182,24 @@ class HomeScreen extends StatelessWidget {
                             },
                           ),
                         )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final category in ProductCategory.values) ...[
-                              Expanded(
+                      : SizedBox(
+                          height: 108,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: ProductCategory.values.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final category = ProductCategory.values[index];
+                              return SizedBox(
+                                width: 122,
                                 child: CategoryCard(
                                   category: category,
                                   onTap: () => _openCatalog(context, category),
                                 ),
-                              ),
-                              if (category != ProductCategory.values.last)
-                                const SizedBox(width: 10),
-                            ],
-                          ],
+                              );
+                            },
+                          ),
                         ),
                 ),
                 Padding(

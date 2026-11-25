@@ -35,7 +35,7 @@ class Fixture {
     name: 'Caja',
     brand: '',
     presentation: 'Caja',
-    category: ProductCategory.genericos,
+    category: ProductCategory.reactivosQuimicaSanguinea,
     price: 150,
     stock: 10,
   );
@@ -271,7 +271,8 @@ void main() {
     () {
       final order = f.inRoute();
       f.act(order, driver, OrderAction.fail, reason: 'Farmacia cerrada');
-      expect(order.status, OrderStatus.fallida);
+      expect(order.status, OrderStatus.reprogramado);
+      expect(order.isRescheduled, isTrue);
       expect(order.deliveredAt, isNull);
       expect(order.failedAt, f.now);
       expect(f.product.stock, 8);

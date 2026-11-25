@@ -13,6 +13,14 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'cliente';
     }
 
+    // El administrador gestiona catálogo, precios y entradas de mercadería.
+    function activeAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+    }
+
     // Identificador legible y consecutivo, con relleno de ceros.
     function farmCode(n) {
       return n < 10 ? 'FARM00' + string(n)
@@ -28,6 +36,15 @@ service cloud.firestore {
     match /usuarios/{uid} {
       // Se mantiene el acceso de cada cuenta a su propio perfil.
       allow get: if signedIn() && request.auth.uid == uid;
+
+      // RF-01: cada usuario actualiza únicamente sus datos de contacto.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['nombre', 'telefono', 'direccion', 'tiene_deuda_vencida'])
+        && request.resource.data.nombre is string
+        && request.resource.data.telefono is string
+        && request.resource.data.direccion is string;
 
       // Un cliente nuevo solo puede crear su propio perfil mínimo.
       allow create: if signedIn()
@@ -54,6 +71,12 @@ service cloud.firestore {
       // Solo el cliente activo puede consultar su propia farmacia.
       allow read: if activeClient()
         && resource.data.usuario_id == request.auth.uid;
+
+      // RF-01: el cliente actualiza responsable, teléfono y dirección.
+      allow update: if activeClient()
+        && resource.data.usuario_id == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['responsable', 'telefono', 'direccion_fiscal']);
 
       // Se requiere crear la farmacia en la misma transacción que el usuario
       // y la actualización del contador. Otros roles no pueden autogenerarse.
@@ -146,19 +169,21 @@ service cloud.firestore {
     // Catálogo en lectura para farmacias autenticadas y activas.
     // Al consultar productos se exige el filtro estado == true.
     match /productos/{productoId} {
-      allow get, list: if activeClient() && resource.data.estado == true;
-      allow create, update, delete: if false;
+      allow get, list: if (activeClient() && resource.data.estado == true)
+        || activeAdmin();
+      allow create, update, delete: if activeAdmin();
     }
 
     match /categorias/{categoriaId} {
-      allow get, list: if activeClient();
-      allow create, update, delete: if false;
+      allow get, list: if activeClient() || activeAdmin();
+      allow create, update, delete: if activeAdmin();
     }
 
-    // Los lotes se leen para calcular la disponibilidad; no se modifican.
+    // Los lotes se leen para calcular la disponibilidad; el administrador
+    // registra las entradas de mercadería (RF-19).
     match /lotes_productos/{loteId} {
-      allow get, list: if activeClient();
-      allow create, update, delete: if false;
+      allow get, list: if activeClient() || activeAdmin();
+      allow create, update, delete: if activeAdmin();
     }
 
     // El resto continúa cerrado hasta integrar cada módulo con permisos.

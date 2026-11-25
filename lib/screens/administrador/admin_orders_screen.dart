@@ -200,7 +200,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       return 'Creado $created · entregado ${_shortDate(order.deliveredAt!)}';
     }
     if (order.isFailure) {
-      return 'Creado $created · entrega fallida';
+      return 'Creado $created · incidencia de entrega';
     }
     if (order.driverName != null && order.driverName!.isNotEmpty) {
       return 'Creado $created · ${order.driverName}';

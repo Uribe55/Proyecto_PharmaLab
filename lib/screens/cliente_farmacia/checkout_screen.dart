@@ -70,6 +70,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = _cart;
     if (!cart.canConfirm) return;
 
+    // RF-07: el estado de cuenta se valida también en el ViewModel/servicio.
+    if (PharmaService.instance.currentUser?.tieneDeudaVencida == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No puedes confirmar el pedido mientras tengas una deuda '
+            'vencida.',
+          ),
+        ),
+      );
+      return;
+    }
+
     FocusScope.of(context).unfocus();
     setState(() => _loading = true);
     await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -129,6 +142,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildContent(BuildContext context) {
     final cart = _cart;
     final pharmacy = PharmaService.instance.pharmacy;
+    final hasDebt =
+        PharmaService.instance.currentUser?.tieneDeudaVencida == true;
 
     return Scaffold(
       appBar: ClientPageAppBar(
@@ -272,6 +287,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 const SizedBox(height: 12),
                 _CheckoutCard(
+                  title: 'Estado de cuenta',
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _RoundIcon(
+                        icon: hasDebt
+                            ? Icons.error_outline_rounded
+                            : Icons.verified_user_outlined,
+                        danger: hasDebt,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              hasDebt ? 'Deuda vencida' : 'Cuenta al día',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: hasDebt
+                                    ? AppColors.danger
+                                    : AppColors.successText,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              hasDebt
+                                  ? 'Regulariza tu deuda con el área '
+                                        'comercial para poder confirmar '
+                                        'nuevos pedidos.'
+                                  : 'No tienes facturas vencidas. Puedes '
+                                        'confirmar tu pedido.',
+                              style: AppText.muted.copyWith(fontSize: 11.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _CheckoutCard(
                   title: 'Observaciones',
                   child: AppTextField(
                     label: 'Referencia o instrucciones',
@@ -283,6 +341,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
+                if (hasDebt) ...[
+                  Container(
+                    padding: const EdgeInsets.all(13),
+                    decoration: BoxDecoration(
+                      color: AppColors.dangerBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.block_rounded,
+                          size: 17,
+                          color: AppColors.danger,
+                        ),
+                        SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            'No puedes confirmar el pedido mientras tengas '
+                            'una deuda vencida. Comunícate con soporte para '
+                            'regularizar tu estado de cuenta.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Container(
                   padding: const EdgeInsets.all(13),
                   decoration: BoxDecoration(
@@ -339,7 +434,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(width: 18),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: !cart.canConfirm || _loading
+                  onPressed:
+                      !cart.canConfirm ||
+                          _loading ||
+                          hasDebt ||
+                          PharmaService.instance.usesFirebase
                       ? null
                       : _confirmOrder,
                   child: _loading
@@ -351,14 +450,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const FittedBox(
+                      : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Confirmar pedido'),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward_rounded, size: 18),
+                              Text(
+                                hasDebt
+                                    ? 'Deuda vencida'
+                                    : 'Confirmar pedido',
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                hasDebt
+                                    ? Icons.lock_outline_rounded
+                                    : Icons.arrow_forward_rounded,
+                                size: 18,
+                              ),
                             ],
                           ),
                         ),
@@ -476,20 +584,25 @@ class _ItemLine extends StatelessWidget {
 }
 
 class _RoundIcon extends StatelessWidget {
-  const _RoundIcon({required this.icon});
+  const _RoundIcon({required this.icon, this.danger = false});
 
   final IconData icon;
+  final bool danger;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 34,
       height: 34,
-      decoration: const BoxDecoration(
-        color: AppColors.mint,
+      decoration: BoxDecoration(
+        color: danger ? AppColors.dangerBackground : AppColors.mint,
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, size: 18, color: AppColors.primary),
+      child: Icon(
+        icon,
+        size: 18,
+        color: danger ? AppColors.danger : AppColors.primary,
+      ),
     );
   }
 }

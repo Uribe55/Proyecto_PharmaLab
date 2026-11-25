@@ -17,7 +17,7 @@ Product product(String id, {double price = 150, int stock = 10}) => Product(
   name: id,
   brand: '',
   presentation: 'Caja de 20 tabletas',
-  category: ProductCategory.genericos,
+  category: ProductCategory.reactivosQuimicaSanguinea,
   price: price,
   stock: stock,
   unitOfMeasure: 'Caja',

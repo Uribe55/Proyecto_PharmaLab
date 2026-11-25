@@ -83,6 +83,15 @@ abstract class _PharmaServiceState extends ChangeNotifier {
       phone: _pickText(data, const ['telefono', 'celular', 'phone']),
       role: role,
       active: _isActive(data),
+      address: _pickText(data, const [
+        'direccion',
+        'dirección',
+        'direccion_entrega',
+        'address',
+      ]),
+      tieneDeudaVencida: _isTrue(
+        data['tiene_deuda_vencida'] ?? data['deuda_vencida'],
+      ),
     );
   }
 
@@ -99,15 +108,24 @@ abstract class _PharmaServiceState extends ChangeNotifier {
 
   bool _isActive(Map<String, dynamic> data) {
     final value = data['estado'] ?? data['activo'] ?? data['active'];
+    if (value == null) return true;
+    return _isTrue(value);
+  }
+
+  /// Interpreta banderas booleanas o sus equivalentes en texto.
+  bool _isTrue(Object? value) {
     if (value is bool) return value;
+    if (value is num) return value != 0;
     if (value is String) {
       final normalized = value.trim().toLowerCase();
       return normalized == 'true' ||
           normalized == 'activo' ||
           normalized == 'activa' ||
-          normalized == '1';
+          normalized == '1' ||
+          normalized == 'si' ||
+          normalized == 'sí';
     }
-    return true;
+    return false;
   }
 
   String _pickText(Map<String, dynamic> data, List<String> keys) {
