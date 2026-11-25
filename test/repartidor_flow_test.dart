@@ -14,7 +14,7 @@ Future<void> _loginAs(WidgetTester tester, String name) async {
   await tester.tap(find.text('Iniciar sesión'));
   await tester.pumpAndSettle();
 }
-
+//actor repartidor
 void main() {
   testWidgets('El repartidor cierra una entrega sin ver precios', (
     tester,
