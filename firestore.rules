@@ -106,9 +106,9 @@ service cloud.firestore {
         allow get: if activeClient()
           && request.auth.uid == uid;
 
-        // Se abrira solo si la implementacion
-        // idempotente resulta verificablemente segura.
-        allow list, create, update, delete: if false;
+        allow create: if activeClient() && request.auth.uid == uid
+          && validSparkOperation(request.resource.data, operacionId);
+        allow list, update, delete: if false;
       }
     }
 
@@ -254,11 +254,8 @@ service cloud.firestore {
       allow get, list: if activeClient()
         || activeStaff();
 
-      // SPARK:
-      // No habilitar descuentos hasta que las
-      // reglas demuestren correspondencia exacta
-      // con cantidades, pedido y lotes.
-      allow create, update, delete: if false;
+      allow update: if validSparkLotDebit(loteId);
+      allow create, delete: if false;
     }
 
     // ============================================
@@ -357,14 +354,97 @@ service cloud.firestore {
         );
     }
 
+    // Contrato académico finito. Un detalle LINEA1 y un lote por pedido.
+    function sparkInitialEvent(uid) {
+      return {'estado_anterior': null, 'estado_nuevo': 'pendiente',
+        'fecha_cambio': request.time, 'id_usuario': uid};
+    }
+
+    function sparkOperation(order, id) {
+      return {'pedido_id': id, 'id_cliente': order.id_cliente,
+        'id_direccion': order.id_direccion, 'linea': order.linea,
+        'observaciones': order.observaciones, 'fecha': request.time};
+    }
+
+    function validSparkOrder(order, id) {
+      let line = order.linea;
+      let farm = get(/databases/$(database)/documents/farmacia_cliente/$(order.id_cliente)).data;
+      let address = get(/databases/$(database)/documents/direcciones/$(order.id_direccion)).data;
+      let product = get(/databases/$(database)/documents/productos/$(line.id_producto)).data;
+      let before = get(/databases/$(database)/documents/lotes_productos/$(line.id_lote)).data;
+      let after = getAfter(/databases/$(database)/documents/lotes_productos/$(line.id_lote)).data;
+      return activeClient()
+        && id.matches('^[A-Za-z0-9]{20}$')
+        && order.keys().hasOnly(['schema_version', 'estado', 'fecha_pedido', 'id_cliente',
+          'id_direccion', 'total', 'usuario_id', 'id_operacion', 'numero_comercial', 'linea', 'observaciones'])
+        && order.keys().hasAll(['schema_version', 'estado', 'fecha_pedido', 'id_cliente',
+          'id_direccion', 'total', 'usuario_id', 'id_operacion', 'numero_comercial', 'linea', 'observaciones'])
+        && order.schema_version == 'spark_single_v1'
+        && order.estado == 'pendiente' && order.fecha_pedido == request.time
+        && order.usuario_id == request.auth.uid && order.id_operacion == id
+        && order.id_cliente.matches('^FARM[0-9]{3,}$')
+        && order.id_direccion.matches('^[A-Za-z0-9_-]{1,100}$')
+        && order.numero_comercial == 'PED-' + id
+        && order.observaciones is string && order.observaciones.size() <= 500
+        && farm.usuario_id == request.auth.uid && farm.estado == true
+        && address.id_cliente == order.id_cliente && address.estado == true
+        && line is map
+        && line.keys().hasOnly(['id_producto', 'id_lote', 'cantidad', 'precio_unitario', 'subtotal'])
+        && line.keys().hasAll(['id_producto', 'id_lote', 'cantidad', 'precio_unitario', 'subtotal'])
+        && line.id_producto is string && line.id_lote is string
+        && line.id_producto.matches('^[A-Za-z0-9_-]{1,100}$')
+        && line.id_lote.matches('^[A-Za-z0-9_-]{1,100}$')
+        && line.cantidad is int && line.cantidad > 0 && line.cantidad <= 1000
+        && product.estado == true && product.precio is number
+        && product.precio > 0 && product.precio <= 1000000
+        && line.precio_unitario == product.precio
+        && line.subtotal == product.precio * line.cantidad && order.total == line.subtotal
+        && before.producto_id == line.id_producto && before.cantidad_disponible is int
+        && before.cantidad_disponible >= line.cantidad
+        && product.get('requiere_vencimiento', false) is bool
+        && (!product.get('requiere_vencimiento', false)
+          || (before.fecha_vencimiento is timestamp && before.fecha_vencimiento > request.time))
+        && after.cantidad_disponible == before.cantidad_disponible - line.cantidad
+        && after.ultimo_pedido_id == id
+        && getAfter(/databases/$(database)/documents/pedidos/$(id)/detalle_pedido/LINEA1).data == line
+        && getAfter(/databases/$(database)/documents/pedidos/$(id)/historial_estado/CONFIRMACION).data == sparkInitialEvent(request.auth.uid)
+        && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)/operaciones_pedido/$(id)).data == sparkOperation(order, id);
+    }
+
+    function newSparkParent(id) {
+      let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
+      return activeClient() && !exists(/databases/$(database)/documents/pedidos/$(id))
+        && order.schema_version == 'spark_single_v1'
+        && order.usuario_id == request.auth.uid && order.id_operacion == id
+        && order.estado == 'pendiente' && order.fecha_pedido == request.time;
+    }
+
+    function validSparkOperation(data, id) {
+      let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
+      return newSparkParent(id) && data == sparkOperation(order, id);
+    }
+
+    function validSparkLotDebit(lotId) {
+      let next = request.resource.data;
+      let id = next.ultimo_pedido_id;
+      let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
+      return newSparkParent(id)
+        && next.diff(resource.data).affectedKeys().hasOnly(['cantidad_disponible', 'ultimo_pedido_id'])
+        && next.diff(resource.data).affectedKeys().hasAll(['cantidad_disponible', 'ultimo_pedido_id'])
+        && next.cantidad_disponible is int && next.cantidad_disponible >= 0
+        && resource.data.cantidad_disponible is int
+        && order.linea.id_lote == lotId && order.linea.id_producto == resource.data.producto_id
+        && order.linea.cantidad is int && order.linea.cantidad > 0
+        && next.cantidad_disponible == resource.data.cantidad_disponible - order.linea.cantidad;
+    }
+
     match /pedidos/{pedidoId} {
 
-      allow get, list: if readsOrder(resource.data);
+      allow get: if (activeClient() && !exists(/databases/$(database)/documents/pedidos/$(pedidoId)))
+        || readsOrder(resource.data);
+      allow list: if readsOrder(resource.data);
 
-      // CREACION DE PEDIDOS:
-      // Mantener bloqueada hasta demostrar seguridad
-      // de precios, detalles, lotes e idempotencia.
-      allow create: if false;
+      allow create: if validSparkOrder(request.resource.data, pedidoId);
 
       // APROBACION CONTROLADA:
       // Requiere una escritura atomica del pedido
@@ -408,7 +488,9 @@ service cloud.firestore {
           ).data
         );
 
-        allow create, update, delete: if false;
+        allow create: if detalleId == 'LINEA1' && newSparkParent(pedidoId)
+          && request.resource.data == getAfter(/databases/$(database)/documents/pedidos/$(pedidoId)).data.linea;
+        allow update, delete: if false;
       }
 
       match /historial_estado/{eventoId} {
@@ -421,7 +503,9 @@ service cloud.firestore {
 
         // Evento unico de aprobacion con escritura
         // atomica junto al cambio de estado.
-        allow create: if eventoId == 'APROBACION'
+        allow create: if (eventoId == 'CONFIRMACION' && newSparkParent(pedidoId)
+            && request.resource.data == sparkInitialEvent(request.auth.uid))
+          || (eventoId == 'APROBACION'
           && activeStaff()
           && request.resource.data.keys().hasOnly([
             'estado_anterior', 'estado_nuevo',
@@ -446,7 +530,7 @@ service cloud.firestore {
           ).data.aprobado_por == request.auth.uid
           && getAfter(
             /databases/$(database)/documents/pedidos/$(pedidoId)
-          ).data.fecha_aprobacion == request.time;
+          ).data.fecha_aprobacion == request.time);
 
         allow update, delete: if false;
       }

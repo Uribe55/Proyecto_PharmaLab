@@ -1,5 +1,7 @@
 # Pedidos con Firebase Spark — 25/11/2026
 
+> Estado anterior. La implementación posterior acotada y sus pruebas están en [SPARK_CONFIRMACION_FUNCIONAL.md](SPARK_CONFIRMACION_FUNCIONAL.md). Las reglas nuevas permanecen pendientes de publicación autorizada.
+
 ## Resultado y alcance real
 
 **Todavía no se pueden confirmar pedidos reales.** Crear pedidos y descontar lotes sigue bloqueado en las reglas publicadas y en la aplicación. No se enviaron escrituras comerciales de prueba. No se activó facturación, no se crearon bases de datos, no se ejecutaron emuladores ni Cloud Functions y no se hicieron commits, merges o push.

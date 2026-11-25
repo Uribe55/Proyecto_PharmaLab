@@ -76,6 +76,7 @@ class FirestoreStaffOrderDataSource implements StaffOrderRepository {
         orderId: orderId,
         serverTimestamp: FieldValue.serverTimestamp(),
       );
+      if (!_authorized(uid)) throw StateError('La sesión cambió.');
     });
   }
 }

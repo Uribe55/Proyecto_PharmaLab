@@ -47,13 +47,10 @@ Future<void> prepare(ApprovalFake tx, {String id = 'nuevo'}) =>
     );
 
 void main() {
-  test(
-    'el interruptor de producción permanece bloqueado sin pruebas de Rules',
-    () {
-      expect(SparkApproval.enabled, isFalse);
-      expect(SparkApproval.blockedReason, contains('bloqueada'));
-    },
-  );
+  test('el protocolo verificado de aprobación está habilitado', () {
+    expect(SparkApproval.enabled, isTrue);
+    expect(SparkApproval.blockedReason, contains('habilitada'));
+  });
 
   for (final role in ['vendedor', 'administrador']) {
     test(

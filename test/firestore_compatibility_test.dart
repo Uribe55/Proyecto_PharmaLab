@@ -16,14 +16,14 @@ void main() {
           'fecha_pedido': stamp,
           'id_cliente': 'FARM001',
           'id_direccion': 'DIR001',
-          'total': 235,
+          'total': 385,
         },
         details: [
           {
             'id_producto': 'PROD001',
-            'cantidad': 1,
+            'cantidad': 2,
             'precio_unitario': 150,
-            'subtotal': 150,
+            'subtotal': 300,
           },
           {
             'id_producto': 'PROD002',
@@ -42,7 +42,7 @@ void main() {
         },
       );
       expect(order.number, 'PED001');
-      expect(order.total, 235);
+      expect(order.total, 385);
       expect(order.history.single.at, stamp.toDate());
       expect(order.history.single.actorId, 'vendedor-existente');
       expect(order.history.single.role, isNull);

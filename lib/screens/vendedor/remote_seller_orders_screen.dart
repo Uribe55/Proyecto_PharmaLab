@@ -124,6 +124,34 @@ class RemoteSellerOrderDetailScreen extends StatefulWidget {
 
 class _RemoteSellerOrderDetailScreenState
     extends State<RemoteSellerOrderDetailScreen> {
+  bool _busy = false, _approved = false;
+  String? _error;
+  Future<void> _approve() async {
+    if (_busy || _approved || !widget.repository.approvalEnabled) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.repository.approve(widget.order.documentId!);
+      if (!mounted) return;
+      setState(() => _approved = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pedido aprobado y registrado en Firestore.'),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = 'No se pudo aprobar. Revisa los permisos y el estado actual. Actualiza el seguimiento antes de reintentar.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   late final Stream<PharmacyOrder> _stream = widget.repository.watchOrder(
     widget.order.documentId!,
   );
@@ -154,11 +182,35 @@ class _RemoteSellerOrderDetailScreenState
                   const SizedBox(height: 16),
                   OrderLifecyclePanel(order: order, showActions: false),
                   const SizedBox(height: 16),
-                  const Text(SparkApproval.blockedReason),
+                  if (!widget.repository.approvalEnabled)
+                    const Text(SparkApproval.blockedReason),
+                  if (_error != null)
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
                   const SizedBox(height: 12),
-                  const ElevatedButton(
-                    onPressed: null,
-                    child: Text('Aprobación real no habilitada'),
+                  ElevatedButton(
+                    onPressed:
+                        widget.repository.approvalEnabled &&
+                            order.isPending &&
+                            !order.fromCache &&
+                            !_busy &&
+                            !_approved &&
+                            !snapshot.hasError
+                        ? _approve
+                        : null,
+                    child: _busy
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            _approved || order.isApproved
+                                ? 'Pedido aprobado'
+                                : 'Aprobar pedido',
+                          ),
                   ),
                 ],
               ),

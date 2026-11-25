@@ -1,0 +1,131 @@
+﻿{
+    "Project":  "demo-pharmalab-spark-check",
+    "FirestorePort":  8085,
+    "ProductionWrites":  false,
+    "RulesSha256":  "E4527C1B23FF60E31C31F44E4EE2B65B658D708C1DC312F01B61E6DBD7DD3DF0",
+    "RulesTests":  46,
+    "RulesPassed":  46,
+    "RulesFailed":  0,
+    "TestedAtUtc":  "2026-11-25T16:14:43.8086652Z",
+    "Cases":  [
+                  "valid five-write transaction, boxes, snapshots and immutable historical PED001",
+                  "second product, non-perishable lot without expiry",
+                  "invalid actor null rejected",
+                  "invalid actor other rejected",
+                  "invalid actor inactive rejected",
+                  "invalid actor seller rejected",
+                  "invalid actor driver rejected",
+                  "invalid purchase {\"farm\":\"FARM002\"}",
+                  "invalid purchase {\"address\":\"DIR002\"}",
+                  "invalid purchase {\"price\":1}",
+                  "invalid purchase {\"quantity\":0}",
+                  "invalid purchase {\"quantity\":-1}",
+                  "invalid purchase {\"quantity\":1.5}",
+                  "invalid purchase {\"quantity\":1001}",
+                  "invalid purchase {\"quantity\":6}",
+                  "invalid purchase {\"lot\":\"EXPIRED\",\"stock\":10}",
+                  "invalid purchase {\"product\":\"MISSING\"}",
+                  "invalid purchase {\"lot\":\"LOTE002\",\"stock\":10}",
+                  "missing atomic document 0 rejected",
+                  "missing atomic document 1 rejected",
+                  "missing atomic document 2 rejected",
+                  "missing atomic document 3 rejected",
+                  "missing atomic document 4 rejected",
+                  "additional detail rejected",
+                  "detail mismatch rejected",
+                  "forged history actor rejected",
+                  "forged timestamp rejected",
+                  "arbitrary stock and metadata writes rejected",
+                  "stock decrease must equal exact purchased boxes",
+                  "stock increase and negative stock rejected",
+                  "duplicate operation is idempotent in SDK transaction",
+                  "concurrent purchases cannot oversell",
+                  "seller approval atomic, no second stock discount and client sees updated state",
+                  "client cannot approve",
+                  "approval without history or with total mutation rejected",
+                  "approval event alone and historical PED001 modification rejected",
+                  "other pharmacy cannot read order or details",
+                  "seller realtime receives new order; client realtime receives approval",
+                  "two orders cannot reuse one stock debit",
+                  "one order cannot arbitrarily debit a second lot",
+                  "existing order cannot authorize a later stock debit",
+                  "commercial line and total cannot be changed after confirmation",
+                  "operation record cannot be replaced or deleted",
+                  "administrator approval obeys the same atomic protocol",
+                  "farm registration transaction and NIT uniqueness preserved",
+                  "partial pharmacy registration and arbitrary counter update rejected"
+              ],
+    "Deployment":  "Pendiente de autorización: no se publicaron reglas",
+    "FlutterTests":  134,
+    "FlutterPassed":  134,
+    "Analyze":  "Sin incidencias",
+    "TemporaryEmulatorFiles":  "Retirados: script y configuración aislados, node_modules, logs y compilaciones. Respaldos anteriores conservados.",
+    "AndroidBuild":  "flutter build apk --debug: correcto",
+    "Cleanup":  [
+                    {
+                        "Path":  ".firebase/spark-verification",
+                        "Files":  2,
+                        "Bytes":  14816
+                    },
+                    {
+                        "Path":  "functions/node_modules",
+                        "Files":  14236,
+                        "Bytes":  188604146
+                    },
+                    {
+                        "Path":  "build",
+                        "Files":  1758,
+                        "Bytes":  2181380245
+                    },
+                    {
+                        "Path":  ".dart_tool/flutter_build",
+                        "Files":  20,
+                        "Bytes":  80241551
+                    },
+                    {
+                        "Path":  ".dart_tool/hooks_runner",
+                        "Files":  37,
+                        "Bytes":  45231942
+                    },
+                    {
+                        "Path":  "spark-npm-install.log",
+                        "Files":  1,
+                        "Bytes":  3280
+                    },
+                    {
+                        "Path":  "spark-security-test-output.log",
+                        "Files":  1,
+                        "Bytes":  945106
+                    },
+                    {
+                        "Path":  "spark-unit-test-output.log",
+                        "Files":  1,
+                        "Bytes":  11676
+                    },
+                    {
+                        "Path":  "spark-flutter-test-output.log",
+                        "Files":  1,
+                        "Bytes":  47730
+                    },
+                    {
+                        "Path":  "spark-seller-widget-test-output.log",
+                        "Files":  1,
+                        "Bytes":  506
+                    },
+                    {
+                        "Path":  "spark-android-build-output.log",
+                        "Files":  1,
+                        "Bytes":  12108
+                    },
+                    {
+                        "Path":  "firebase-debug.log",
+                        "Files":  1,
+                        "Bytes":  803572
+                    },
+                    {
+                        "Path":  "firestore-debug.log",
+                        "Files":  1,
+                        "Bytes":  207721
+                    }
+                ]
+}

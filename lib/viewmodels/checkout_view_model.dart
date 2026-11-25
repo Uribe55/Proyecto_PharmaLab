@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../data/datasources/firestore_order_data_source.dart';
 import '../data/datasources/pending_checkout_store.dart';
 import '../data/repositories/remote_order_repository.dart';
+import '../domain/spark_checkout.dart';
 import '../models/delivery_address.dart';
 import '../models/order.dart';
 import '../services/pharma_service.dart';
@@ -52,6 +53,11 @@ class CheckoutViewModel extends ChangeNotifier {
         (item['quantity'] as num) * (item['expectedPriceCents'] as num) / 100,
   );
   bool get enabled => repository.confirmationEnabled;
+  String? get scopeError => cart.items.length != 1
+      ? SparkCheckout.limitMessage
+      : cart.items.single.quantity > 1000
+      ? 'El máximo es 1000 cajas por pedido.'
+      : null;
   DeliveryAddress? get selectedAddress {
     for (final address in addresses) {
       if (address.id == addressId) return address;
@@ -72,7 +78,8 @@ class CheckoutViewModel extends ChangeNotifier {
       ready &&
       _owner == sessionUid() &&
       !busy &&
-      (hasPending || (cart.canReview && selectedAddress != null));
+      (hasPending ||
+          (scopeError == null && cart.canReview && selectedAddress != null));
 
   Future<void> initialize() async {
     final uid = sessionUid();
@@ -151,6 +158,11 @@ class CheckoutViewModel extends ChangeNotifier {
     if (busy || !ready || !enabled || _owner != sessionUid()) return null;
     if (!hasPending &&
         (!cart.canReview || selectedAddress == null || consultOnly)) {
+      return null;
+    }
+    if (!hasPending && scopeError != null) {
+      error = scopeError;
+      notifyListeners();
       return null;
     }
     busy = true;

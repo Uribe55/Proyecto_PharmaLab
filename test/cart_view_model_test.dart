@@ -203,7 +203,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'La confirmación real todavía no está disponible: falta verificar la protección conjunta del pedido y el descuento por lotes. Tu carrito se conserva.',
+          'Esta versión permite un producto y un único lote por pedido, hasta 1000 cajas. No se dividen compras ni se eliminan productos del carrito.',
         ),
         findsOneWidget,
       );

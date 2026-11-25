@@ -64,6 +64,15 @@ class FirestoreOrderMapper {
       ],
     );
     for (final line in details) {
+      if (line['id_lote'] is String) {
+        order.lotAllocations.add(
+          LotStockAllocation(
+            productId: line['id_producto'] as String,
+            batchId: line['id_lote'] as String,
+            quantity: (line['cantidad'] as num).toInt(),
+          ),
+        );
+      }
       for (final raw in line['asignaciones_lotes'] as List? ?? []) {
         final allocation = Map<String, dynamic>.from(raw as Map);
         order.lotAllocations.add(

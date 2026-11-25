@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/cart_item.dart';
 import '../../viewmodels/cart_view_model.dart';
 import '../../viewmodels/checkout_view_model.dart';
+import '../../domain/spark_checkout.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
@@ -258,7 +259,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
-                      'La confirmación real todavía no está disponible: falta verificar la protección conjunta del pedido y el descuento por lotes. Tu carrito se conserva.',
+                      SparkCheckout.limitMessage,
                       style: AppText.label,
                     ),
                   ),
@@ -267,6 +268,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     'Revisa la disponibilidad del catálogo y ajusta el carrito antes de continuar.',
                     style: AppText.label,
                   ),
+                if (_checkout?.scopeError != null)
+                  Text(_checkout!.scopeError!, style: AppText.label),
                 _CheckoutCard(
                   title: 'Resumen de compra',
                   trailing:
@@ -463,7 +466,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Expanded(
                         child: Text(
                           cart.isRemote
-                              ? 'Resumen previo: no se genera un pedido ni se modifica el inventario.'
+                              ? 'Al confirmar se registrará el pedido pendiente y se descontarán cajas del lote en una sola transacción. El carrito solo se vacía tras verificar el éxito.'
                               : 'Al confirmar, el stock se descuenta automáticamente y se genera un número único de pedido.',
                           style: AppText.meta.copyWith(height: 1.4),
                         ),

@@ -7,9 +7,10 @@ abstract interface class ApprovalTransaction {
 }
 
 class SparkApproval {
-  static const enabled = false;
+  // Contrato verificado con Rules: transición y evento APROBACION atómicos.
+  static const enabled = true;
   static const blockedReason =
-      'Aprobación real bloqueada: falta verificar las reglas de la transacción en un entorno aislado.';
+      'La aprobación no está habilitada para este repositorio.';
 
   static Future<void> prepare(
     ApprovalTransaction tx, {
