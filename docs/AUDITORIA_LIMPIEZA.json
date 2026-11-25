@@ -1,0 +1,91 @@
+﻿[
+    {
+        "value":  [
+                      {
+                          "Path":  "build",
+                          "Files":  2121,
+                          "Bytes":  1508043093,
+                          "Reason":  "Generado, ignorado y regenerable; procesos de prueba detenidos"
+                      },
+                      {
+                          "Path":  ".dart_tool/flutter_build",
+                          "Files":  153,
+                          "Bytes":  621622006,
+                          "Reason":  "Generado, ignorado y regenerable; procesos de prueba detenidos"
+                      },
+                      {
+                          "Path":  ".dart_tool/hooks_runner",
+                          "Files":  46,
+                          "Bytes":  56539328,
+                          "Reason":  "Generado, ignorado y regenerable; procesos de prueba detenidos"
+                      },
+                      {
+                          "Path":  "functions/node_modules",
+                          "Files":  14236,
+                          "Bytes":  188604146,
+                          "Reason":  "Generado, ignorado y regenerable; procesos de prueba detenidos"
+                      }
+                  ],
+        "Count":  4
+    },
+    {
+        "Path":  "build",
+        "Files":  11,
+        "Bytes":  77019654,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  ".dart_tool/flutter_build",
+        "Files":  1,
+        "Bytes":  3457,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  ".dart_tool/hooks_runner",
+        "Files":  10,
+        "Bytes":  11307752,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "emulator-export-debug.log",
+        "Files":  1,
+        "Bytes":  5160,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "emulator-phone-debug.log",
+        "Files":  1,
+        "Bytes":  135888,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "emulator-test-output.log",
+        "Files":  1,
+        "Bytes":  301986,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "firebase-debug.log",
+        "Files":  1,
+        "Bytes":  226826,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "firestore-debug.log",
+        "Files":  1,
+        "Bytes":  48656,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "flutter-test-output.log",
+        "Files":  1,
+        "Bytes":  32012,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    },
+    {
+        "Path":  "npm-ci-output.log",
+        "Files":  1,
+        "Bytes":  3314,
+        "Reason":  "Salida regenerable retirada tras concluir verificaciones"
+    }
+]

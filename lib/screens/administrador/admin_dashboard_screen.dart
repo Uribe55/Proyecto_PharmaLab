@@ -170,7 +170,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         final horizontal = DashboardLayout.isDesktop(width) ? 24.0 : 16.0;
         final loadingFirstLoad =
             _vm.loadingOrders && _vm.orders.isEmpty && _vm.updatedAt == null;
-        final ordersFailed = _vm.origin == DashboardOrigin.error;
+        final ordersFailed =
+            _vm.origin == DashboardOrigin.error ||
+            _vm.origin == DashboardOrigin.permissionDenied;
 
         return Scaffold(
           body: SafeArea(

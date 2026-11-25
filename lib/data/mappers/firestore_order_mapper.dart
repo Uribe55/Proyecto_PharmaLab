@@ -87,12 +87,12 @@ class FirestoreOrderMapper {
               : status(event['estado_anterior']),
           after: after,
           operation: event['operacion'] as String? ?? 'estado',
-          at: date(event['fecha']),
-          actorId: event['usuario_id'] as String? ?? '',
-          role: UserRole.values.firstWhere(
-            (r) => r.name == event['rol'],
-            orElse: () => UserRole.cliente,
-          ),
+          at: date(event['fecha'] ?? event['fecha_cambio']),
+          actorId:
+              event['usuario_id'] as String? ??
+              event['id_usuario'] as String? ??
+              '',
+          role: _role(event['rol']),
           note:
               event['nota'] as String? ??
               event['observaciones'] as String? ??
@@ -102,5 +102,12 @@ class FirestoreOrderMapper {
     }
     order.history.sort((a, b) => a.at.compareTo(b.at));
     return order;
+  }
+
+  static UserRole? _role(dynamic value) {
+    for (final role in UserRole.values) {
+      if (role.name == value) return role;
+    }
+    return null;
   }
 }

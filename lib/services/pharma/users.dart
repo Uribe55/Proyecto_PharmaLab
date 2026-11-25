@@ -2,8 +2,10 @@ part of '../pharma_service.dart';
 
 /// Gestión de usuarios internos y sincronización de sus perfiles.
 mixin _PharmaUsers on _PharmaServiceState {
-  List<AppUser> get users =>
-      _accounts.values.map((account) => account.user).toList();
+  List<AppUser> get users => _accounts.values
+      .where((account) => account.remote == usesFirebase)
+      .map((account) => account.user)
+      .toList();
 
   List<AppUser> get drivers => users
       .where((user) => user.role == UserRole.repartidor && user.active)
@@ -11,15 +13,20 @@ mixin _PharmaUsers on _PharmaServiceState {
 
   int get activeUsers => users.where((user) => user.active).length;
 
-  int get totalOrders => _orders.length;
+  int get totalOrders => usesFirebase ? 0 : _orders.length;
 
   int get pendingOrdersCount =>
-      _orders.where((order) => order.isPending).length;
+      usesFirebase ? 0 : _orders.where((order) => order.isPending).length;
 
-  int get inTransitOrders => _orders.where((order) => order.isInTransit).length;
+  int get inTransitOrders =>
+      usesFirebase ? 0 : _orders.where((order) => order.isInTransit).length;
 
-  int get completedDeliveries =>
-      _orders.where((order) => order.status.isDelivered).length;
+  int get completedDeliveries => usesFirebase
+      ? 0
+      : _orders.where((order) => order.status.isDelivered).length;
+
+  String? usersError;
+  bool loadingUsers = false;
 
   /// Carga los perfiles de la colección `usuarios` de Firestore (RF-19).
   ///
@@ -27,10 +34,13 @@ mixin _PharmaUsers on _PharmaServiceState {
   /// `estado`. Se aceptan alias para tolerar datos ya cargados a mano.
   Future<void> refreshUsers() async {
     if (!usesFirebase) return;
+    loadingUsers = true;
+    usersError = null;
     try {
       final snapshot = await _db
           .collection('usuarios')
           .get(const GetOptions(source: Source.server));
+      _accounts.removeWhere((_, account) => account.remote);
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final userRole = _roleFrom(data);
@@ -53,11 +63,17 @@ mixin _PharmaUsers on _PharmaServiceState {
           pharmacy: _currentUser?.id == user.id ? _currentPharmacy : null,
         );
       }
-      notifyListeners();
     } on FirebaseException catch (e) {
+      usersError = e.code == 'permission-denied'
+          ? 'No tienes permisos para consultar los usuarios reales.'
+          : 'No se pudieron cargar los usuarios reales. Revisa la conexión.';
       debugPrint('No se pudieron cargar los usuarios: ${e.code}');
     } catch (e) {
+      usersError = 'No se pudieron cargar los usuarios reales.';
       debugPrint('No se pudieron cargar los usuarios: ${e.runtimeType}');
+    } finally {
+      loadingUsers = false;
+      notifyListeners();
     }
   }
 
@@ -216,6 +232,7 @@ mixin _PharmaUsers on _PharmaServiceState {
         await secondaryAuth.useAuthEmulator(
           FirebaseEnvironment.emulatorHost!,
           9099,
+          automaticHostMapping: false,
         );
       }
       final credential = await secondaryAuth.createUserWithEmailAndPassword(

@@ -13,8 +13,7 @@ import 'pharma_service.dart';
 /// Repositorio del dashboard administrativo.
 ///
 /// - Pedidos: escucha `pedidos` en Firestore y complementa con `entregas`.
-/// - Si Firestore no tiene pedidos (o no se puede leer), usa los pedidos
-///   locales de la aplicación y lo informa a la vista.
+/// - Una consulta vacía o denegada nunca se sustituye por pedidos demo.
 /// - Inventario: lee `productos`, `lotes_productos` y `categorias`. En modo
 ///   local usa el stock del catálogo de demostración, sin inventar lotes ni
 ///   fechas de vencimiento.
@@ -65,19 +64,15 @@ class DashboardRepository {
       }
       if (!ordersLoaded) return;
 
-      if (remoteOrders.isEmpty) {
-        final message =
-            ordersError ??
-            'Firestore no tiene pedidos registrados. Se muestran los pedidos '
-                'locales de demostración.';
+      if (ordersError != null) {
         controller.add(
           DashboardFeed(
-            orders: _localOrders(),
+            orders: const [],
             origin: ordersDenied
                 ? DashboardOrigin.permissionDenied
-                : DashboardOrigin.localFallback,
+                : DashboardOrigin.error,
             updatedAt: DateTime.now(),
-            message: message,
+            message: ordersError,
           ),
         );
         return;

@@ -83,7 +83,7 @@ class DateRange {
 /// Origen de los datos de pedidos mostrados en el dashboard.
 ///
 /// [local] se usa cuando la app no tiene Firebase (modo demostración),
-/// [localFallback] cuando Firestore respondió pero no hay registros y
+/// [localFallback] se conserva por compatibilidad con fuentes anteriores y
 /// [permissionDenied] cuando las reglas impidieron leer los datos reales.
 enum DashboardOrigin {
   loading,
@@ -238,15 +238,12 @@ class DashboardFeed {
 
   bool get isFirestore => origin == DashboardOrigin.firestore;
 
-  bool get isFallback =>
-      origin == DashboardOrigin.localFallback ||
-      origin == DashboardOrigin.permissionDenied;
+  bool get isFallback => origin == DashboardOrigin.localFallback;
 
   /// Datos de demostración que no provienen de Firestore.
   bool get isDemo =>
       origin == DashboardOrigin.local ||
-      origin == DashboardOrigin.localFallback ||
-      origin == DashboardOrigin.permissionDenied;
+      origin == DashboardOrigin.localFallback;
 
   bool get hasPermissionIssue => origin == DashboardOrigin.permissionDenied;
 }

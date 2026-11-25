@@ -87,6 +87,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         style: AppText.muted,
                       ),
                       const SizedBox(height: 18),
+                      if (PharmaService.instance.loadingUsers)
+                        const LinearProgressIndicator(),
+                      if (PharmaService.instance.usersError != null)
+                        Text(
+                          PharmaService.instance.usersError!,
+                          style: AppText.muted,
+                        ),
                       TextField(
                         controller: _searchController,
                         onChanged: (_) => setState(() {}),

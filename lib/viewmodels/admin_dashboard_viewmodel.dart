@@ -66,9 +66,7 @@ class AdminDashboardViewModel extends ChangeNotifier {
 
   bool get isFirestore => _origin == DashboardOrigin.firestore;
 
-  bool get isLocalFallback =>
-      _origin == DashboardOrigin.localFallback ||
-      _origin == DashboardOrigin.permissionDenied;
+  bool get isLocalFallback => _origin == DashboardOrigin.localFallback;
 
   bool get hasPermissionIssue =>
       _origin == DashboardOrigin.permissionDenied ||

@@ -49,7 +49,21 @@ app.*.map.json
 
 # Local Firebase tooling
 functions/node_modules/
+node_modules/
 .firebase/
 *-debug.log
 *-debug.*.log
 *-test-output.log
+
+# Generated Android caches and local secrets
+**/.gradle/
+**/.kotlin/
+**/.cxx/
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*service-account*.json
+*serviceAccount*.json
+*application_default_credentials*.json

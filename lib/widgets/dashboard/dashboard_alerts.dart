@@ -34,12 +34,12 @@ class DashboardSourceBanner extends StatelessWidget {
         AppColors.pendingBackground,
       ),
       DashboardOrigin.localFallback => (
-        'Pedidos locales · Firestore sin registros',
+        'Firestore sin registros',
         AppColors.pendingText,
         AppColors.pendingBackground,
       ),
       DashboardOrigin.permissionDenied => (
-        'Permisos denegados · pedidos de demostración',
+        'Permisos denegados · pedidos no disponibles',
         AppColors.danger,
         AppColors.dangerBackground,
       ),
@@ -203,7 +203,10 @@ class DashboardInventorySourceBanner extends StatelessWidget {
           Container(
             width: 28,
             height: 28,
-            decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: background,
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, size: 15, color: color),
           ),
           const SizedBox(width: 9),

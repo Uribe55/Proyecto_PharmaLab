@@ -36,6 +36,7 @@ class PharmaService extends _PharmaServiceState
         _PharmaOrders,
         _PharmaUsers {
   PharmaService._() {
+    if (usesFirebase) return;
     _resetDemoData();
     for (final user in demoUsers) {
       _accounts[user.email.toLowerCase()] = _Account(

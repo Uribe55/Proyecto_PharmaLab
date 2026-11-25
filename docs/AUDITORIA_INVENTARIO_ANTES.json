@@ -1,0 +1,458 @@
+﻿{
+    "Root":  "D:\\Sexto Semestre\\Proyecto Final\\Desarrollo_aplicaciones_moviles\\Proyecto_PharmaLab",
+    "AtUtc":  "2026-11-24T23:21:40.4982614Z",
+    "Files":  17331,
+    "Directories":  6370,
+    "Bytes":  2365217841,
+    "Top":  [
+                {
+                    "Path":  "build",
+                    "Files":  2121,
+                    "Bytes":  1485797485
+                },
+                {
+                    "Path":  ".dart_tool",
+                    "Files":  204,
+                    "Bytes":  678196682
+                },
+                {
+                    "Path":  "functions",
+                    "Files":  14242,
+                    "Bytes":  188769162
+                },
+                {
+                    "Path":  "android",
+                    "Files":  43,
+                    "Bytes":  10039850
+                },
+                {
+                    "Path":  ".git",
+                    "Files":  509,
+                    "Bytes":  893341
+                },
+                {
+                    "Path":  "lib",
+                    "Files":  108,
+                    "Bytes":  784709
+                },
+                {
+                    "Path":  "emulator-test-output.log",
+                    "Files":  1,
+                    "Bytes":  314122
+                },
+                {
+                    "Path":  "test",
+                    "Files":  17,
+                    "Bytes":  99342
+                },
+                {
+                    "Path":  "ios",
+                    "Files":  50,
+                    "Bytes":  72123
+                },
+                {
+                    "Path":  "emulator-phone-debug.log",
+                    "Files":  1,
+                    "Bytes":  58986
+                },
+                {
+                    "Path":  "web",
+                    "Files":  7,
+                    "Bytes":  43615
+                },
+                {
+                    "Path":  "docs",
+                    "Files":  2,
+                    "Bytes":  38193
+                },
+                {
+                    "Path":  "flutter-test-output.log",
+                    "Files":  1,
+                    "Bytes":  31328
+                },
+                {
+                    "Path":  "pubspec.lock",
+                    "Files":  1,
+                    "Bytes":  20856
+                },
+                {
+                    "Path":  "firestore.rules",
+                    "Files":  1,
+                    "Bytes":  11427
+                },
+                {
+                    "Path":  ".firebase",
+                    "Files":  6,
+                    "Bytes":  8917
+                },
+                {
+                    "Path":  "assets",
+                    "Files":  1,
+                    "Bytes":  8438
+                },
+                {
+                    "Path":  ".flutter-plugins-dependencies",
+                    "Files":  1,
+                    "Bytes":  8210
+                },
+                {
+                    "Path":  "firebase-debug.log",
+                    "Files":  1,
+                    "Bytes":  5418
+                },
+                {
+                    "Path":  "emulator-export-debug.log",
+                    "Files":  1,
+                    "Bytes":  5160
+                },
+                {
+                    "Path":  "pubspec.yaml",
+                    "Files":  1,
+                    "Bytes":  4070
+                },
+                {
+                    "Path":  "analysis_options.yaml",
+                    "Files":  1,
+                    "Bytes":  1535
+                },
+                {
+                    "Path":  ".github",
+                    "Files":  3,
+                    "Bytes":  1309
+                },
+                {
+                    "Path":  ".metadata",
+                    "Files":  1,
+                    "Bytes":  1296
+                },
+                {
+                    "Path":  ".gitignore",
+                    "Files":  1,
+                    "Bytes":  906
+                },
+                {
+                    "Path":  "firebase.json",
+                    "Files":  1,
+                    "Bytes":  429
+                },
+                {
+                    "Path":  "firebase.emulator.json",
+                    "Files":  1,
+                    "Bytes":  422
+                },
+                {
+                    "Path":  "firestore.indexes.json",
+                    "Files":  1,
+                    "Bytes":  231
+                },
+                {
+                    "Path":  ".vscode",
+                    "Files":  1,
+                    "Bytes":  166
+                },
+                {
+                    "Path":  "README.md",
+                    "Files":  1,
+                    "Bytes":  113
+                },
+                {
+                    "Path":  "firestore-debug.log",
+                    "Files":  1,
+                    "Bytes":  0
+                }
+            ],
+    "Candidates":  [
+                       {
+                           "Path":  "functions/node_modules",
+                           "Files":  14236,
+                           "Directories":  4119,
+                           "Bytes":  188604146
+                       },
+                       {
+                           "Path":  "node_modules",
+                           "Files":  0,
+                           "Directories":  0,
+                           "Bytes":  null
+                       },
+                       {
+                           "Path":  "build",
+                           "Files":  2121,
+                           "Directories":  1869,
+                           "Bytes":  1485797485
+                       },
+                       {
+                           "Path":  ".dart_tool",
+                           "Files":  204,
+                           "Directories":  32,
+                           "Bytes":  678196682
+                       },
+                       {
+                           "Path":  "android/.gradle",
+                           "Files":  17,
+                           "Directories":  13,
+                           "Bytes":  9960855
+                       },
+                       {
+                           "Path":  ".gradle",
+                           "Files":  0,
+                           "Directories":  0,
+                           "Bytes":  null
+                       },
+                       {
+                           "Path":  ".firebase",
+                           "Files":  6,
+                           "Directories":  6,
+                           "Bytes":  8917
+                       },
+                       {
+                           "Path":  "coverage",
+                           "Files":  0,
+                           "Directories":  0,
+                           "Bytes":  null
+                       },
+                       {
+                           "Path":  ".git",
+                           "Files":  509,
+                           "Directories":  246,
+                           "Bytes":  893341
+                       }
+                   ],
+    "Logs":  [
+                 {
+                     "Path":  "emulator-export-debug.log",
+                     "Bytes":  5160
+                 },
+                 {
+                     "Path":  "emulator-phone-debug.log",
+                     "Bytes":  58986
+                 },
+                 {
+                     "Path":  "emulator-test-output.log",
+                     "Bytes":  314122
+                 },
+                 {
+                     "Path":  "firebase-debug.log",
+                     "Bytes":  5418
+                 },
+                 {
+                     "Path":  "firestore-debug.log",
+                     "Bytes":  0
+                 },
+                 {
+                     "Path":  "flutter-test-output.log",
+                     "Bytes":  31328
+                 },
+                 {
+                     "Path":  "build/sqflite_android/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  1226
+                 },
+                 {
+                     "Path":  "build/sqflite_android/outputs/aar/sqflite_android-debug.aar",
+                     "Bytes":  47361
+                 },
+                 {
+                     "Path":  "build/sqflite_android/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  351
+                 },
+                 {
+                     "Path":  "build/jni_flutter/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  1504
+                 },
+                 {
+                     "Path":  "build/jni_flutter/outputs/aar/jni_flutter-debug.aar",
+                     "Bytes":  2510
+                 },
+                 {
+                     "Path":  "build/jni_flutter/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  363
+                 },
+                 {
+                     "Path":  "build/jni/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  1404
+                 },
+                 {
+                     "Path":  "build/jni/outputs/aar/jni-debug.aar",
+                     "Bytes":  109525
+                 },
+                 {
+                     "Path":  "build/jni/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  355
+                 },
+                 {
+                     "Path":  "build/firebase_core/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  2557
+                 },
+                 {
+                     "Path":  "build/firebase_core/outputs/aar/firebase_core-debug.aar",
+                     "Bytes":  36986
+                 },
+                 {
+                     "Path":  "build/firebase_core/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  363
+                 },
+                 {
+                     "Path":  "build/firebase_auth/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  2554
+                 },
+                 {
+                     "Path":  "build/firebase_auth/outputs/aar/firebase_auth-debug.aar",
+                     "Bytes":  189439
+                 },
+                 {
+                     "Path":  "build/firebase_auth/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  363
+                 },
+                 {
+                     "Path":  "build/cloud_functions/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  2590
+                 },
+                 {
+                     "Path":  "build/cloud_functions/outputs/aar/cloud_functions-debug.aar",
+                     "Bytes":  26619
+                 },
+                 {
+                     "Path":  "build/cloud_functions/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  368
+                 },
+                 {
+                     "Path":  "build/cloud_firestore/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  2596
+                 },
+                 {
+                     "Path":  "build/cloud_firestore/outputs/aar/cloud_firestore-debug.aar",
+                     "Bytes":  183370
+                 },
+                 {
+                     "Path":  "build/cloud_firestore/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json",
+                     "Bytes":  368
+                 },
+                 {
+                     "Path":  "build/app/outputs/logs/manifest-merger-debug-report.txt",
+                     "Bytes":  121670
+                 },
+                 {
+                     "Path":  "build/app/outputs/flutter-apk/app-debug.apk",
+                     "Bytes":  116801850
+                 },
+                 {
+                     "Path":  "build/app/outputs/flutter-apk/app-debug.apk.sha1",
+                     "Bytes":  40
+                 },
+                 {
+                     "Path":  "build/app/outputs/apk/debug/app-debug.apk",
+                     "Bytes":  116801850
+                 },
+                 {
+                     "Path":  "build/app/outputs/apk/debug/output-metadata.json",
+                     "Bytes":  416
+                 },
+                 {
+                     "Path":  "build/app/intermediates/packaged_manifests/debug/processDebugManifestForPackage/output-metadata.json",
+                     "Bytes":  405
+                 },
+                 {
+                     "Path":  "build/app/intermediates/merged_manifests/debug/processDebugManifest/output-metadata.json",
+                     "Bytes":  403
+                 },
+                 {
+                     "Path":  "build/app/intermediates/merged_manifest/debug/outputDebugAppLinkSettings/AndroidManifest.xml",
+                     "Bytes":  12869
+                 },
+                 {
+                     "Path":  "build/app/intermediates/linked_resources_binary_format/debug/processDebugResources/output-metadata.json",
+                     "Bytes":  438
+                 },
+                 {
+                     "Path":  "build/app/intermediates/compatible_screen_manifest/debug/createDebugCompatibleScreenManifests/output-metadata.json",
+                     "Bytes":  208
+                 },
+                 {
+                     "Path":  "build/.cxx/debug/5d5c4t6s/x86_64/CMakeFiles/CMakeOutput.log",
+                     "Bytes":  38391
+                 },
+                 {
+                     "Path":  "build/.cxx/debug/5d5c4t6s/armeabi-v7a/CMakeFiles/CMakeOutput.log",
+                     "Bytes":  41958
+                 },
+                 {
+                     "Path":  "build/.cxx/debug/5d5c4t6s/arm64-v8a/CMakeFiles/CMakeOutput.log",
+                     "Bytes":  39154
+                 },
+                 {
+                     "Path":  "android/.kotlin/errors/errors-1795376389831.log",
+                     "Bytes":  64
+                 },
+                 {
+                     "Path":  "android/.gradle/kotlin/errors/errors-1795376389831.log",
+                     "Bytes":  64
+                 },
+                 {
+                     "Path":  "android/.gradle/buildOutputCleanup/buildOutputCleanup.lock",
+                     "Bytes":  17
+                 },
+                 {
+                     "Path":  "android/.gradle/buildOutputCleanup/cache.properties",
+                     "Bytes":  59
+                 },
+                 {
+                     "Path":  "android/.gradle/buildOutputCleanup/outputFiles.bin",
+                     "Bytes":  91781
+                 },
+                 {
+                     "Path":  ".firebase/phone-backup/firestore_export/all_namespaces/all_kinds/output-0",
+                     "Bytes":  7333
+                 },
+                 {
+                     "Path":  ".dart_tool/hooks_runner/objective_c/bbe70db44d/output.json",
+                     "Bytes":  95
+                 },
+                 {
+                     "Path":  ".dart_tool/hooks_runner/objective_c/8e04c28b44/output.json",
+                     "Bytes":  95
+                 },
+                 {
+                     "Path":  ".dart_tool/hooks_runner/objective_c/68c609493f/output.json",
+                     "Bytes":  95
+                 },
+                 {
+                     "Path":  ".dart_tool/hooks_runner/objective_c/4459e21b81/output.json",
+                     "Bytes":  95
+                 },
+                 {
+                     "Path":  ".dart_tool/hooks_runner/objective_c/337ce265dc/output.json",
+                     "Bytes":  95
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/fc981b7af8b7a7a4d78b624f8c9364b2/outputs.json",
+                     "Bytes":  1920
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/debb331a553af830a3a606b2d83b275c/outputs.json",
+                     "Bytes":  2105
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/d8a7ee6af370c9aea179e249b4a15eca/outputs.json",
+                     "Bytes":  1920
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/d87dacaaacc32517583408ee1888a7a4/outputs.json",
+                     "Bytes":  2105
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/d09ed0a63affd78676fd1979c1758114/outputs.json",
+                     "Bytes":  2105
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/c809f9dddfe832e4b3b092424a3fde44/outputs.json",
+                     "Bytes":  1920
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/c6920b18eed9b8676618469407f9b241/outputs.json",
+                     "Bytes":  2105
+                 },
+                 {
+                     "Path":  ".dart_tool/flutter_build/7ceaf006fafd18dcf5dcba563d80505d/outputs.json",
+                     "Bytes":  2105
+                 }
+             ]
+}

@@ -22,7 +22,18 @@ abstract class _PharmaServiceState extends ChangeNotifier {
 
   UserRole get role => _currentUser?.role ?? UserRole.cliente;
 
-  PharmacyProfile get pharmacy => _currentPharmacy ?? PharmaService.demoProfile;
+  PharmacyProfile get pharmacy =>
+      _currentPharmacy ??
+      (usesFirebase
+          ? const PharmacyProfile(
+              commercialName: 'Farmacia no disponible',
+              nit: '',
+              responsible: '',
+              phone: '',
+              address: '',
+              email: '',
+            )
+          : PharmaService.demoProfile);
 
   bool get isLoggedIn => _currentUser != null;
 

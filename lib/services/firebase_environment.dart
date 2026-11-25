@@ -26,16 +26,15 @@ class FirebaseEnvironment {
     emulatorHost = host;
     _emulatorApp = await Firebase.initializeApp(
       name: 'pharmalab-emulator',
-      options: const FirebaseOptions(
-        apiKey: 'demo-pharmalab-key',
-        appId: '1:123456789:android:demo',
-        messagingSenderId: '123456789',
-        projectId: 'demo-pharmalab',
-      ),
+      // El SDK genera las opciones demo con el formato que exige Android,
+      // también cuando Functions solicita el identificador de instalación.
+      demoProjectId: 'demo-pharmalab',
     );
-    firestore.useFirestoreEmulator(host, 8080);
-    await auth.useAuthEmulator(host, 9099);
-    functions.useFunctionsEmulator(host, 5001);
+    // El host ya es explícito: 127.0.0.1 para adb reverse en teléfono físico,
+    // 10.0.2.2 para Android Emulator. Evitar que el SDK lo reescriba.
+    firestore.useFirestoreEmulator(host, 8080, automaticHostMapping: false);
+    await auth.useAuthEmulator(host, 9099, automaticHostMapping: false);
+    functions.useFunctionsEmulator(host, 5001, automaticHostMapping: false);
     _emulatorsConfigured = true;
   }
 }
