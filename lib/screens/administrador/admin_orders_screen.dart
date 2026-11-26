@@ -5,6 +5,7 @@ import '../../models/order.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/admin_dashboard_viewmodel.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/admin_scroll_layout.dart';
 import '../../widgets/dashboard/dashboard_alerts.dart';
 import '../../widgets/dashboard/dashboard_order_detail.dart';
 import '../../widgets/empty_state.dart';
@@ -79,16 +80,20 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         }).toList();
 
         return Scaffold(
-          appBar: widget.embedded ? null : AppPageAppBar(title: 'Pedidos'),
           body: SafeArea(
             bottom: false,
             child: Column(
               children: [
-                if (widget.embedded) const AppTabHeader(title: 'Pedidos'),
                 Expanded(
-                  child: ListView(
+                  child: AdminScrollList(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                    children: [
+                    headerPrefix: widget.embedded
+                        ? const AppTabHeader(title: 'Pedidos')
+                        : SizedBox(
+                            height: kToolbarHeight,
+                            child: AppPageAppBar(title: 'Pedidos'),
+                          ),
+                    headerChildren: [
                       const Text(
                         'SUPERVISIÓN DE PEDIDOS',
                         style: AppText.eyebrow,
@@ -139,6 +144,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                    ],
+                    children: [
                       Row(
                         children: [
                           const Expanded(

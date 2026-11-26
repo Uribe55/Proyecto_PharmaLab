@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../admin_scroll_layout.dart';
 import 'dashboard_alerts.dart';
 
 /// Utilidades de composición responsiva del panel administrativo.
@@ -16,7 +17,11 @@ class DashboardLayout {
   static bool isDesktop(double width) => width >= desktopBreakpoint;
 
   /// Ancho de cada tarjeta de indicadores para una grilla de [columns].
-  static double gridItemWidth(double width, int columns, {double spacing = 10}) {
+  static double gridItemWidth(
+    double width,
+    int columns, {
+    double spacing = 10,
+  }) {
     if (columns <= 1) return width;
     return (width - spacing * (columns - 1)) / columns;
   }
@@ -48,22 +53,18 @@ class DashboardTabScroll extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final horizontal = width >= DashboardLayout.desktopBreakpoint ? 28.0 : 20.0;
-        return ListView(
-          key: scrollKey,
+        final horizontal = width >= DashboardLayout.desktopBreakpoint
+            ? 28.0
+            : 20.0;
+        return AdminScrollList(
+          scrollKey: scrollKey,
           controller: controller,
           padding: EdgeInsets.fromLTRB(horizontal, 4, horizontal, 32),
+          maxContentWidth: DashboardLayout.maxContentWidth,
           children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: DashboardLayout.maxContentWidth,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: children,
-                ),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
             ),
           ],
         );
@@ -238,7 +239,11 @@ class DashboardTwoColumns extends StatelessWidget {
         if (!DashboardLayout.isWide(constraints.maxWidth)) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [first, SizedBox(height: spacing), second],
+            children: [
+              first,
+              SizedBox(height: spacing),
+              second,
+            ],
           );
         }
         return Row(
@@ -271,9 +276,7 @@ class DashboardInfoNote extends StatelessWidget {
           color: AppColors.muted,
         ),
         const SizedBox(width: 6),
-        Expanded(
-          child: Text(text, style: AppText.meta.copyWith(fontSize: 10)),
-        ),
+        Expanded(child: Text(text, style: AppText.meta.copyWith(fontSize: 10))),
       ],
     );
   }

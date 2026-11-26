@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../viewmodels/admin_dashboard_viewmodel.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/admin_scroll_layout.dart';
 import '../../widgets/dashboard/dashboard_alerts.dart';
 import '../../widgets/dashboard/dashboard_charts.dart';
 import '../../widgets/dashboard/dashboard_kpi_card.dart';
@@ -53,7 +54,7 @@ typedef _OpenOrders = void Function({
 ///
 /// Consume [AdminDashboardViewModel], que mantiene los pedidos en tiempo real y
 /// el inventario en un único origen de datos. La información se organiza en
-/// cuatro pestañas para evitar una única página interminable; los filtros y el
+/// cinco pestañas para evitar una única página interminable; los filtros y el
 /// origen de los datos se comparten entre todas ellas.
 ///
 /// Toda cifra mostrada proviene de pedidos o lotes reales. Cuando la consulta
@@ -179,125 +180,119 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return Scaffold(
           body: SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                const AppTabHeader(
-                  title: 'Panel administrativo',
-                  showLogo: true,
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontal,
-                    0,
-                    horizontal,
-                    0,
+            child: AdminScrollLayout(
+              header: Column(
+                children: [
+                  const AppTabHeader(
+                    title: 'Panel administrativo',
+                    showLogo: true,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Mostrar información general solamente
-                      // cuando NO estamos en Empleados.
-                      if (_tab != AdminDashboardTab.empleados) ...[
-                        const Text(
-                          'SUPERVISIÓN GENERAL',
-                          style: AppText.eyebrow,
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Todo PharmaLab, a la vista.',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 21,
-                            height: 1.15,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                            color: AppColors.ink,
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Mostrar información general solamente
+                        // cuando NO estamos en Empleados.
+                        if (_tab != AdminDashboardTab.empleados) ...[
+                          const Text(
+                            'SUPERVISIÓN GENERAL',
+                            style: AppText.eyebrow,
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        const Text(
-                          'Pedidos, entregas e inventario para decidir con datos.',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.muted,
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Todo PharmaLab, a la vista.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 21,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              color: AppColors.ink,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Pedidos, entregas e inventario para decidir con datos.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
 
-                        DashboardSourceBanner(
-                          origin: _vm.origin,
-                          updatedAt: _vm.updatedAt,
-                          message: _vm.ordersError,
-                          refreshing: _vm.loadingOrders,
-                          onRefresh: _vm.refresh,
-                        ),
+                          DashboardSourceBanner(
+                            origin: _vm.origin,
+                            updatedAt: _vm.updatedAt,
+                            message: _vm.ordersError,
+                            refreshing: _vm.loadingOrders,
+                            onRefresh: _vm.refresh,
+                          ),
 
-                        const SizedBox(height: 8),
+                          const SizedBox(height: 8),
 
-                        DashboardPeriodSelector(
-                          value: _vm.period,
-                          range: _vm.range,
-                          onSelected: _vm.setPeriod,
-                          onPickRange: () => _pickCustomRange(_vm.range),
+                          DashboardPeriodSelector(
+                            value: _vm.period,
+                            range: _vm.range,
+                            onSelected: _vm.setPeriod,
+                            onPickRange: () => _pickCustomRange(_vm.range),
+                          ),
+
+                          const SizedBox(height: 6),
+                        ],
+
+                        // Las pestañas se ocultan junto con la cabecera.
+                        AdminDashboardTabBar(
+                          selected: _tab,
+                          onSelected: _selectTab,
                         ),
 
                         const SizedBox(height: 6),
                       ],
-
-                      // Las pestañas siempre permanecen visibles.
-                      AdminDashboardTabBar(
-                        selected: _tab,
-                        onSelected: _selectTab,
-                      ),
-
-                      const SizedBox(height: 6),
-                    ],
+                    ),
                   ),
+                ],
+              ),
+              body: switch (_tab) {
+                AdminDashboardTab.resumen => _ResumenTab(
+                  metrics: metrics,
+                  loading: loadingFirstLoad,
+                  ordersFailed: ordersFailed,
+                  rangeLabel: _longRange(metrics.period),
+                  now: _vm.now,
+                  onOpenOrders: _openOrders,
+                  onOpenAlert: _openAlert,
+                  onRefresh: _vm.refresh,
                 ),
-
-                Expanded(
-                  child: switch (_tab) {
-                    AdminDashboardTab.resumen => _ResumenTab(
-                      metrics: metrics,
-                      loading: loadingFirstLoad,
-                      ordersFailed: ordersFailed,
-                      rangeLabel: _longRange(metrics.period),
-                      now: _vm.now,
-                      onOpenOrders: _openOrders,
-                      onOpenAlert: _openAlert,
-                      onRefresh: _vm.refresh,
-                    ),
-                    AdminDashboardTab.ventas => _VentasTab(
-                      metrics: metrics,
-                      loading: loadingFirstLoad,
-                      ordersFailed: ordersFailed,
-                      rangeLabel: _longRange(metrics.period),
-                      onRetry: _vm.refresh,
-                    ),
-                    AdminDashboardTab.logistica => _LogisticaTab(
-                      metrics: metrics,
-                      loading: loadingFirstLoad,
-                      ordersFailed: ordersFailed,
-                      rangeLabel: _longRange(metrics.period),
-                      orderCaption: _orderCaption,
-                      onOpenOrders: _openOrders,
-                      onRetry: _vm.refresh,
-                    ),
-                    AdminDashboardTab.inventario => _InventarioTab(
-                      metrics: metrics,
-                      inventory: inventory,
-                      viewModel: _vm,
-                      onOpenInventory: _openInventory,
-                    ),
-                    AdminDashboardTab.empleados => const AdminEmployeesPanel(
-                      embedded: true,
-                    ),
-                  },
+                AdminDashboardTab.ventas => _VentasTab(
+                  metrics: metrics,
+                  loading: loadingFirstLoad,
+                  ordersFailed: ordersFailed,
+                  rangeLabel: _longRange(metrics.period),
+                  onRetry: _vm.refresh,
                 ),
-              ],
+                AdminDashboardTab.logistica => _LogisticaTab(
+                  metrics: metrics,
+                  loading: loadingFirstLoad,
+                  ordersFailed: ordersFailed,
+                  rangeLabel: _longRange(metrics.period),
+                  orderCaption: _orderCaption,
+                  onOpenOrders: _openOrders,
+                  onRetry: _vm.refresh,
+                ),
+                AdminDashboardTab.inventario => _InventarioTab(
+                  metrics: metrics,
+                  inventory: inventory,
+                  viewModel: _vm,
+                  onOpenInventory: _openInventory,
+                ),
+                AdminDashboardTab.empleados => const AdminEmployeesPanel(
+                  embedded: true,
+                ),
+              },
             ),
           ),
         );

@@ -8,6 +8,7 @@ import '../../services/employee_repository.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/admin_scroll_layout.dart';
 import '../../widgets/empty_state.dart';
 import 'admin_employee_form_screen.dart';
 
@@ -114,14 +115,13 @@ class _AdminEmployeesPanelState extends State<AdminEmployeesPanel> {
     final error = await repository.setEmployeeActive(employee, next);
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          next ? 'Empleado activado.' : 'Empleado desactivado.',
-        ),
+        content: Text(next ? 'Empleado activado.' : 'Empleado desactivado.'),
       ),
     );
   }
@@ -158,74 +158,71 @@ class _AdminEmployeesPanelState extends State<AdminEmployeesPanel> {
           return matchesPosition && matchesActive && matchesQuery;
         }).toList();
 
-        return Column(
-          children: [
-            _Filters(
-              searchController: _searchController,
-              position: _positionFilter,
-              active: _activeFilter,
-              counter: _counter,
-              loadingCounter: _loadingCounter,
-              onSearch: () => setState(() {}),
-              onPosition: (value) => setState(() => _positionFilter = value),
-              onActive: (value) => setState(() => _activeFilter = value),
-              onRegister: () => _openForm(),
-              onRefreshCounter: _loadCounter,
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-                children: [
-                  if (snapshot.hasError)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _ErrorNote(message: '${snapshot.error}'),
+        return AdminScrollLayout(
+          header: _Filters(
+            searchController: _searchController,
+            position: _positionFilter,
+            active: _activeFilter,
+            counter: _counter,
+            loadingCounter: _loadingCounter,
+            onSearch: () => setState(() {}),
+            onPosition: (value) => setState(() => _positionFilter = value),
+            onActive: (value) => setState(() => _activeFilter = value),
+            onRegister: () => _openForm(),
+            onRefreshCounter: _loadCounter,
+          ),
+          body: AdminScrollList(
+            scrollKey: const PageStorageKey('admin-employees-list'),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+            children: [
+              if (snapshot.hasError)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ErrorNote(message: '${snapshot.error}'),
+                ),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (filtered.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: EmptyState(
+                    icon: Icons.badge_outlined,
+                    title: 'Sin empleados en esta vista',
+                    description: all.isEmpty
+                        ? 'Registra el primer vendedor o repartidor. El '
+                              'documento se creará como empleado/EMP###.'
+                        : 'No hay empleados que coincidan con la búsqueda '
+                              'o los filtros.',
+                    action: OutlinedButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _positionFilter = null;
+                          _activeFilter = null;
+                        });
+                      },
+                      child: const Text('Limpiar filtros'),
                     ),
-                  if (snapshot.connectionState == ConnectionState.waiting)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (filtered.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24),
-                      child: EmptyState(
-                        icon: Icons.badge_outlined,
-                        title: 'Sin empleados en esta vista',
-                        description: all.isEmpty
-                            ? 'Registra el primer vendedor o repartidor. El '
-                                  'documento se creará como empleado/EMP###.'
-                            : 'No hay empleados que coincidan con la búsqueda '
-                                  'o los filtros.',
-                        action: OutlinedButton(
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _positionFilter = null;
-                              _activeFilter = null;
-                            });
-                          },
-                          child: const Text('Limpiar filtros'),
-                        ),
-                      ),
-                    )
-                  else
-                    for (final employee in filtered) ...[
-                      _EmployeeCard(
-                        employee: employee,
-                        isCurrent:
-                            employee.usuarioId ==
-                            PharmaService.instance.currentUser?.id,
-                        onTap: () => _openForm(employee),
-                        onDetail: () => _openDetail(employee),
-                        onToggle: () => _toggle(employee),
-                      ),
-                      if (employee != filtered.last) const SizedBox(height: 10),
-                    ],
+                  ),
+                )
+              else
+                for (final employee in filtered) ...[
+                  _EmployeeCard(
+                    employee: employee,
+                    isCurrent:
+                        employee.usuarioId ==
+                        PharmaService.instance.currentUser?.id,
+                    onTap: () => _openForm(employee),
+                    onDetail: () => _openDetail(employee),
+                    onToggle: () => _toggle(employee),
+                  ),
+                  if (employee != filtered.last) const SizedBox(height: 10),
                 ],
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -241,35 +238,31 @@ class AdminEmployeesScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            const AppTabHeader(title: 'Empleados'),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('PERSONAL DE PHARMALAB', style: AppText.eyebrow),
-                        const SizedBox(height: 4),
-                        const Text('Empleados EMP###.', style: AppText.h1),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Vendedores y repartidores con documento propio y '
-                          'cuenta de Authentication vinculada.',
-                          style: AppText.muted,
-                        ),
-                      ],
+        child: AdminScrollLayout(
+          header: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AppTabHeader(title: 'Empleados'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('PERSONAL DE PHARMALAB', style: AppText.eyebrow),
+                    const SizedBox(height: 4),
+                    const Text('Empleados EMP###.', style: AppText.h1),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Vendedores y repartidores con documento propio y '
+                      'cuenta de Authentication vinculada.',
+                      style: AppText.muted,
                     ),
-                  ),
-                  const Expanded(child: AdminEmployeesPanel()),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          body: const AdminEmployeesPanel(),
         ),
       ),
     );
@@ -452,10 +445,7 @@ class _CounterBanner extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           if (!ready)
-            TextButton(
-              onPressed: onRefresh,
-              child: const Text('Revisar'),
-            )
+            TextButton(onPressed: onRefresh, child: const Text('Revisar'))
           else
             IconButton(
               tooltip: 'Registrar empleado',
@@ -503,7 +493,9 @@ class _EmployeeCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: employee.estado ? AppColors.mint : AppColors.background,
+                  color: employee.estado
+                      ? AppColors.mint
+                      : AppColors.background,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -673,7 +665,9 @@ class _EmployeeDetail extends StatelessWidget {
           ),
           _DetailRow(
             label: 'Teléfono',
-            value: employee.telefono.isEmpty ? 'Sin teléfono' : employee.telefono,
+            value: employee.telefono.isEmpty
+                ? 'Sin teléfono'
+                : employee.telefono,
           ),
           _DetailRow(
             label: 'Fecha de ingreso',
@@ -708,10 +702,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 130,
-            child: Text(label, style: AppText.meta),
-          ),
+          SizedBox(width: 130, child: Text(label, style: AppText.meta)),
           Expanded(
             child: Text(
               value,
@@ -735,7 +726,7 @@ class _LocalModeNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return AdminScrollList(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
       children: [
         if (!embedded) ...[

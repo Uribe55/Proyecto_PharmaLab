@@ -6,6 +6,7 @@ import '../../models/app_user.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/admin_scroll_layout.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/user_avatar.dart';
 import 'admin_employees_screen.dart';
@@ -82,11 +83,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             bottom: false,
             child: Column(
               children: [
-                const AppTabHeader(title: 'Gestión de usuarios'),
                 Expanded(
-                  child: ListView(
+                  child: AdminScrollList(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
-                    children: [
+                    headerPrefix: const AppTabHeader(
+                      title: 'Gestión de usuarios',
+                    ),
+                    headerChildren: [
                       const Text('CUENTAS Y PERMISOS', style: AppText.eyebrow),
                       const SizedBox(height: 7),
                       const Text('Usuarios del sistema.', style: AppText.h1),
@@ -163,6 +166,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                    ],
+                    children: [
                       Row(
                         children: [
                           const Expanded(

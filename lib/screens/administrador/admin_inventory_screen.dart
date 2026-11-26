@@ -8,6 +8,7 @@ import '../../utils/formatters.dart';
 import '../../viewmodels/admin_dashboard_viewmodel.dart';
 import '../../viewmodels/admin_inventory_viewmodel.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/admin_scroll_layout.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/dashboard/dashboard_alerts.dart';
 import '../../widgets/dashboard/dashboard_charts.dart';
@@ -49,9 +50,8 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _showCreateProduct() async {
@@ -273,10 +273,7 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
               children: [
                 Text(product.name, style: AppText.label),
                 const SizedBox(height: 4),
-                Text(
-                  'Stock actual: ${product.usable} u.',
-                  style: AppText.meta,
-                ),
+                Text('Stock actual: ${product.usable} u.', style: AppText.meta),
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'Cantidad que ingresa',
@@ -364,28 +361,31 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
         final lots = _filteredLots(inventory, now);
 
         return Scaffold(
-          appBar: AppPageAppBar(
-            title: 'Inventario',
-            actions: [
-              IconButton(
-                tooltip: 'Nuevo producto',
-                onPressed: _showCreateProduct,
-                icon: const Icon(Icons.add_box_outlined, size: 21),
-              ),
-              IconButton(
-                tooltip: 'Actualizar inventario',
-                onPressed: vm.loadingInventory
-                    ? null
-                    : () => vm.loadInventory(),
-                icon: const Icon(Icons.refresh_rounded, size: 20),
-              ),
-            ],
-          ),
           body: SafeArea(
             bottom: false,
-            child: ListView(
+            child: AdminScrollList(
+              headerPrefix: SizedBox(
+                height: kToolbarHeight,
+                child: AppPageAppBar(
+                  title: 'Inventario',
+                  actions: [
+                    IconButton(
+                      tooltip: 'Nuevo producto',
+                      onPressed: _showCreateProduct,
+                      icon: const Icon(Icons.add_box_outlined, size: 21),
+                    ),
+                    IconButton(
+                      tooltip: 'Actualizar inventario',
+                      onPressed: vm.loadingInventory
+                          ? null
+                          : () => vm.loadInventory(),
+                      icon: const Icon(Icons.refresh_rounded, size: 20),
+                    ),
+                  ],
+                ),
+              ),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-              children: [
+              headerChildren: [
                 const Text('CONTROL DE INVENTARIO', style: AppText.eyebrow),
                 const SizedBox(height: 7),
                 const Text('Existencias y vencimientos.', style: AppText.h1),
@@ -419,6 +419,8 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
+              ],
+              children: [
                 if (vm.loadingInventory)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 30),
@@ -877,10 +879,7 @@ class _ProductStockTile extends StatelessWidget {
                     minimumSize: Size.zero,
                   ),
                   icon: const Icon(Icons.sell_outlined, size: 14),
-                  label: const Text(
-                    'Precio',
-                    style: TextStyle(fontSize: 10.5),
-                  ),
+                  label: const Text('Precio', style: TextStyle(fontSize: 10.5)),
                 ),
               ),
               const SizedBox(width: 8),

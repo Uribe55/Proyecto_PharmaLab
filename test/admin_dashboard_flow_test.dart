@@ -28,6 +28,10 @@ Finder _dashboardList() {
 }
 
 Future<void> _openTab(WidgetTester tester, String label) async {
+  // Las pestañas vuelven a su posición al regresar al inicio del contenido.
+  final position = tester.state<ScrollableState>(_dashboardList()).position;
+  position.jumpTo(position.minScrollExtent);
+  await tester.pumpAndSettle();
   final finder = find.text(label);
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
@@ -128,6 +132,20 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.byType(AdminDashboardScreen), findsOneWidget);
+
+    await _openTab(tester, 'Empleados');
+    expect(find.text('Modo demostración'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AdminDashboardScreen),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Usuarios'));
     await tester.pumpAndSettle();
