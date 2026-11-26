@@ -185,6 +185,98 @@ mixin _PharmaUsers on _PharmaServiceState {
     return null;
   }
 
+  /// Permite al cliente o al repartidor editar su nombre, teléfono y
+  /// dirección desde la pantalla de cuenta (RF-01).
+  ///
+  /// El cambio se aplica de inmediato en la sesión y se persiste en
+  /// `usuarios`; para el cliente también se sincroniza su farmacia.
+  Future<String?> updateOwnProfile({
+    required String name,
+    required String phone,
+    required String address,
+  }) async {
+    final user = _currentUser;
+    if (user == null) return 'No hay una sesión activa.';
+    if (name.trim().isEmpty) return 'Ingresa el nombre completo.';
+    if (phone.trim().isEmpty) return 'Ingresa un teléfono de contacto.';
+
+    final account = _accounts[user.email.toLowerCase()];
+    if (account == null) return 'No encontramos la cuenta del usuario.';
+
+    final updated = user.copyWith(
+      name: _titleCase(name),
+      phone: phone.trim(),
+      address: address.trim(),
+    );
+    account.user = updated;
+    final pharmacy = account.pharmacy;
+    if (pharmacy != null) {
+      account.pharmacy = pharmacy.copyWith(
+        responsible: updated.name,
+        phone: updated.phone,
+        address: updated.address,
+      );
+    }
+
+    _currentUser = updated;
+    if (account.pharmacy != null) _currentPharmacy = account.pharmacy;
+    notifyListeners();
+
+    if (!usesFirebase) return null;
+
+    try {
+      await _db.collection('usuarios').doc(updated.id).set({
+        'nombre': updated.name,
+        'telefono': updated.phone,
+        'direccion': updated.address,
+      }, SetOptions(merge: true));
+
+      final pharmacyId = _pharmacyId;
+      if (pharmacyId != null) {
+        await _db.collection('farmacia_cliente').doc(pharmacyId).set({
+          'responsable': updated.name,
+          'telefono': updated.phone,
+          'direccion_fiscal': updated.address,
+        }, SetOptions(merge: true));
+      }
+    } on FirebaseException catch (e) {
+      debugPrint('No se pudo persistir el perfil: ${e.code}');
+      return 'Los datos se actualizaron en esta sesión, pero Firestore '
+          'rechazó la escritura (${e.code}).';
+    } catch (e) {
+      debugPrint('No se pudo persistir el perfil: ${e.runtimeType}');
+      return 'Los datos se actualizaron en esta sesión, pero no se pudieron '
+          'guardar en Firestore.';
+    }
+    return null;
+  }
+
+  /// Actualiza el estado de cuenta simulado del cliente (RF-07).
+  ///
+  /// Se usa en la demostración para probar el bloqueo del checkout. En
+  /// Firestore el campo viaja como `tiene_deuda_vencida`.
+  void setDebtStatus({required bool hasDebt}) {
+    final user = _currentUser;
+    if (user == null) return;
+    final updated = user.copyWith(tieneDeudaVencida: hasDebt);
+    _currentUser = updated;
+    final account = _accounts[user.email.toLowerCase()];
+    if (account != null) account.user = updated;
+
+    if (usesFirebase) {
+      unawaited(
+        _db
+            .collection('usuarios')
+            .doc(user.id)
+            .set({'tiene_deuda_vencida': hasDebt}, SetOptions(merge: true))
+            .catchError((Object error) {
+              debugPrint('No se pudo actualizar la deuda: $error');
+            }),
+      );
+    }
+    notifyListeners();
+  }
+
   /// Activa o desactiva una cuenta (RF-19).
   String? setUserActive(AppUser user, bool active) {
     if (!active && _currentUser?.id == user.id) {
@@ -299,6 +391,7 @@ mixin _PharmaUsers on _PharmaServiceState {
           .update({
             'nombre': user.name,
             'telefono': user.phone,
+            'direccion': user.address,
             'rol': user.role.name,
           })
           .catchError((Object error) {

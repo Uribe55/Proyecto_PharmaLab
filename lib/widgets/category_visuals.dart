@@ -5,24 +5,27 @@ import '../theme/app_theme.dart';
 
 IconData categoryIcon(ProductCategory category) {
   return switch (category) {
-    ProductCategory.genericos => Icons.medication_outlined,
-    ProductCategory.insumos => Icons.medical_services_outlined,
-    ProductCategory.vitaminas => Icons.eco_outlined,
+    ProductCategory.reactivosQuimicaSanguinea => Icons.science_outlined,
+    ProductCategory.reactivosInmunologia => Icons.coronavirus_outlined,
+    ProductCategory.equiposLaboratorio => Icons.precision_manufacturing_outlined,
+    ProductCategory.insumosClinicos => Icons.medical_services_outlined,
   };
 }
 
 Color categoryTint(ProductCategory category) {
   return switch (category) {
-    ProductCategory.genericos => AppColors.primary,
-    ProductCategory.insumos => AppColors.lavenderInk,
-    ProductCategory.vitaminas => AppColors.peachInk,
+    ProductCategory.reactivosQuimicaSanguinea => AppColors.primary,
+    ProductCategory.reactivosInmunologia => AppColors.lavenderInk,
+    ProductCategory.equiposLaboratorio => AppColors.approvedText,
+    ProductCategory.insumosClinicos => AppColors.peachInk,
   };
 }
 
 Color categoryBackground(ProductCategory category) {
   return switch (category) {
-    ProductCategory.genericos => AppColors.mint,
-    ProductCategory.insumos => AppColors.lavender,
-    ProductCategory.vitaminas => AppColors.peach,
+    ProductCategory.reactivosQuimicaSanguinea => AppColors.mint,
+    ProductCategory.reactivosInmunologia => AppColors.lavender,
+    ProductCategory.equiposLaboratorio => AppColors.approvedBackground,
+    ProductCategory.insumosClinicos => AppColors.peach,
   };
 }

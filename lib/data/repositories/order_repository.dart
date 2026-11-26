@@ -318,7 +318,7 @@ class OrderRepository {
         } else {
           attempt.result = AttemptResult.failed;
           attempt.reason = reason.trim();
-          order.status = OrderStatus.fallida;
+          order.status = OrderStatus.reprogramado;
           order.failedAt = now;
           order.failureReason = reason.trim();
           order.failureNote = note.trim();
@@ -363,6 +363,7 @@ class OrderRepository {
         order.dispatchedAt = null;
         order.dispatchedBy = null;
         order.rescheduledFor = scheduledFor ?? now;
+        order.scheduledFor = order.rescheduledFor;
       case OrderAction.coordinate || OrderAction.escalate:
         break;
     }

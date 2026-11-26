@@ -7,6 +7,7 @@ enum OrderStatus {
   enRuta('En ruta', 'Transporte iniciado'),
   entregado('Entregado', 'Recibido por la farmacia'),
   fallida('Entrega fallida', 'Intento fallido; pendiente de coordinación'),
+  reprogramado('Reprogramado', 'El vendedor asignará una nueva fecha'),
   cancelado('Cancelado', 'Pedido cancelado antes del despacho');
 
   const OrderStatus(this.label, this.description);
@@ -25,6 +26,10 @@ enum OrderStatus {
   bool get isDelivered => this == OrderStatus.entregado;
 
   bool get isFailure => this == OrderStatus.fallida;
+
+  /// Una entrega fallida ya no cierra el pedido: queda reprogramada para que
+  /// el vendedor asigne una nueva fecha (RF-17).
+  bool get isRescheduled => this == OrderStatus.reprogramado;
 
   bool get isFinal =>
       this == OrderStatus.entregado || this == OrderStatus.cancelado;
@@ -68,6 +73,7 @@ class PharmacyOrder {
     this.deliveredAt,
     this.failureReason,
     this.failureNote,
+    this.scheduledFor,
     this.customerId,
     this.remote = false,
     this.failedAt,
@@ -78,9 +84,11 @@ class PharmacyOrder {
     this.fromCache = false,
   }) {
     // Migración lógica: conserva el fallo histórico sin atribuirle una entrega.
-    if (status == OrderStatus.enRuta || status == OrderStatus.fallida) {
+    if (status == OrderStatus.enRuta ||
+        status.isFailure ||
+        status.isRescheduled) {
       hasBeenDispatched = true;
-      if (status == OrderStatus.fallida) {
+      if (status.isFailure || status.isRescheduled) {
         failedAt ??= deliveredAt;
         deliveredAt = null;
       }
@@ -90,8 +98,8 @@ class PharmacyOrder {
           orderNumber: number,
           number: 1,
           driverId: driverId ?? '',
-          closedAt: status == OrderStatus.fallida ? failedAt : null,
-          result: status == OrderStatus.fallida
+          closedAt: status.isFailure || status.isRescheduled ? failedAt : null,
+          result: status.isFailure || status.isRescheduled
               ? AttemptResult.failed
               : AttemptResult.inProgress,
           reason: failureReason,
@@ -145,6 +153,10 @@ class PharmacyOrder {
   String? failureReason;
   String? failureNote;
 
+  /// Nueva fecha acordada por el vendedor después de una entrega fallida
+  /// (RF-17). El pedido vuelve a "Aprobado" para asignar al repartidor.
+  DateTime? scheduledFor;
+
   int get totalUnits => items.fold(0, (sum, item) => sum + item.quantity);
 
   double get total =>
@@ -154,7 +166,7 @@ class PharmacyOrder {
   /// se detiene en el paso "En ruta".
   int get statusIndex {
     if (status == OrderStatus.cancelado) return -1;
-    if (status.isFailure) {
+    if (status.isFailure || status.isRescheduled) {
       return OrderStatus.deliverySteps.indexOf(OrderStatus.enRuta);
     }
     return OrderStatus.deliverySteps.indexOf(status);
@@ -166,7 +178,13 @@ class PharmacyOrder {
 
   bool get isInTransit => status == OrderStatus.enRuta;
 
+  bool get isRescheduled => status.isRescheduled;
+
   bool get canAssignDriver => status == OrderStatus.aprobado;
 
   bool get canDeliver => status == OrderStatus.enRuta;
+
+  /// Un pedido reprogramado debe volver al panel del vendedor para fijar una
+  /// nueva fecha antes de asignar repartidor.
+  bool get needsReschedule => status.isRescheduled || status.isFailure;
 }

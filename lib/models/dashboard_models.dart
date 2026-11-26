@@ -181,7 +181,12 @@ class DashboardOrder {
 
   bool get isDelivered => !cancelled && status == OrderStatus.entregado;
 
-  bool get isFailure => !cancelled && status == OrderStatus.fallida;
+  bool get isFailure =>
+      !cancelled &&
+      (status == OrderStatus.fallida || status == OrderStatus.reprogramado);
+
+  bool get isRescheduled =>
+      !cancelled && status == OrderStatus.reprogramado;
 
   bool get isPending => !cancelled && status == OrderStatus.pendiente;
 

@@ -13,7 +13,7 @@ void main() {
       name: 'Producto',
       brand: '',
       presentation: 'Caja',
-      category: ProductCategory.insumos,
+      category: ProductCategory.insumosClinicos,
       price: 10,
       stock: 2,
     );

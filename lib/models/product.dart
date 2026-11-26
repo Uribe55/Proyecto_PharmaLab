@@ -1,8 +1,12 @@
-/// Categorías definidas en el RF-02 del proyecto.
+/// Categorías definidas en el RF-02 y el RF-03 del proyecto.
+///
+/// PharmaLab distribuye reactivos, equipos e insumos de laboratorio; por eso
+/// el catálogo ya no se organiza con categorías de farmacia minorista.
 enum ProductCategory {
-  genericos('Genéricos'),
-  insumos('Insumos'),
-  vitaminas('Vitaminas');
+  reactivosQuimicaSanguinea('Reactivos de Química Sanguínea'),
+  reactivosInmunologia('Reactivos de Inmunología'),
+  equiposLaboratorio('Equipos de Laboratorio'),
+  insumosClinicos('Insumos Clínicos');
 
   const ProductCategory(this.label);
 
@@ -55,6 +59,49 @@ class Product {
 
   /// El stock es mutable: se descuenta al confirmar un pedido (RF-08).
   int stock;
+
+  /// Copia inmutable usada por el administrador al actualizar precios (RF-19).
+  Product copyWith({
+    String? id,
+    String? name,
+    String? brand,
+    String? presentation,
+    ProductCategory? category,
+    double? price,
+    int? stock,
+    String? description,
+    bool? isFeatured,
+    String? categoryId,
+    String? categoryName,
+    String? code,
+    String? concentration,
+    String? material,
+    String? size,
+    bool? requiresExpiry,
+    String? unitOfMeasure,
+    int? unitsPerPackage,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      brand: brand ?? this.brand,
+      presentation: presentation ?? this.presentation,
+      category: category ?? this.category,
+      price: price ?? this.price,
+      stock: stock ?? this.stock,
+      description: description ?? this.description,
+      isFeatured: isFeatured ?? this.isFeatured,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      code: code ?? this.code,
+      concentration: concentration ?? this.concentration,
+      material: material ?? this.material,
+      size: size ?? this.size,
+      requiresExpiry: requiresExpiry ?? this.requiresExpiry,
+      unitOfMeasure: unitOfMeasure ?? this.unitOfMeasure,
+      unitsPerPackage: unitsPerPackage ?? this.unitsPerPackage,
+    );
+  }
 
   /// Identifica qué se selecciona y qué se descuenta del inventario.
   String get saleUnit {

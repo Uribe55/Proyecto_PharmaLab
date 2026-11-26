@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/app_text_field.dart';
 import '../../widgets/client_header.dart';
 import '../login_screen.dart' show LoginScreen;
 
@@ -15,6 +16,89 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
+  bool _savingProfile = false;
+
+  /// RF-01: el cliente edita nombre, teléfono y dirección.
+  Future<void> _editProfile() async {
+    final pharmacy = PharmaService.instance.pharmacy;
+    final user = PharmaService.instance.currentUser;
+    final nameController = TextEditingController(
+      text: user?.name ?? pharmacy.responsible,
+    );
+    final phoneController = TextEditingController(text: pharmacy.phone);
+    final addressController = TextEditingController(text: pharmacy.address);
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Editar datos de contacto'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                label: 'Nombre del responsable',
+                hint: 'Nombre y apellido',
+                controller: nameController,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'Teléfono',
+                hint: '+591 700-00000',
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'Dirección de entrega',
+                hint: 'Calle, número y ciudad',
+                controller: addressController,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave != true || !mounted) {
+      nameController.dispose();
+      phoneController.dispose();
+      addressController.dispose();
+      return;
+    }
+
+    setState(() => _savingProfile = true);
+    final warning = await PharmaService.instance.updateOwnProfile(
+      name: nameController.text,
+      phone: phoneController.text,
+      address: addressController.text,
+    );
+    nameController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+
+    if (!mounted) return;
+    setState(() => _savingProfile = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          warning ?? 'Datos de contacto actualizados correctamente.',
+        ),
+      ),
+    );
+  }
 
   Future<void> _confirmLogout() async {
     final shouldLogout = await showDialog<bool>(
@@ -196,9 +280,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: AppText.meta,
                 ),
                 const SizedBox(height: 26),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Text('Datos de la farmacia', style: AppText.h3),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Datos de la farmacia',
+                          style: AppText.h3,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _savingProfile ? null : _editProfile,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: _savingProfile
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.edit_outlined, size: 16),
+                        label: const Text('Editar'),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Padding(
@@ -287,6 +398,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             subtitle: const Text(
                               'Avisos de estado y entregas',
+                              style: AppText.meta,
+                            ),
+                          ),
+                          const Divider(),
+                          SwitchListTile(
+                            value:
+                                PharmaService
+                                    .instance
+                                    .currentUser
+                                    ?.tieneDeudaVencida ??
+                                false,
+                            onChanged: (value) {
+                              PharmaService.instance.setDebtStatus(
+                                hasDebt: value,
+                              );
+                              setState(() {});
+                            },
+                            activeThumbColor: AppColors.surface,
+                            activeTrackColor: AppColors.danger,
+                            secondary: const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 20,
+                            ),
+                            title: const Text(
+                              'Simular deuda vencida',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Demuestra el bloqueo del checkout (RF-07)',
                               style: AppText.meta,
                             ),
                           ),

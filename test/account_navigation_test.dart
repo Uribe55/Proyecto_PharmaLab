@@ -22,6 +22,7 @@ void main() {
       expect(
         await service.login(
           email: user.email,
+          //passwrod pharmaservice demo password
           password: PharmaService.demoPassword,
         ),
         isNull,

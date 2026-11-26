@@ -466,7 +466,8 @@ class DashboardRepository {
     } else if (delivery.status != null) {
       final deliveryFinal =
           delivery.status == OrderStatus.entregado ||
-          delivery.status == OrderStatus.fallida;
+          delivery.status == OrderStatus.fallida ||
+          delivery.status == OrderStatus.reprogramado;
       if (deliveryFinal || order.isPending) {
         status = delivery.status!;
       }
@@ -898,6 +899,9 @@ class DashboardRepository {
         value.contains('deliver') ||
         value.contains('complet')) {
       return (status: OrderStatus.entregado, cancelled: false);
+    }
+    if (value.contains('reprogram')) {
+      return (status: OrderStatus.reprogramado, cancelled: false);
     }
     if (value.contains('fall') ||
         value.contains('fail') ||
