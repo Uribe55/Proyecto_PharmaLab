@@ -186,54 +186,78 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   showLogo: true,
                 ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontal,
+                    0,
+                    horizontal,
+                    0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text('SUPERVISIÓN GENERAL', style: AppText.eyebrow),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Todo PharmaLab, a la vista.',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 21,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          color: AppColors.ink,
+                      // Mostrar información general solamente
+                      // cuando NO estamos en Empleados.
+                      if (_tab != AdminDashboardTab.empleados) ...[
+                        const Text(
+                          'SUPERVISIÓN GENERAL',
+                          style: AppText.eyebrow,
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'Pedidos, entregas e inventario para decidir con datos.',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: AppColors.muted),
-                      ),
-                      const SizedBox(height: 10),
-                      DashboardSourceBanner(
-                        origin: _vm.origin,
-                        updatedAt: _vm.updatedAt,
-                        message: _vm.ordersError,
-                        refreshing: _vm.loadingOrders,
-                        onRefresh: _vm.refresh,
-                      ),
-                      const SizedBox(height: 8),
-                      DashboardPeriodSelector(
-                        value: _vm.period,
-                        range: _vm.range,
-                        onSelected: _vm.setPeriod,
-                        onPickRange: () => _pickCustomRange(_vm.range),
-                      ),
-                      const SizedBox(height: 6),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Todo PharmaLab, a la vista.',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 21,
+                            height: 1.15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        const Text(
+                          'Pedidos, entregas e inventario para decidir con datos.',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        DashboardSourceBanner(
+                          origin: _vm.origin,
+                          updatedAt: _vm.updatedAt,
+                          message: _vm.ordersError,
+                          refreshing: _vm.loadingOrders,
+                          onRefresh: _vm.refresh,
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        DashboardPeriodSelector(
+                          value: _vm.period,
+                          range: _vm.range,
+                          onSelected: _vm.setPeriod,
+                          onPickRange: () => _pickCustomRange(_vm.range),
+                        ),
+
+                        const SizedBox(height: 6),
+                      ],
+
+                      // Las pestañas siempre permanecen visibles.
                       AdminDashboardTabBar(
                         selected: _tab,
                         onSelected: _selectTab,
                       ),
+
+                      const SizedBox(height: 6),
                     ],
                   ),
                 ),
+
                 Expanded(
                   child: switch (_tab) {
                     AdminDashboardTab.resumen => _ResumenTab(
