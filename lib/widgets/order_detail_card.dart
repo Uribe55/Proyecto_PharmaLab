@@ -48,7 +48,12 @@ class OrderDetailCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 5),
-          Text(formatOrderDate(order.createdAt), style: AppText.meta),
+          Text(
+            order.createdAtKnown
+                ? formatOrderDate(order.createdAt)
+                : 'Fecha no disponible',
+            style: AppText.meta,
+          ),
           const SizedBox(height: 14),
           const Divider(),
           const SizedBox(height: 12),

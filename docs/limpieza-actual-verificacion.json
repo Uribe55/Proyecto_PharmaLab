@@ -1,0 +1,1479 @@
+﻿{
+    "Protected":  [
+                      {
+                          "Path":  ".flutter-plugins-dependencies",
+                          "Hash":  "4C791AE0BDE9DCBE880E033D0D8B690455B46680279EC25801DBD6B9A3AACAAF"
+                      },
+                      {
+                          "Path":  ".gitignore",
+                          "Hash":  "630E14F23ABD231D2252F9A8F6B8D945398F5AF2E62961347F533F6C490C0631"
+                      },
+                      {
+                          "Path":  ".metadata",
+                          "Hash":  "EA2162EF1D43DF476AD72AB4242A51D2A541949B43BDD27F842472ECAC5E9EEC"
+                      },
+                      {
+                          "Path":  "analysis_options.yaml",
+                          "Hash":  "1F229AABBB10B67E0A4B18A772D8436D36FC0A7EEC46AB567C6918549EC442BD"
+                      },
+                      {
+                          "Path":  "firebase.emulator.json",
+                          "Hash":  "56EA3EDF691ADA4201D7F4A0D6D9133E225F12C02E06F62A3299020E67EF7BAC"
+                      },
+                      {
+                          "Path":  "firebase.json",
+                          "Hash":  "3ACC836CFC94D67C57EFB6CEE1840F99FB266CA1581A2872CF226129EF24522B"
+                      },
+                      {
+                          "Path":  "firebase.logistics-test.json",
+                          "Hash":  "4DD49DCDF92C3D0939A75C8360FE6E4BCD767B3E086086FD507841ED8B57ECBB"
+                      },
+                      {
+                          "Path":  "firestore.indexes.json",
+                          "Hash":  "6A08ECB19DA4A28A155FAC8B0D21A355ACB38496C7D73A5DE8DBCF82435F283D"
+                      },
+                      {
+                          "Path":  "firestore.rules",
+                          "Hash":  "730E5865EFF1F574B22D504CC4A1895E0DE98B4B77D9151EA57F7B1D041811FC"
+                      },
+                      {
+                          "Path":  "pubspec.lock",
+                          "Hash":  "FA9E7B7D98821DEEB237674465EC66996DCFFE22026D9AF358485F4F2220E565"
+                      },
+                      {
+                          "Path":  "pubspec.yaml",
+                          "Hash":  "D3E98A9782E19DEB740DD5D436A56CE627F5F82A8F11DF4A4B018D4D25DD05F6"
+                      },
+                      {
+                          "Path":  "README.md",
+                          "Hash":  "5FB985948A854F1A594146F28B26EE7E7FD0ECA8E710381A62385A1E089A1E0D"
+                      },
+                      {
+                          "Path":  ".firebase\\audit-backup\\firebase-export-metadata.json",
+                          "Hash":  "D3CC84A3893919D1B5E1CB3C52C291F8F5A0CC1654758897EDFE5C8C53B0D093"
+                      },
+                      {
+                          "Path":  ".firebase\\audit-backup\\auth_export\\accounts.json",
+                          "Hash":  "2141C39448D4640A583AD315F7C0735B30B3C2A10FF84EA86806B5A493633477"
+                      },
+                      {
+                          "Path":  ".firebase\\audit-backup\\auth_export\\config.json",
+                          "Hash":  "A06AD971DD56D46B5975AB34F3308384FF3231D81C70B82B7099FB9B3D312CA8"
+                      },
+                      {
+                          "Path":  ".firebase\\audit-backup\\firestore_export\\firestore_export.overall_export_metadata",
+                          "Hash":  "3CF365F5ABA373AD83E919B6DBF232CC81A9ABD41556557508B7DAD42D792E75"
+                      },
+                      {
+                          "Path":  ".firebase\\audit-backup\\firestore_export\\all_namespaces\\all_kinds\\all_namespaces_all_kinds.export_metadata",
+                          "Hash":  "5143CB14EB8672B82DDB5F1EB62C1B96DE204A87CE40422C192DF2DB9528DEBE"
+                      },
+                      {
+                          "Path":  ".firebase\\audit-backup\\firestore_export\\all_namespaces\\all_kinds\\output-0",
+                          "Hash":  "8DEFED1CC9E51C47CE08339F1E8ED5AF16598C57CA8A52CB5FC41E9CEDC8A11E"
+                      },
+                      {
+                          "Path":  ".firebase\\phone-backup\\firebase-export-metadata.json",
+                          "Hash":  "D3CC84A3893919D1B5E1CB3C52C291F8F5A0CC1654758897EDFE5C8C53B0D093"
+                      },
+                      {
+                          "Path":  ".firebase\\phone-backup\\auth_export\\accounts.json",
+                          "Hash":  "0B2BA909E41922408535FAF85D51A507D9495815AE6611BC5DDA2213CD751E2D"
+                      },
+                      {
+                          "Path":  ".firebase\\phone-backup\\auth_export\\config.json",
+                          "Hash":  "A06AD971DD56D46B5975AB34F3308384FF3231D81C70B82B7099FB9B3D312CA8"
+                      },
+                      {
+                          "Path":  ".firebase\\phone-backup\\firestore_export\\firestore_export.overall_export_metadata",
+                          "Hash":  "3CF365F5ABA373AD83E919B6DBF232CC81A9ABD41556557508B7DAD42D792E75"
+                      },
+                      {
+                          "Path":  ".firebase\\phone-backup\\firestore_export\\all_namespaces\\all_kinds\\all_namespaces_all_kinds.export_metadata",
+                          "Hash":  "AEC2DF4CE8000691019DB2DCC577D6624992608D19D4FDD0BDDECD0442B20956"
+                      },
+                      {
+                          "Path":  ".firebase\\phone-backup\\firestore_export\\all_namespaces\\all_kinds\\output-0",
+                          "Hash":  "E80B3AE73A588DC207EFB33EFA4B23E08078DDFA4EFB698FCACAB5A79852990F"
+                      },
+                      {
+                          "Path":  ".github\\modernize\\java-upgrade\\.gitignore",
+                          "Hash":  "A31A11A8565C1A92EE2B47B36A4AC2FF4320A3F73645201D5736A602D3EBA46F"
+                      },
+                      {
+                          "Path":  ".github\\modernize\\java-upgrade\\hooks\\scripts\\recordToolUse.ps1",
+                          "Hash":  "3D94791ECD4146C2436FA9034E05945AAEACFC4BAB7A23FBCCB9945FB7F38BF0"
+                      },
+                      {
+                          "Path":  ".github\\modernize\\java-upgrade\\hooks\\scripts\\recordToolUse.sh",
+                          "Hash":  "EE1B0710801CD4E9BB087A755CA7B1616EE79912849B5B63974D6A9EA891E959"
+                      },
+                      {
+                          "Path":  ".vscode\\settings.json",
+                          "Hash":  "CF8654D363B9243808CCF80FB19227480B788F7076A9B08ED612DD81A7D667C4"
+                      },
+                      {
+                          "Path":  "android\\.gitignore",
+                          "Hash":  "48EE6D771AA3BB518973DBF247FC9B2FF8CBADFCC06A3F9132B807E3F1DF3020"
+                      },
+                      {
+                          "Path":  "android\\build.gradle.kts",
+                          "Hash":  "218F400E3FFF31C9C986A2535DFB974560E1B4D33CC27B7C1FEE96A2B7E44454"
+                      },
+                      {
+                          "Path":  "android\\gradle.properties",
+                          "Hash":  "98B0FE4A9D40A236BB98F91B3C7D1B7C910759A4ECFABE81C3A0171EEF721C36"
+                      },
+                      {
+                          "Path":  "android\\gradlew",
+                          "Hash":  "EC56C02543666D92D9AC5AE7FCC48F88CE4DE0DEB8B7F9B39928CA46F68C1B2B"
+                      },
+                      {
+                          "Path":  "android\\gradlew.bat",
+                          "Hash":  "C13C6E91B9A517783976DE213D46398C661EA9E17651376D7301E839EAEDCC62"
+                      },
+                      {
+                          "Path":  "android\\local.properties",
+                          "Hash":  "B612E2D8EEED1ECC3317BBCA58CFEE56A7E3A10B48F976649CFACAD772E0A823"
+                      },
+                      {
+                          "Path":  "android\\settings.gradle.kts",
+                          "Hash":  "9B3BFA8D4A1C4C0D96A863751A2C0F2ECFA1A36D576CF05059F1E757FAF3FDDF"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\file-system.probe",
+                          "Hash":  "0ADDDEEF6BA8DCDFF7590B644295815C01A39346297B4F8D9F923EDE8D22040E"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\gc.properties",
+                          "Hash":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\checksums\\checksums.lock",
+                          "Hash":  "A1E41A39FCFB035A8F09010C973C54974F915A41ED88CA1D5D9504A383796925"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\executionHistory\\executionHistory.bin",
+                          "Hash":  "46D9C310B381D7489A191082FC5018A62DD75F5F7F25611202182878F0A5FB7D"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\executionHistory\\executionHistory.lock",
+                          "Hash":  "883F557D3E20F486FAF5D87188963896767AA8CAF37B14AE32335F6306FBB581"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\fileChanges\\last-build.bin",
+                          "Hash":  "6E340B9CFFB37A989CA544E6BB780A2C78901D3FB33738768511A30617AFA01D"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\fileHashes\\fileHashes.bin",
+                          "Hash":  "CFD502B1AC77A32CE618378211013E3324F37FAAED6F00E61555AF122D3ECC05"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\fileHashes\\fileHashes.lock",
+                          "Hash":  "92381266E644C75B3BE7367803940F8B5FD9550CAFD9626521FCDF9261649029"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.3.1\\fileHashes\\resourceHashesCache.bin",
+                          "Hash":  "946D45C24C7BA584C9F2188A5DB77936BCCF27852EA247C82D2608AE8479D13C"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\gc.properties",
+                          "Hash":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\checksums\\checksums.lock",
+                          "Hash":  "3152373317142F9127B03DEFA8157F1CC7ED5C25419DD3EA2EE5D22C38111F59"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\checksums\\md5-checksums.bin",
+                          "Hash":  "8FE44836DE99E75ADD551B955B4DFF0535D7C6088C2035C92FE84A098D774290"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\checksums\\sha1-checksums.bin",
+                          "Hash":  "EB1BEE2CAF86D5C82621E8691508D17093F5485FE8CAE973188E241E780A4DF4"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\executionHistory\\executionHistory.lock",
+                          "Hash":  "E176085E420673DEE1F60A793858D3B5BABCA3899086F5653E641F814CC4390A"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\fileChanges\\last-build.bin",
+                          "Hash":  "6E340B9CFFB37A989CA544E6BB780A2C78901D3FB33738768511A30617AFA01D"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\fileHashes\\fileHashes.bin",
+                          "Hash":  "BC78C19FDB3927AB4860C561DF6EB6E19CD569D555DA74B7934DD1F18F940BD7"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\fileHashes\\fileHashes.lock",
+                          "Hash":  "F8EC5569F2A5E1F9EE1F9E4BA7433568B27687AB414A2A04C7BC040B2A3E98D4"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\fileHashes\\resourceHashesCache.bin",
+                          "Hash":  "CD0683ACECEF4DFE11FE0DF110931E0B0BC6CA10ED2081B24344370BD483C3D8"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\kotlin-dsl-plugin-entries\\jar-entries.bin",
+                          "Hash":  "F80DF5116090D6C1581CC3899B8DF6E2769B6FD6F76D1CAECFF05B8D9F01CB26"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\9.7.1\\kotlin-dsl-plugin-entries\\kotlin-dsl-plugin-entries.lock",
+                          "Hash":  "F9C52C8E8AF2C80AF90459877CB6A3F99AC2ABC28D375C87BF17A61795F65C75"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\buildOutputCleanup\\buildOutputCleanup.lock",
+                          "Hash":  "B2D31CEB2BBA80FCB36DA9FC467E244F0B1420C982CAD28225AEA89FD6288833"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\buildOutputCleanup\\cache.properties",
+                          "Hash":  "41341A9D185F7C52B96CC49720D399A32614B43DF65E6CA429BEBC2F891E2691"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\buildOutputCleanup\\outputFiles.bin",
+                          "Hash":  "E863DA19A646453A0D203F46BE332F1175E1E773B1FB103771C380FEC712F8CB"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\noVersion\\buildLogic.lock",
+                          "Hash":  "D951DA74F9DA01A3E1EA606D534C5244CDC25282F00542777BC73F90AE81B224"
+                      },
+                      {
+                          "Path":  "android\\.gradle\\vcs-1\\gc.properties",
+                          "Hash":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+                      },
+                      {
+                          "Path":  "android\\app\\build.gradle.kts",
+                          "Hash":  "43DB9BF99BF50C3139BC13FE40C1F46436D5930E341CD2175686EBEFBF9652BC"
+                      },
+                      {
+                          "Path":  "android\\app\\google-services.json",
+                          "Hash":  "AB068442AD998255908FEFE3910F40BE439F804EEFCF0DE02BFF243EBB43692A"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\debug\\AndroidManifest.xml",
+                          "Hash":  "6FC0E6EC541F259118B76A6CD4C04B42F7234E3DF78C34D51DD0D9F77EBB4FCD"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\AndroidManifest.xml",
+                          "Hash":  "9B392F4EF2135BE5E4A63CB1EAF895F7B5AFD790677F6019FECA1D87BE00E543"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java",
+                          "Hash":  "B51F41C6C2694C8F1932A3EE49108FF71E5711868368E3220C85C6E0FC7DFCBC"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\kotlin\\com\\example\\proyecto_final_movil\\MainActivity.kt",
+                          "Hash":  "450778338FC3D5886A7920B305AFA35AB1CDE7609688BAF8D3F481F21510414C"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\drawable\\launch_background.xml",
+                          "Hash":  "2DF60E2CFBEE873CE2858088CF003E6B93498F2F568476DA437610467EA1A9D7"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\drawable\\pharmalab_icon_foreground.xml",
+                          "Hash":  "D805C13C6057483AE7E58DC0A00409938901ECEC756330D441B0CF94ADFE14CA"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\drawable-v21\\launch_background.xml",
+                          "Hash":  "DCA312EC77DE83E43EF70A825C299B51451247286C29167D62F19165750B8793"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-anydpi\\ic_pharmalab.xml",
+                          "Hash":  "8A3A29FE3F30996B23F92C79377DF17C477E5F048041AFC9EF8E0E7E86E64B0A"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-anydpi-v24\\ic_pharmalab.xml",
+                          "Hash":  "8A3A29FE3F30996B23F92C79377DF17C477E5F048041AFC9EF8E0E7E86E64B0A"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-anydpi-v26\\ic_pharmalab.xml",
+                          "Hash":  "7782587D152DDEBD4B0A682A75697BE253FC92CB57B134DC3851ADCC8908AEE7"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png",
+                          "Hash":  "6A7C8F0D703E3682108F9662F813302236240D3F8F638BB391E32BFB96055FEF"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png",
+                          "Hash":  "C7C0C0189145E4E32A401C61C9BDC615754B0264E7AFAE24E834BB81049EAF81"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png",
+                          "Hash":  "E14AA40904929BF313FDED22CF7E7FFCBF1D1AAC4263B5EF1BE8BFCE650397AA"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png",
+                          "Hash":  "4D470BF22D5C17D84EDC5F82516D1BA8A1C09559CD761CEFB792F86D9F52B540"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png",
+                          "Hash":  "3C34E1F298D0C9EA3455D46DB6B7759C8211A49E9EC6E44B635FC5C87DFB4180"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\values\\styles.xml",
+                          "Hash":  "CCA15A99B59380A548BF6A890F7CA5380EE509B1F9BBB2F5F9EC3589FA25C2F7"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\main\\res\\values-night\\styles.xml",
+                          "Hash":  "EA763597DC1A84C8034251CAEE98D7753E0FBF57340FFC94677427DE4B537516"
+                      },
+                      {
+                          "Path":  "android\\app\\src\\profile\\AndroidManifest.xml",
+                          "Hash":  "B01A4541A8144C15BC617BAB7EB267C99FA1476368FBBDA5A12CDBF4E316A34C"
+                      },
+                      {
+                          "Path":  "android\\gradle\\wrapper\\gradle-wrapper.jar",
+                          "Hash":  "16CAEAF66D57A0D1D2087FEF6A97EFA62DE8DA69AFA5B908F40DB35AFC4342DA"
+                      },
+                      {
+                          "Path":  "android\\gradle\\wrapper\\gradle-wrapper.properties",
+                          "Hash":  "594A00250EF7A36609A01F3263BF5ED63963AFAF9CA9F82F2CD1DE0F6F056383"
+                      },
+                      {
+                          "Path":  "assets\\images\\PharmaLab_logo.svg",
+                          "Hash":  "6D5C3ABEF9D7375FB7158ED44ABFD8F3D2F534B5FF98B97E76ED4E2AF594167A"
+                      },
+                      {
+                          "Path":  "docs\\AUDITORIA_DEPENDENCIAS.json",
+                          "Hash":  "8E187DCB156D0C5B7AD05DD450952FC988F6BD380FF885086F150C3F6836076C"
+                      },
+                      {
+                          "Path":  "docs\\AUDITORIA_FIRESTORE_REAL.json",
+                          "Hash":  "ECF061741004C85E3B1CCB7596C39BE54286B0B7CE49A27D5140F1224DD4DFBB"
+                      },
+                      {
+                          "Path":  "docs\\AUDITORIA_INVENTARIO_ANTES.json",
+                          "Hash":  "D2D29082A524FF31A5C9A5C06552EDA771D575857E55B8DC75128E36B6ECA6E1"
+                      },
+                      {
+                          "Path":  "docs\\AUDITORIA_INVENTARIO_DESPUES.json",
+                          "Hash":  "427F09DCD31D05DE889853FB6D9E2D17256C4143B4DD9C5C4D51E1DE11127606"
+                      },
+                      {
+                          "Path":  "docs\\AUDITORIA_LIMPIEZA.json",
+                          "Hash":  "A191170FE2634262CEE9C4A006B5259536F959D3720B7FC99E4C8C90DF5E1A29"
+                      },
+                      {
+                          "Path":  "docs\\CORRECCIONES_POR_ROL.md",
+                          "Hash":  "55CC463792C8F47906DE85106588ABD4A72DC608E4F4899E1328814FDA0F5571"
+                      },
+                      {
+                          "Path":  "docs\\CORRECCIONES_POR_ROL_VERIFICACION.json",
+                          "Hash":  "0F7E34F3B4023D4CAA94F575F98FE2286421429672D63997DB2E697C44E8C152"
+                      },
+                      {
+                          "Path":  "docs\\DIAGNOSTICO_CONFIRMACION_REAL.json",
+                          "Hash":  "BA00569286F8DE82B4AE73CDDFD7BF81B919A3837C129E8DC7344C3350EF7691"
+                      },
+                      {
+                          "Path":  "docs\\DIAGNOSTICO_CONFIRMACION_REAL.md",
+                          "Hash":  "80978255F245EA47F08B47DE901EED4FA9BCDB36AE5F805A72FF3EC003112DCB"
+                      },
+                      {
+                          "Path":  "docs\\ETAPA_4_PEDIDOS.md",
+                          "Hash":  "BDCD7EA25EF73B59C6AAFFF2B19D0C53782680D79696B7EAFBD107C473306D3C"
+                      },
+                      {
+                          "Path":  "docs\\ETAPA_5_PEDIDOS_FIRESTORE.md",
+                          "Hash":  "8435E4DE4636E1576CEB43CE9502B369D86692CD412BEFD921786BA529282DE5"
+                      },
+                      {
+                          "Path":  "docs\\ETAPA_6_LOGISTICA.md",
+                          "Hash":  "4497AEF7DB0D87C2ED26E4C5DE88BF441911BFF99755C44B20B8FA86E257BDD9"
+                      },
+                      {
+                          "Path":  "docs\\ETAPA_7_ADMINISTRADOR.md",
+                          "Hash":  "E7E0091DEA7B1BBDAF26C0B5740A18B59C32D9EB025B4A4D928D95D59719819E"
+                      },
+                      {
+                          "Path":  "docs\\ETAPA_7_VERIFICACION.json",
+                          "Hash":  "7E32421E0520EFB7F7FBC9090F285361C061EC16B0105DC3D0CCE1A0EF49F61F"
+                      },
+                      {
+                          "Path":  "docs\\INTEGRACION_MAIN_VERIFICADA.md",
+                          "Hash":  "3877BF2B2AAB2AAA29D3D9446B3FFD9C94BF32674086A5034B621C4C49B69CBA"
+                      },
+                      {
+                          "Path":  "docs\\limpieza-eliminados.json",
+                          "Hash":  "63E8CC52D44543265E2455D0985BAA4B927505F91EE2B1BBD266634A44C13E7C"
+                      },
+                      {
+                          "Path":  "docs\\limpieza-integridad.json",
+                          "Hash":  "3726ECA54BF36F81B93E8A4112F8CFFA5B213809B3DF1527AD657C38F838BE95"
+                      },
+                      {
+                          "Path":  "docs\\limpieza-medicion.json",
+                          "Hash":  "C1EE96BB9640FF85CE95907BA0F7D63104D2D30B3CED96D50EB9F430C456D542"
+                      },
+                      {
+                          "Path":  "docs\\limpieza-selectiva-verificacion.json",
+                          "Hash":  "A0723A48652B846E27FD64118AC0DA8A18B69AE44656D15CDE165B1F83AC1726"
+                      },
+                      {
+                          "Path":  "docs\\LIMPIEZA_SEGURA.md",
+                          "Hash":  "9C81D657787D78F1649B060443A9089F042944421375612762EA0C0612B2F88A"
+                      },
+                      {
+                          "Path":  "docs\\LIMPIEZA_SELECTIVA_FINAL.md",
+                          "Hash":  "7127894EE92F2BEE467E540661A551B89E4D95FF939BA6DEE09284D862A6CA88"
+                      },
+                      {
+                          "Path":  "docs\\NUMERACION_AUDITORIA_REAL.json",
+                          "Hash":  "087F0E4E10677F2CF855943DA3962E1C64249D64E3D36FBFB3391D87FB4CEEB2"
+                      },
+                      {
+                          "Path":  "docs\\NUMERACION_COMERCIAL.md",
+                          "Hash":  "AC005AE316BA8925E67F9E9659769A8EB30F16116DC9BE0A166C0F748C6405CB"
+                      },
+                      {
+                          "Path":  "docs\\NUMERACION_PRUEBAS.json",
+                          "Hash":  "E2A8053397848D2F2E2810F65722833CA1389DB56CA29585CDE0EB36461D3B69"
+                      },
+                      {
+                          "Path":  "docs\\OPTIMIZACION_Y_FIRESTORE_REAL.md",
+                          "Hash":  "C1447AE30723DDBE757708B6481118CBFE61E2BF22CA3A7887D34E26F478A776"
+                      },
+                      {
+                          "Path":  "docs\\PEDIDOS_SPARK_SEGURIDAD.md",
+                          "Hash":  "D8130CD2676F97C83D2C282DA4C3688D4753B77396AD7672B7C35A66CCA30218"
+                      },
+                      {
+                          "Path":  "docs\\SPARK_CONFIRMACION_FUNCIONAL.md",
+                          "Hash":  "8DE3A5100F5AF60F61A9C58DFE6CC1FFB5ED68C16F87EA216C5B5602F42C56A7"
+                      },
+                      {
+                          "Path":  "docs\\SPARK_CONFIRMACION_PRUEBAS.json",
+                          "Hash":  "BE761103A4E2CC861A04A7A193A2E44C674B4DFC0BBA90885EFA0A2C4F9EADDE"
+                      },
+                      {
+                          "Path":  "docs\\SPARK_LECTURA_REAL.json",
+                          "Hash":  "B576B246360D3BA702475227816E424DEA8525BF411CC117AC213EB604C640EC"
+                      },
+                      {
+                          "Path":  "docs\\SPARK_REGLAS_PUBLICADAS.json",
+                          "Hash":  "22C0817866D59C72ECFA7E5C298C959F8C3C6ED4C9BCCE2EFD0534F5BF1CBBB7"
+                      },
+                      {
+                          "Path":  "functions\\package-lock.json",
+                          "Hash":  "CC0F4E28AAF8E11BF08604EC5AE1CA5E42F63BD7F3CEF095D4CD1B16BF2C6A50"
+                      },
+                      {
+                          "Path":  "functions\\package.json",
+                          "Hash":  "A0E5D6971E3E5A635E50712819FAEE1386E9FAE2D22CA3A503DE89C464D48313"
+                      },
+                      {
+                          "Path":  "functions\\seed-emulator.js",
+                          "Hash":  "272D61AFBFE9DE3A3F0FF58399CA1CD693E15C5A8E799366E2EA77A3AC36F998"
+                      },
+                      {
+                          "Path":  "functions\\scripts\\audit-firestore-readonly.js",
+                          "Hash":  "6D2DA82F8B4B319AD6D3A0F264A9F74931492C034D8B1D0F0EA9E3703B59BA98"
+                      },
+                      {
+                          "Path":  "functions\\src\\index.js",
+                          "Hash":  "698D764FEB449B98A86F3DBDA841AAD254D628841EBBC3DF558631B500FEF5D3"
+                      },
+                      {
+                          "Path":  "functions\\src\\orders.js",
+                          "Hash":  "5073248496B9A43687CB8B7407365D7BADE965A76A9DD0F4E81955CAB336BF99"
+                      },
+                      {
+                          "Path":  "functions\\test\\employees.rules.cjs",
+                          "Hash":  "8650BB2A0BDA330F59862EC4F86889F5766FBCA7DE76A3294EF0F52B283CF5EF"
+                      },
+                      {
+                          "Path":  "functions\\test\\logistics.rules.cjs",
+                          "Hash":  "20FD1A135D599ECC5D4373BBC2452BF6EB1773E8C6242549011DF3D8FF3B0010"
+                      },
+                      {
+                          "Path":  "functions\\test\\orders.test.js",
+                          "Hash":  "BB1C88A3C7641297D458702A75ACAF98CB9B05F2250CF2AFD373629BD75CBED1"
+                      },
+                      {
+                          "Path":  "functions\\test\\spark_checkout.rules.cjs",
+                          "Hash":  "16F90458C5AC1FF2C533E9CF7ADBE6AD409A7327DB7A7AE5FFC9FF03DAF5D4C3"
+                      },
+                      {
+                          "Path":  "functions\\test\\fixtures\\firestore.before-numbering.rules",
+                          "Hash":  "FC1EE121DC0D5B2DFFE84BC01ACB54C60B21403C439884656DE0CE00C2EE7A67"
+                      },
+                      {
+                          "Path":  "functions\\test\\fixtures\\firestore.before-spark.rules",
+                          "Hash":  "26F073D4A4516E064EEB2EFD05C57878E7D859D5DFE7C8A0A900613B4F8542F4"
+                      },
+                      {
+                          "Path":  "functions\\test\\fixtures\\spark-farm004.json",
+                          "Hash":  "F81A35307105836AC91914793CF93DF036001030FB582A4472CF7A65914D259F"
+                      },
+                      {
+                          "Path":  "ios\\.gitignore",
+                          "Hash":  "E85B4DB8BA6ED14708E5F7D3C60336E5A3067CE11329B84AA8BA5D98603EE253"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\AppFrameworkInfo.plist",
+                          "Hash":  "E51CFA76FCA1AE586244B43BF97423577315D2906394C1E7768EF43B8D23E161"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\Debug.xcconfig",
+                          "Hash":  "C0D1DA54718E75F2028962B689258ECC741ABF7CDAED50483AA5225264D0A7D7"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\flutter_export_environment.sh",
+                          "Hash":  "A7899A7672DC87323AE60E9A511E75E8FB1A7BFDEB38E405EBAAEE5E22BF8F71"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\Generated.xcconfig",
+                          "Hash":  "57F61F7268F1058042A15D43ED55E9CEFBDA2837367F15A7E67393DC5EB7AFBC"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\Release.xcconfig",
+                          "Hash":  "C0D1DA54718E75F2028962B689258ECC741ABF7CDAED50483AA5225264D0A7D7"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\ephemeral\\.swift_pm.lock",
+                          "Hash":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\ephemeral\\flutter_lldbinit",
+                          "Hash":  "EAEC5F5268E3A5024D9703046F4097701107D574D0DE7A2D8D81F0BF4644A333"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\ephemeral\\flutter_lldb_helper.py",
+                          "Hash":  "05CFE3977FDEE593EFAD2049A4F62D374E55C69CEDC8AABEEE5566B37ACB8384"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\ephemeral\\flutter_native_integration.env",
+                          "Hash":  "CFD793E352D143E4370CF77C0CEBF336FB554BED96FCAC1D4E9F86407827D8D2"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\ephemeral\\Packages\\FlutterGeneratedPluginSwiftPackage\\Package.swift",
+                          "Hash":  "C59649B8EB9E7F78FBF8DC7F9254012FAD2CBB594B19CC83640A5AFC59E40E20"
+                      },
+                      {
+                          "Path":  "ios\\Flutter\\ephemeral\\Packages\\FlutterGeneratedPluginSwiftPackage\\Sources\\FlutterGeneratedPluginSwiftPackage\\FlutterGeneratedPluginSwiftPackage.swift",
+                          "Hash":  "8518FB048C29925943B03DE7F45C9D5232C0B46D2CC97D36F83FF501E1FFB9BA"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\AppDelegate.swift",
+                          "Hash":  "54A5E98D6C3E8A79413AD50607B83AAC8DED8828BC913EDA1FE86BB33A66CD5D"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\GeneratedPluginRegistrant.h",
+                          "Hash":  "A5F88CC6415D2E639D2CB549348B84E02A7FDD0261603B0063ABEF6FA11F075A"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\GeneratedPluginRegistrant.m",
+                          "Hash":  "E2BD038B935DF05C6F2AD4B555773F3960F9E07825FF9D86927E7C758198A8CA"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Info.plist",
+                          "Hash":  "67B3E0DF4125885F8B323A9BDBCBA9ABC1EFC4F2D2DA626A92CE8406421AA02E"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Runner-Bridging-Header.h",
+                          "Hash":  "EFE657D8B27F7F8595A0D416BFFB33FE7D93BD2869D81F7353B556C439D7A1A7"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\SceneDelegate.swift",
+                          "Hash":  "EDCE811C671CA0A6CCB14753E14E16DEB0D89A0ADF4F1B685E362D87D8F4C366"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Contents.json",
+                          "Hash":  "5F8B941B774BDE4496D73347C1F79CBDD786BB76FBDAB9ED1F3F0CB78A0FB0D3"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-1024x1024@1x.png",
+                          "Hash":  "7770183009E914112DE7D8EF1D235A6A30C5834424858E0D2F8253F6B8D31926"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@1x.png",
+                          "Hash":  "CAB10A0D391EC5BC09EF50CE49E8AD401CEE7EF03707EC0923A222C5C2B3D212"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@2x.png",
+                          "Hash":  "B9AD02CF6576A04D1B6806AC02A2431481B448DD0C2E505CE25842D1F7C4730B"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@3x.png",
+                          "Hash":  "C6E6D3B215AE744A9C391F4C4D44157EFF5E739D6AD6C39F9BFA5DF66DDDD267"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@1x.png",
+                          "Hash":  "5DEE24DC104AC76DC162E42AE0BEB163D426BF365562EE28BA7B3AD368559A60"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@2x.png",
+                          "Hash":  "A9B21EB6F4271385655A8771F76E29EEF8C1107D7879CBCFC567E6619D1F716A"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@3x.png",
+                          "Hash":  "E677D701FFE4AF7BC2935098D6B3984CC9AB7ACE573E6900955A5535B12410CF"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@1x.png",
+                          "Hash":  "B9AD02CF6576A04D1B6806AC02A2431481B448DD0C2E505CE25842D1F7C4730B"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@2x.png",
+                          "Hash":  "7C61C42FC7B657D9CF314D32A4EC458F0647C3AAF360BE1B9377857266EC2499"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@3x.png",
+                          "Hash":  "19BE171481DC71A0B2803EBCD01DD8B0C5FD5778DEE34C0A3CABC948C225F24E"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@2x.png",
+                          "Hash":  "19BE171481DC71A0B2803EBCD01DD8B0C5FD5778DEE34C0A3CABC948C225F24E"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@3x.png",
+                          "Hash":  "4209A49E44A92EC40A327D3455EB1B1C153EE83D75DE1C2BE0A12AB18B2FF9DE"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@1x.png",
+                          "Hash":  "836C918CB613249EBA0483A6B02FA3DF3C1C0A89A315EE4D3B88509B83C7AB73"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@2x.png",
+                          "Hash":  "41C7D42F6E61F8FE7F30B1FFA2256AECBC9682BE06D18C4A3062043E1A2E547C"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-83.5x83.5@2x.png",
+                          "Hash":  "5D7E5BDF01B93802BC973345B3A78C038907147625035952A08A115A563B7F81"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\Contents.json",
+                          "Hash":  "FBD112A9F3B541A1D811F71AC8E4FE68B6176687D973A5F4D99B7AA4A722E94E"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage.png",
+                          "Hash":  "93AE7D494FAD0FB30CBF3AE746A39C4BC7A0F8BBF87FBB587A3F3C01F3C5CE20"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@2x.png",
+                          "Hash":  "93AE7D494FAD0FB30CBF3AE746A39C4BC7A0F8BBF87FBB587A3F3C01F3C5CE20"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@3x.png",
+                          "Hash":  "93AE7D494FAD0FB30CBF3AE746A39C4BC7A0F8BBF87FBB587A3F3C01F3C5CE20"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\README.md",
+                          "Hash":  "853AC958E2416FE2540F6F61165283A3618B71A7BA5F85F65AC41C2158DFCD21"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Base.lproj\\LaunchScreen.storyboard",
+                          "Hash":  "BC3644FBB251FF1E18DE25A4932C927850AE1A025BE3DD1447940429633FE4B2"
+                      },
+                      {
+                          "Path":  "ios\\Runner\\Base.lproj\\Main.storyboard",
+                          "Hash":  "DCEA4686C02065E56217FD19FCFB73D7509B41872E7486126149D47A18559363"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcodeproj\\project.pbxproj",
+                          "Hash":  "519B663FA64326D66A7010C9992660A386503E11BDD8A66AE0EB6F1A9CB824E1"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcodeproj\\project.xcworkspace\\contents.xcworkspacedata",
+                          "Hash":  "AC28B35C2B940210BEC0FFF8E424B07FD0EFE9112AB178A10533583F251A386C"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcodeproj\\project.xcworkspace\\xcshareddata\\IDEWorkspaceChecks.plist",
+                          "Hash":  "D557C2C32FC6258EC28981FA45DC847B76C9968BEB90A2E26D13EF9C4EA45C30"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcodeproj\\project.xcworkspace\\xcshareddata\\WorkspaceSettings.xcsettings",
+                          "Hash":  "DD64C0308AB2971C456871B990B24A008BDC3ECE09833E8DBE9675E33A496E74"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcodeproj\\xcshareddata\\xcschemes\\Runner.xcscheme",
+                          "Hash":  "A46C0D064503DB8BF9F452B492C61FDF76F9FEBB8894005FE30B2FACEC21E550"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcworkspace\\contents.xcworkspacedata",
+                          "Hash":  "706A4C812F2A1E220E6785C27580020D58048E2AE4D30D1280F3C43344CE6B38"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcworkspace\\xcshareddata\\IDEWorkspaceChecks.plist",
+                          "Hash":  "D557C2C32FC6258EC28981FA45DC847B76C9968BEB90A2E26D13EF9C4EA45C30"
+                      },
+                      {
+                          "Path":  "ios\\Runner.xcworkspace\\xcshareddata\\WorkspaceSettings.xcsettings",
+                          "Hash":  "DD64C0308AB2971C456871B990B24A008BDC3ECE09833E8DBE9675E33A496E74"
+                      },
+                      {
+                          "Path":  "ios\\RunnerTests\\RunnerTests.swift",
+                          "Hash":  "C0E04141287EB7F9C9F3D31CF5BE8CB626A9EA71351206C9121578E8B8F480C3"
+                      },
+                      {
+                          "Path":  "lib\\firebase_options.dart",
+                          "Hash":  "E4DDB0D583DD11117A96CA045F43882006DE5DB5230E2F9F2D182433089441B1"
+                      },
+                      {
+                          "Path":  "lib\\main.dart",
+                          "Hash":  "1DAB5860B9F2F0D0D3D6906A98B09A84A2840447175735B5842B9A0702CF5943"
+                      },
+                      {
+                          "Path":  "lib\\main_demo.dart",
+                          "Hash":  "9F3C197A2B854B7C3B5B32D8833E1BA68E51DAD29E9B561801BBF25ABC3A99D6"
+                      },
+                      {
+                          "Path":  "lib\\main_emulator.dart",
+                          "Hash":  "9522F744FC14F1D4BBEC0D14637A672451BC12463E6A34F58A25CE528BB1E0F8"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\checkout_diagnostics.dart",
+                          "Hash":  "55F04924EAA034B4B887156325A5FE47071C51C65983654E1BB558775F273D53"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\firestore_catalog_data_source.dart",
+                          "Hash":  "A678733FA5A39636FC1B7A1AE14659754B9FCA7E7A6170B7961C7F49D10B6B42"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\firestore_logistics_data_source.dart",
+                          "Hash":  "B9DDDA1628609E8A786DC45533A950D7FC4C93AAFCDE5781AA700EE908A0CC27"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\firestore_order_data_source.dart",
+                          "Hash":  "A9BC38401A11D0D9510209F8FBD70FCC2D207ADAD1FEAE4E6E695992C2BF5A43"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\firestore_order_reader.dart",
+                          "Hash":  "5FD054BF456E96419C3A8F00BF4203F29D806773B909DBF39F8AD533A4B7AB1B"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\firestore_spark_checkout.dart",
+                          "Hash":  "19D745BA3A62C5B2BB3095030BE974D798FED195FEC40C2869AA3311344834D6"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\firestore_staff_order_data_source.dart",
+                          "Hash":  "448EFE8BF62D8B993F439A571E64380C25DCA109F2049373AD8C1455343BD982"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\local_order_data_source.dart",
+                          "Hash":  "6AAD24E2100D1F9DDA95019C3A8278B7EEFA116B252CAE642F37D00A71D5AF80"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\numbered_transaction.dart",
+                          "Hash":  "E3EFC0969BD36CA3163CBA88FD3B10B4A49AFAE7168B9471BF7B612C9179CA9D"
+                      },
+                      {
+                          "Path":  "lib\\data\\datasources\\pending_checkout_store.dart",
+                          "Hash":  "6425158AB0FCE761ABE3F1D28E3390C1BABC7750F4FF044B1A0E549F8824C4B8"
+                      },
+                      {
+                          "Path":  "lib\\data\\mappers\\firestore_order_mapper.dart",
+                          "Hash":  "44CC8091FC4CBB75DFDB987D7FCD9F7E10C0AB0176FC86636DA996ECE831A4FE"
+                      },
+                      {
+                          "Path":  "lib\\data\\repositories\\catalog_repository.dart",
+                          "Hash":  "1F6306561C7499ACA682CE2A2ECFDB4E5026265E2F49C827C0AB4C01A8098413"
+                      },
+                      {
+                          "Path":  "lib\\data\\repositories\\logistics_repository.dart",
+                          "Hash":  "259FF4A92167AD449ED20882587BCCCC00373F61FB2758FFEF7B63FE637C052C"
+                      },
+                      {
+                          "Path":  "lib\\data\\repositories\\order_repository.dart",
+                          "Hash":  "EB00014EC582896ED33450462FEF8BFDFB37B80C42DB971F2476F34B248E789C"
+                      },
+                      {
+                          "Path":  "lib\\data\\repositories\\remote_order_repository.dart",
+                          "Hash":  "EF3F25AF83E2D957C4F45773A0299AFD3C92E31474E3C4D8BD8D065A1D59309D"
+                      },
+                      {
+                          "Path":  "lib\\data\\repositories\\staff_order_repository.dart",
+                          "Hash":  "3988DCB41CA0D58397DBB2EF9FF076A449CA1AD7B876742B097AB9492EF7B56C"
+                      },
+                      {
+                          "Path":  "lib\\domain\\commercial_number.dart",
+                          "Hash":  "0D88AE1341846BEA640EE667F3FA63335C5CFE6FF81BFB279F8F0F01DC2FEF75"
+                      },
+                      {
+                          "Path":  "lib\\domain\\order_policy.dart",
+                          "Hash":  "A89A86ACC363A53CC9242B44E787E34A42646B43081646A59C524E679B2CE4FB"
+                      },
+                      {
+                          "Path":  "lib\\domain\\seller_order_list.dart",
+                          "Hash":  "828A62A1F94905B3F8A49F875E9B15A4FA2C6B89D76139F541D2B337CFFAF709"
+                      },
+                      {
+                          "Path":  "lib\\domain\\spark_address.dart",
+                          "Hash":  "F6916561E6A46F758FF3E5320964584B8988D5643A32923EF4A729609B4BBB15"
+                      },
+                      {
+                          "Path":  "lib\\domain\\spark_approval.dart",
+                          "Hash":  "AA2F931C92DDB6887A45C8D5A8B8067EDF46151F52EC80D01FF0FC16E5929B59"
+                      },
+                      {
+                          "Path":  "lib\\domain\\spark_checkout.dart",
+                          "Hash":  "504B0AD602F7C2421BC0761F915040E06D7AB9EEB71C1E5F4BEB539FB608BF74"
+                      },
+                      {
+                          "Path":  "lib\\models\\app_user.dart",
+                          "Hash":  "A082B06D71DE234BFBA460A7F2AA0FF13279BC541BBBF548086C87F12F42D68A"
+                      },
+                      {
+                          "Path":  "lib\\models\\cart_item.dart",
+                          "Hash":  "496C75C27DC36DC86BAEDA940A37276F8FB975DAF9C778DDBBC738BBA2675B1F"
+                      },
+                      {
+                          "Path":  "lib\\models\\catalog_category.dart",
+                          "Hash":  "7B1178B57D82B7EFC70702AF7FE43C0695F630E110305F0BC7804B6C6F26C704"
+                      },
+                      {
+                          "Path":  "lib\\models\\dashboard_metrics.dart",
+                          "Hash":  "9D063392D877A69FE9AC9CC2B4B9EB63724BCE7041046037113ACB1A3936FE5E"
+                      },
+                      {
+                          "Path":  "lib\\models\\dashboard_models.dart",
+                          "Hash":  "CAD6287AAE0A95CF84DC33FC51E2ACCAF7641EEBAB5FBB846CBD041803B33F64"
+                      },
+                      {
+                          "Path":  "lib\\models\\delivery_address.dart",
+                          "Hash":  "11EB39A28311EDFDB08D2F9A3F05C6521E140C6870C9002F31E0EBBB090E1F70"
+                      },
+                      {
+                          "Path":  "lib\\models\\employee.dart",
+                          "Hash":  "A0B1B7A349B157EFE5C00859552F06ADA4007BC9BEE11C67FFC0D96FA79A7B40"
+                      },
+                      {
+                          "Path":  "lib\\models\\order.dart",
+                          "Hash":  "E580D092D127F2319ECF521F5388E5FF03141652150CFC5E8A2294899B8087A7"
+                      },
+                      {
+                          "Path":  "lib\\models\\order_lifecycle.dart",
+                          "Hash":  "E0BBC30F399618E0E1FB7B5BA6FD77FD5E3875D60B82144D60C77568F7787CCD"
+                      },
+                      {
+                          "Path":  "lib\\models\\pharmacy.dart",
+                          "Hash":  "8C342CA23DBBEEE911961260BA7CE74560DF6AA1D0FD756FEE0D26E6BCF1D34A"
+                      },
+                      {
+                          "Path":  "lib\\models\\product.dart",
+                          "Hash":  "41FBB5A31113E10688381F250BCC072E2CBEDB72EC88C581B61AD964E6CE64DB"
+                      },
+                      {
+                          "Path":  "lib\\models\\product_batch.dart",
+                          "Hash":  "3A54A8DE3CE32EDF36456AEDAAA71A92C3C8D3BE8C05E5EE0E116F6100A8B797"
+                      },
+                      {
+                          "Path":  "lib\\screens\\login_screen.dart",
+                          "Hash":  "6993FE445CFFF187C12B4916456B0C4FEF6FF04D747C85542128594DA82255CB"
+                      },
+                      {
+                          "Path":  "lib\\screens\\register_screen.dart",
+                          "Hash":  "5B8FB11730DC58B07537533D483724853625D7163A091B636A0993358AEE2342"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_account_screen.dart",
+                          "Hash":  "BEA50B7610CDEFB41B2ABC1EA3E2D3E8A5958DFFFEACC0A40AE1EAA59FD84FE4"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_dashboard_screen.dart",
+                          "Hash":  "697C3695C20E29C714271A8521ACC8EBC03C6CC89B0916B548A913E45E82EEE2"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_employees_screen.dart",
+                          "Hash":  "FCD3482CC3592F5B7FA05CC200C67561F1860FD1FF4B451A9A253E5FE102E0D7"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_employee_form_screen.dart",
+                          "Hash":  "BDCFAC810057ABD7FE372D0AFD58BD11028C6C33419FAB154D3FEFEAD779832C"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_inventory_screen.dart",
+                          "Hash":  "11E58A5A81EAC235F35F4582C0CADEC37E272514B9D45E1D36981A224E847D42"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_inventory_screen.dart.bak",
+                          "Hash":  "A7FFA2981940641F7A78DFEB522ADBCC0C84AC092754099676A2FB66513A1A07"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_orders_screen.dart",
+                          "Hash":  "14CB40D08930BB58F18C01181EF7C08C815217C55F3DDC6F29E09F9869450030"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_orders_screen.dart.bak",
+                          "Hash":  "AC9D0C886FF79F4F97BF7A91EFBC4D0DC4CDB5BF92C16F1351F58336D8123F9C"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_shell.dart",
+                          "Hash":  "A6020B333517DFB6C7DFE7BB01FAEDA050D42CAC207BD814B5E34B18E834B623"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_users_screen.dart",
+                          "Hash":  "CC7E00E6D57EE4DC10AA0422D14E5598332D6FAB5E2DDA64ABE1546744EB1D1D"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_users_screen.dart.bak",
+                          "Hash":  "6DCCCB53D19E684720E85C354ACE9E4E74A83A6C4AD756196D3088E6E43028BB"
+                      },
+                      {
+                          "Path":  "lib\\screens\\administrador\\admin_user_form_screen.dart",
+                          "Hash":  "9E230989AD51D2C45637F002F0772A66468CDE198371C363DA730CEE7EBD29A0"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\cart_screen.dart",
+                          "Hash":  "B10DE9FB59C589A64D1A39D241B9B7989FE69699608073D6956E444A32229C8D"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\catalog_screen.dart",
+                          "Hash":  "430CB9A12E664D14F24787770E6C303EB3A4A3CB68BC23B2788176C6099ACD0C"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\checkout_screen.dart",
+                          "Hash":  "7B4D6A750B9D636CF432F1AC8104F10951F47A7C506AFD1722455D34D13833FF"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\client_shell.dart",
+                          "Hash":  "D6D380288F3C8647ACCDA0D9C0C860573F4F53AF36F24DA18E400341CB160056"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\home_screen.dart",
+                          "Hash":  "F9BE584D5A609857F5AE8E1CB24B71EF5070584251C44E4AA9DC25BDFF715D49"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\order_history_screen.dart",
+                          "Hash":  "15793F578F66A5BBA0129EEB7B9B7A21519F7EF15FA1FAE6AA6F93FD794FBD3E"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\order_tracking_screen.dart",
+                          "Hash":  "C263B62A827DF68E4340F64ACA556551C85F6909F62D91E21704B5A340E8DCF5"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\product_detail_screen.dart",
+                          "Hash":  "0FC4845235B252762F4787E56714609F60435064E20DA4230ECE285195271B29"
+                      },
+                      {
+                          "Path":  "lib\\screens\\cliente_farmacia\\profile_screen.dart",
+                          "Hash":  "31F68C5A2EA5724A103D60CF98108DC4C94800F328FE4840C084E89500AEECAD"
+                      },
+                      {
+                          "Path":  "lib\\screens\\repartidor\\driver_account_screen.dart",
+                          "Hash":  "D7DA613566B47413DCF8D042137229AA3C7500C2F30E0AAED2A08BF85ACF99F0"
+                      },
+                      {
+                          "Path":  "lib\\screens\\repartidor\\driver_deliveries_screen.dart",
+                          "Hash":  "8034D559EE0BBA516A0FBEF9A3548149770F264549CABC6A304A4A24BE7D8978"
+                      },
+                      {
+                          "Path":  "lib\\screens\\repartidor\\driver_delivery_detail_screen.dart",
+                          "Hash":  "7C816D6ECFCDF17F001064ED896D5F6091FA6B05438565D7D79FB22700B97281"
+                      },
+                      {
+                          "Path":  "lib\\screens\\repartidor\\driver_failure_screen.dart",
+                          "Hash":  "A2FFFDB06F459709873B7CC142B825DCC7236661EEE307FEAAB0EBE2436BC7CD"
+                      },
+                      {
+                          "Path":  "lib\\screens\\repartidor\\driver_history_screen.dart",
+                          "Hash":  "3C776D141E1984EB32B7A8E73ACF7D61C11D2252758CD40FE835C4911A06ECC3"
+                      },
+                      {
+                          "Path":  "lib\\screens\\repartidor\\driver_shell.dart",
+                          "Hash":  "A0EC50B2AB692A9132061FCEB8E52D2757D8D58EAFE9EF78F9FC90EA09FA4978"
+                      },
+                      {
+                          "Path":  "lib\\screens\\shared\\employee_account_screen.dart",
+                          "Hash":  "0447059354FA1810E62BA86BC8374FBE3EB37AAC10E8D0F0DBADE526B92B3483"
+                      },
+                      {
+                          "Path":  "lib\\screens\\shared\\order_operations_screen.dart",
+                          "Hash":  "27BB524BD38E42CC6A2838E996F4A95E82D719F6A7C3C56E27EF7B0072F483DC"
+                      },
+                      {
+                          "Path":  "lib\\screens\\shared\\remote_logistics_screen.dart",
+                          "Hash":  "A23E60FB792B5FDB1BE334CCADA7F2C62CD3636591C306B0816CC8636EB70A95"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\remote_seller_orders_screen.dart",
+                          "Hash":  "3C1D4EAB9278F8980C028DAF7CB09A2130FD9E5AC70E6C477584FA38E7DB0D63"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_account_screen.dart",
+                          "Hash":  "3E895AB3496A25EBE53C8AB7B5E3DDB84EE3B01F748FA30486CB018C60A48BD1"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_assignments_screen.dart",
+                          "Hash":  "C5356F9962998BAFF9BEBD04E1A88D9479FDA462C0F990305D0895E6A0AB0492"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_assign_screen.dart",
+                          "Hash":  "090F9D4624D6B4379E4E78067F230F200B7677F8F2B7C7B33CA1AB92909E2571"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_orders_screen.dart",
+                          "Hash":  "07A603C9D44DD165C01DF4745D06107BEE7630AC6037774BC9EAACC1337945E3"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_reschedule_screen.dart",
+                          "Hash":  "19990ABEAC57C3287FDB0B4B7103A0F5699896F1FBC197FB882B884A07E55CCB"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_review_screen.dart",
+                          "Hash":  "744279E033C0B5F4FFB474CCF10B603F143E8C88755E87FCA1F4798E310A150A"
+                      },
+                      {
+                          "Path":  "lib\\screens\\vendedor\\seller_shell.dart",
+                          "Hash":  "12A1A1BB9ABE4BF298D11820E02D1DD506BBFC1AF5748AB87D6E174284AE3EE2"
+                      },
+                      {
+                          "Path":  "lib\\services\\cart_service.dart",
+                          "Hash":  "AC6C0664D13C4BE9CD9FE81186B19CF6CE258BF449E56D7081A4B003A00F80D4"
+                      },
+                      {
+                          "Path":  "lib\\services\\dashboard_repository.dart",
+                          "Hash":  "8E47E837ADEEF261C17D574AB9224DB9106C69D4A737170D0C936D7592737686"
+                      },
+                      {
+                          "Path":  "lib\\services\\employee_repository.dart",
+                          "Hash":  "4A7A5A611560269DC525B6EE06D0085E05AB55475CEA627B46391850BB02D90D"
+                      },
+                      {
+                          "Path":  "lib\\services\\firebase_environment.dart",
+                          "Hash":  "44A365CC8B0D5A63CEECEF0EFA0938207B59846D00B3697C3A5D24D459135AF5"
+                      },
+                      {
+                          "Path":  "lib\\services\\notification_service.dart",
+                          "Hash":  "BB9C1C7488BDAD77AF945AC619A97690A76178B4EE42C7D49F4E604022D96A11"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma_service.dart",
+                          "Hash":  "E59F036154738837CFAF9DD85814661FE69561A00C009F3BD4C22AD1177C6B9D"
+                      },
+                      {
+                          "Path":  "lib\\services\\seed_data.dart",
+                          "Hash":  "30CFE46D39C7F0CF5BC5FAE05FB27955D1765B642F4059ECB474177CDF37558A"
+                      },
+                      {
+                          "Path":  "lib\\services\\sync_service.dart",
+                          "Hash":  "458D58E7E3752B2AC9809626EC0FB34F43B372DD72DA16C6B20776206F05AA1B"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\account.dart",
+                          "Hash":  "3E471B02252260D330768357E6EB97DF01C271EE3D3A157167F7620CC0D943DD"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\authentication.dart",
+                          "Hash":  "35F7A3BCB11F6BBF91CE99E4EC288664EA82053FA41A241A943A9D219FB7A5DD"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\catalog.dart",
+                          "Hash":  "332109C3DCA473ADF94C74F8F4660EF9B1E1DC0C1516BEA3F047A92EFBC8CC37"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\orders.dart",
+                          "Hash":  "CE2375144EEDF10C36348782415D7BBC305D24FF48807C6BFD0CB362363ADC9C"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\pharmacy_registration.dart",
+                          "Hash":  "29869ED873888956CABB4221672F7096F43410E63A3E596EF466E8B005B66954"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\service_state.dart",
+                          "Hash":  "190962E0D6CE85C00C60243B4B787BFB70B572653B8EB6FD536D6BBC460EB5E1"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\stock_unavailable_exception.dart",
+                          "Hash":  "C6C35CD5CB0D358F2F0CA3F5D605D4781B18F92AC9BDB6A4F39594351C74D2CC"
+                      },
+                      {
+                          "Path":  "lib\\services\\pharma\\users.dart",
+                          "Hash":  "A109390E0119BEE6789AC8EAAB5A1FADA6EC3EA35C7FE5748A36710C9E043E0B"
+                      },
+                      {
+                          "Path":  "lib\\theme\\app_theme.dart",
+                          "Hash":  "FB8CDB88E498F610D85DAC7D41B593272A9AACB834ADD7BFA95B8AE88BB8C8A2"
+                      },
+                      {
+                          "Path":  "lib\\utils\\bolivia_time.dart",
+                          "Hash":  "EBE5F92AB8A17BAC327E6AB009C83FB23973534E1C94F2B88442A3E8D3D42A1B"
+                      },
+                      {
+                          "Path":  "lib\\utils\\formatters.dart",
+                          "Hash":  "4A9451304DD991EB1208DB9742626DF00237F153A7A764E38453C465785154C9"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\admin_dashboard_viewmodel.dart",
+                          "Hash":  "AD452213C7EA07E0AE9D80B133B9AF0F8C456DFC21F6B579E3E4EC047287141B"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\admin_inventory_viewmodel.dart",
+                          "Hash":  "DE9E626479D34E303215611870E88B9F57FFA7920670949C9D13043323601D9D"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\cart_view_model.dart",
+                          "Hash":  "26B5524AC916801A61BE16FD224E867A774CB140ACAB5CD950D6BD43A007DA53"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\catalog_view_model.dart",
+                          "Hash":  "D46548AC106F9750C5E4E75F80BD8D2FC075BD1810137D6997CCE67EB670D64D"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\checkout_view_model.dart",
+                          "Hash":  "2A9C24A213A07548CFBAD27306B5EFFCFFC43A368FB70B950AE80CBC360FD090"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\delivery_view_model.dart",
+                          "Hash":  "761DA30697E838D2420C16A729B432ED34A29566193300E55E9307FA5189EFAF"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\logistics_view_model.dart",
+                          "Hash":  "26ECCA5D41795DF5B69B4E0908F9A582983200609FD7F32E4BE92FECAC515864"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\order_history_view_model.dart",
+                          "Hash":  "9C4CE8C0BCBFAD351426C0282496C67DCBB570FAC3D5FA29EDCC3BA4FC0DE737"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\order_view_model.dart",
+                          "Hash":  "E74B23252A90F55CB07D06C53A0595D9DF4934C2EEB7FEA0D411CCFCC94D01DF"
+                      },
+                      {
+                          "Path":  "lib\\viewmodels\\seller_orders_view_model.dart",
+                          "Hash":  "DDC084F74B412799624D94199D772E724D56988EDF2B36319B03EF33DA74D0D4"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\account_navigation.dart",
+                          "Hash":  "2EF588ACC0C75FE87BA6F406EFC03EB31F34EDA24C107168C4EB7D6ADC698463"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\admin_scroll_layout.dart",
+                          "Hash":  "FAEBBD8175B911DBAB7ADED85C6363C71F553682E826F657D05C8A6D9F61D3CB"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\app_header.dart",
+                          "Hash":  "252E1131CC8B8F52714F9D43BA857226ECB73604376957FE19F112D21D4DAE78"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\app_text_field.dart",
+                          "Hash":  "80EC832311F04E7342E2178FDFE0B8461117D45EAF7BBFE1305A0D930A7B7E8E"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\availability_chip.dart",
+                          "Hash":  "98D45EFEF46E26B13D6D9D4FCDED6DDFD46DC918BE71FCC0070E3C8D3B6D476B"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\cart_navigation.dart",
+                          "Hash":  "A9F015EC006582C02B142922C139CD3EFDE51D540CD61B17132E4789018FF131"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\category_card.dart",
+                          "Hash":  "5F0316C2653477B3BE1C8E6C554F68089F6BD4ACBBDBAD5222A3AA1865594870"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\category_visuals.dart",
+                          "Hash":  "0609E9AA6219F2D0AFF8945B24BEF813FB520FCCD9F94F34E5E74CBD032B0886"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\client_avatar.dart",
+                          "Hash":  "94E71545F67A8FB39883123572FFF10F0C192D9B7D1F73FEF0BC1352A6F99660"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\client_header.dart",
+                          "Hash":  "E21ECADCFFF5D942F383C7B74353A1B8F61094E4B22774C20FE921DCAC16AD9C"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\contact_edit_dialog.dart",
+                          "Hash":  "F4D3BF73741B314D43472C9C196229B4AD8F2C24B3CDDF75B0BBB0B93E679460"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\delivery_card.dart",
+                          "Hash":  "02792A5A5FA94515514A0DD0969AC8B7E7667989CD6BFAAB0CA0F2531C1FF286"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\empty_state.dart",
+                          "Hash":  "3EBDE52AB320C5A03BFBE60F04709BA9DABA2168E8A165924289AAEDF4212965"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\offline_banner.dart",
+                          "Hash":  "988C9602F01B370339FA953FB0BD2AEF2DF68F1441C8EE582AC1869FC0DBC88D"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\order_detail_card.dart",
+                          "Hash":  "86AE301614E0EA3DB64C4A39F0DBF2B3BB780017524868321436F1CA8A137382"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\order_detail_sheet.dart",
+                          "Hash":  "A656C96C164459E4DACCD7DAF9A1E52DA0919E92C309FD0F4CD9B3B9DDCA2B9D"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\order_lifecycle_panel.dart",
+                          "Hash":  "D2FD3B041D8DA8708ADFA3C513D7A3CDB8FEA33C31C6B4B248FCFD0337D5DAD0"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\order_list_tile.dart",
+                          "Hash":  "AA9C2ED7464A01021798F8D81170F31A246BE5E51093A2B0966EFE186128FD49"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\pharma_logo.dart",
+                          "Hash":  "33D5E1F9A0ED6FB425D162E607F39B5867B9B7B80EB3FEB9AB729F7535D6DC88"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\product_card.dart",
+                          "Hash":  "0EFB191B48E831FA04F48D5096F7D838766BB1E95E49821C0C4EE7DBD969E85A"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\product_image.dart",
+                          "Hash":  "B84BF61CF6C623AD7DB54DE31114D81B00AB7AE93F25297D75B1206FE122892F"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\quantity_stepper.dart",
+                          "Hash":  "C22F1AD5F5477C5443118B189C8E8C7B5868A4D237DE50DA17D7E9DA6A1D2605"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\section_header.dart",
+                          "Hash":  "DC2091D47BDB6FD756452D9380F8AE7731E19736D62140ACE52C64C3ED1EA7FA"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\status_chip.dart",
+                          "Hash":  "F44FA65021576A68DEEFF833F73C47A3DBCAB32DA85B3504FD83B2E8F8F8E372"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\stat_card.dart",
+                          "Hash":  "B8902D552F80CA4C3454956F5C8B0EDF496D357193812CAA171BA1725E9A7E21"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\user_avatar.dart",
+                          "Hash":  "220BD56EFD6142CAE200A7D00E24F5B5B63D5B84F85E6F2FC5F9B179BADE6612"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_alerts.dart",
+                          "Hash":  "F999F7D497C8EB4811BA63D7B08D8A00E1CEBE9DB6BA2AC1328368DED87FD940"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_charts.dart",
+                          "Hash":  "62EE7A3C68A7F7AF797CE0A1E359D7E95ACF5993A45721099B12956FEA485BE3"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_kpi_card.dart",
+                          "Hash":  "FFBBCA1D7526034C482F522086DF5AD87809AE3E685AF65B4B6AC5A6916D3858"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_layout.dart",
+                          "Hash":  "D0496490DC658AC5A9F608E0F87BA5B6A050A4B45FAF8D32D70E2A7E4072AE2B"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_lists.dart",
+                          "Hash":  "78962F510B567B2C67CFD7F0A1BDC8F1DAECEE2F0937585D33D535B9A5B7F836"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_order_detail.dart",
+                          "Hash":  "DC5EECADAE6D4AD59B8D3650D87863383962D68B946F0EC4A3BCF9633F181F20"
+                      },
+                      {
+                          "Path":  "lib\\widgets\\dashboard\\dashboard_period_selector.dart",
+                          "Hash":  "A36EAB0B2D461429CBC91017D940E31BCA69707B6997D6BD443C818CCB628445"
+                      },
+                      {
+                          "Path":  "scripts\\Measure-Project.ps1",
+                          "Hash":  "3C7038134EADA5C78864448E62B2B37E8F29F30F557E913D7064C6D739E93A59"
+                      },
+                      {
+                          "Path":  "scripts\\Start-PharmaLab.ps1",
+                          "Hash":  "48A84A8524462E4892AAB416E76613C4EF1ADEDCA216E978BF1465E0016BE342"
+                      },
+                      {
+                          "Path":  "test\\account_navigation_test.dart",
+                          "Hash":  "12DD92E0EA89FBB95E6384AEC7554AA0A758841C797FD440E8F613F44B97BC27"
+                      },
+                      {
+                          "Path":  "test\\administrador_flow_test.dart",
+                          "Hash":  "50D4318BFBEF70FF65B6BD92777E67CAB00BF072D5658917E45477E58109B102"
+                      },
+                      {
+                          "Path":  "test\\admin_dashboard_flow_test.dart",
+                          "Hash":  "8F5955E2B29959220BDB2CC4B894A9EEB66BECE9F35EB5EE69DF1ADD27AE466A"
+                      },
+                      {
+                          "Path":  "test\\admin_employees_local_test.dart",
+                          "Hash":  "381EF7959FD802291612865B73523ED705C1BEF58AD45079F48CFEABF01198C1"
+                      },
+                      {
+                          "Path":  "test\\admin_scroll_layout_test.dart",
+                          "Hash":  "1200D1379155CA6A838A77BCD1DC5C9F580B5F4816876EEE447F1CE4EECA9C7E"
+                      },
+                      {
+                          "Path":  "test\\bolivia_time_test.dart",
+                          "Hash":  "6A3A50B1CC886BAA61D3CEEABEA4EBD77B2578F12BEB5948971BA3E52FE8FDEA"
+                      },
+                      {
+                          "Path":  "test\\cart_service_test.dart",
+                          "Hash":  "7B6E540B0F3F634CBD478D8E109DE9CAE201F20D5CE0B6C258B991145C4BAC93"
+                      },
+                      {
+                          "Path":  "test\\cart_view_model_test.dart",
+                          "Hash":  "C4247EFE60302A77A0E0A77F17E3F2C29B76146077CEC495B1BEF2DE46E2BFDA"
+                      },
+                      {
+                          "Path":  "test\\catalog_repository_test.dart",
+                          "Hash":  "D67DE29670B82FE7780514DA0631FFCA438AC10C92509BF35381D2B66EE60CAC"
+                      },
+                      {
+                          "Path":  "test\\checkout_diagnostics_test.dart",
+                          "Hash":  "1945AF4C0AAC27572BC65AC9E8DD893D49163E937F4DC3A1F4646867B7DD6691"
+                      },
+                      {
+                          "Path":  "test\\checkout_view_model_test.dart",
+                          "Hash":  "E3622AB777FECEEBA4012118AED671E9776F83EAB8DAA9E81FE3D26B9ADE397A"
+                      },
+                      {
+                          "Path":  "test\\cliente_flow_test.dart",
+                          "Hash":  "07FE46B4BB3BBDE1778605F75A2F64FE68D9288BE8428D5D9D178E126B0C3FDB"
+                      },
+                      {
+                          "Path":  "test\\commercial_number_test.dart",
+                          "Hash":  "AEC1FA35B2CA538398AFE80B8559612F447A5EDA41F26E54AF82EFD08FD8603A"
+                      },
+                      {
+                          "Path":  "test\\dashboard_firestore_mapping_test.dart",
+                          "Hash":  "ADFB95D794B1014D7C8E4D69A474A594FD943BAE1C775FFD4B43D159C939D70E"
+                      },
+                      {
+                          "Path":  "test\\dashboard_metrics_test.dart",
+                          "Hash":  "332207022BF3FE48D545C2CE19537CC039290EB281FA1ABBAC46674E8BA1CD12"
+                      },
+                      {
+                          "Path":  "test\\dashboard_widgets_test.dart",
+                          "Hash":  "A963401BE678B74058E6615ED3EEB6D534132CB4280611C8F727E36F346BD787"
+                      },
+                      {
+                          "Path":  "test\\employee_model_test.dart",
+                          "Hash":  "159DD4C6716707560C47E58C926F4A4CF485EC24CD6867340F55E76FCB0BD728"
+                      },
+                      {
+                          "Path":  "test\\firestore_compatibility_test.dart",
+                          "Hash":  "72517AD61D125BA23CE76D91D9C0FA35316FD2D0D836704CA7DA4F0A7BFE62E1"
+                      },
+                      {
+                          "Path":  "test\\login_layout_test.dart",
+                          "Hash":  "95DD26398CB44E0A61AA165EEDEF713FF649A9041D3320AEF998AD50AA5C91D9"
+                      },
+                      {
+                          "Path":  "test\\logistics_view_model_test.dart",
+                          "Hash":  "CE2BFA77578835021C14117763E775D77A4677677B9498B44AC939DFB44D4406"
+                      },
+                      {
+                          "Path":  "test\\order_lifecycle_test.dart",
+                          "Hash":  "C0AE976D28C37A39E2BEBC62B635D1DFF9E2246652E9CD6A529EFAA841ACD082"
+                      },
+                      {
+                          "Path":  "test\\order_lifecycle_widgets_test.dart",
+                          "Hash":  "F7395DDA6830C321E22A58390B6D63C781866C99F989DE00DDAB3D9A4A3EC68F"
+                      },
+                      {
+                          "Path":  "test\\product_sale_units_test.dart",
+                          "Hash":  "ECA3C5A82FAFEE82CA47B23C478409147DFE46D66E7295F57E2CF92736B525A6"
+                      },
+                      {
+                          "Path":  "test\\remote_delivery_dialog_test.dart",
+                          "Hash":  "B9A6DF3082E39BC21F24E20E6956F343A8ED00E2CCFB8FF72E38230CDC3C4F4D"
+                      },
+                      {
+                          "Path":  "test\\remote_order_tracking_test.dart",
+                          "Hash":  "0F2B8CB752D70D1A4DDD2F4A571415848C4B5F79EDC0455E2C5BB123EC85164A"
+                      },
+                      {
+                          "Path":  "test\\repartidor_flow_test.dart",
+                          "Hash":  "53F4E6E9DF6FE1C44B08B2956A13C98273B670AE32BDF640D9D1B877FD0212CE"
+                      },
+                      {
+                          "Path":  "test\\role_functional_fixes_test.dart",
+                          "Hash":  "3A7375D20A4C7617DF14DD7A6DC287B16EFB1040A15319CC6EE703A6DA8BA855"
+                      },
+                      {
+                          "Path":  "test\\seller_orders_view_model_test.dart",
+                          "Hash":  "BE1C41ADFF6F76E20EB8E62B5A08BB8A6A741F75F9D4AD1C4C44BBA200B232C8"
+                      },
+                      {
+                          "Path":  "test\\spark_approval_test.dart",
+                          "Hash":  "770E7CEA983BC80078B1F18036DC82F6A69B7763A7E2B1544562E31AEEA59A8A"
+                      },
+                      {
+                          "Path":  "test\\spark_checkout_test.dart",
+                          "Hash":  "23B7F2CA24828A272A8E5E3C6F0D5F74AA62F200C8274C2DCF47955D385AB13D"
+                      },
+                      {
+                          "Path":  "test\\spark_seller_approval_widget_test.dart",
+                          "Hash":  "AD038D17722FAFA41DD48D7643F450A17069E589CD9E337F6AF3D9047EF3D5DE"
+                      },
+                      {
+                          "Path":  "test\\vendedor_flow_test.dart",
+                          "Hash":  "E30344750F35EB4935454D93A880091BA95AF2DAD9E800B6EC674CF57F047E03"
+                      },
+                      {
+                          "Path":  "test\\widget_test.dart",
+                          "Hash":  "27047291281D7758CF4931FD7E43D15873401F7AD8353DF6C68BA9082BA5A045"
+                      },
+                      {
+                          "Path":  "web\\favicon.png",
+                          "Hash":  "7AB2525F4B86B65D3E4C70358A17E5A1AAF6F437F99CBCC046DAD73D59BB9015"
+                      },
+                      {
+                          "Path":  "web\\index.html",
+                          "Hash":  "B46A82C3504F9B8B1D75973A1E53E731730AB1C070904E3ED002FD3BA15B81F8"
+                      },
+                      {
+                          "Path":  "web\\manifest.json",
+                          "Hash":  "2B6E1A328F0435432F7D072B7BDDECB39F9779C8F2D69AD42475DBD9B4B84B56"
+                      },
+                      {
+                          "Path":  "web\\icons\\Icon-192.png",
+                          "Hash":  "3DCE99077602F70421C1C6B2A240BC9B83D64D86681D45F2154143310C980BE3"
+                      },
+                      {
+                          "Path":  "web\\icons\\Icon-512.png",
+                          "Hash":  "BACCB205AE45F0B421BE1657259B4943AC40C95094AB877F3BCBE12CD544DCBE"
+                      },
+                      {
+                          "Path":  "web\\icons\\Icon-maskable-192.png",
+                          "Hash":  "D2C842E22A9F4EC9D996B23373A905C88D9A203B220C5C151885AD621F974B5C"
+                      },
+                      {
+                          "Path":  "web\\icons\\Icon-maskable-512.png",
+                          "Hash":  "6AEE06CDCAB6B2AEF74B1734C4778F4421D2DA100B0FF9E52B21B55240202929"
+                      }
+                  ],
+    "BeforeBytes":  1753669396,
+    "Removed":  [
+                    {
+                        "Path":  "build",
+                        "Bytes":  1435944091
+                    },
+                    {
+                        "Path":  ".dart_tool/flutter_build",
+                        "Bytes":  161434562
+                    },
+                    {
+                        "Path":  ".dart_tool/hooks_runner",
+                        "Bytes":  33923047
+                    },
+                    {
+                        "Path":  "functions/node_modules",
+                        "Bytes":  188609177
+                    },
+                    {
+                        "Path":  "firebase-debug.log",
+                        "Bytes":  1031969
+                    },
+                    {
+                        "Path":  "firestore-debug.log",
+                        "Bytes":  493103
+                    },
+                    {
+                        "Path":  "integration-rules-test.log",
+                        "Bytes":  1614316
+                    }
+                ],
+    "CheckedFiles":  333,
+    "ChangedProtectedFiles":  [
+
+                              ],
+    "Validation":  {
+                       "AndroidBuild":  "flutter build apk --debug --target-platform android-arm64: correcto",
+                       "Analyze":  "No issues found",
+                       "FlutterTests":  182
+                   },
+    "FinalBytes":  12011303,
+    "SavedBytes":  1741658093,
+    "PostCleanupAnalyze":  "No issues found"
+}

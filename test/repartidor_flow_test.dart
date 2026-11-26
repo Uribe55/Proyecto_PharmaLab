@@ -14,6 +14,7 @@ Future<void> _loginAs(WidgetTester tester, String name) async {
   await tester.tap(find.text('Iniciar sesión'));
   await tester.pumpAndSettle();
 }
+
 //actor repartidor
 void main() {
   testWidgets('El repartidor cierra una entrega sin ver precios', (
@@ -42,7 +43,10 @@ void main() {
     await tester.tap(find.text('Sí, entregado'));
     await tester.pumpAndSettle();
 
-    expect(find.text('No tienes entregas en ruta'), findsOneWidget);
+    expect(
+      find.text('Todas'),
+      findsOneWidget,
+    ); // La vista Todas conserva las finalizadas.
     expect(
       PharmaService.instance.orders
           .firstWhere((order) => order.number == 'PL-2026-0842')
@@ -99,6 +103,15 @@ void main() {
     // Registrar la entrega sin conexión.
     await tester.tap(find.text('Mis entregas').last);
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('PL-2026-0809'),
+      240,
+      scrollable: find
+          .byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+          )
+          .first,
+    );
     await tester.tap(find.text('PL-2026-0809'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Iniciar ruta'));
@@ -159,6 +172,15 @@ void main() {
     await tester.pumpAndSettle();
     await _loginAs(tester, 'Carlos Mendoza');
 
+    await tester.scrollUntilVisible(
+      find.text('PL-2026-0839'),
+      240,
+      scrollable: find
+          .byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+          )
+          .first,
+    );
     await tester.tap(find.text('PL-2026-0839'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Iniciar ruta'));

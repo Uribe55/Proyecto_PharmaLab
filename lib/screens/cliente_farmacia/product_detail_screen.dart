@@ -12,8 +12,14 @@ import '../../widgets/product_image.dart';
 import '../../widgets/quantity_stepper.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.product, this.cart});
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.cart,
+    this.onOpenCart,
+  });
 
+  final VoidCallback? onOpenCart;
   final Product product;
   final CartViewModel? cart;
 
@@ -32,6 +38,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int get _maxQuantity => _cart.remainingFor(_product);
 
   void _addToCart() {
+    if (_cart.quantityFor(_product) > 0) {
+      widget.onOpenCart?.call();
+      return;
+    }
     final quantity = _quantity > _maxQuantity ? _maxQuantity : _quantity;
     if (quantity <= 0) return;
 
@@ -71,6 +81,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildContent(BuildContext context) {
     final maxQuantity = _maxQuantity;
     final remote = _cart.isRemote;
+    final inCart = _cart.quantityFor(_product) > 0;
     final canAdd = maxQuantity > 0;
     final quantity = _quantity.clamp(1, maxQuantity > 0 ? maxQuantity : 1);
     final tint = categoryTint(_product.category);
@@ -285,11 +296,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: canAdd ? _addToCart : null,
+                onPressed: inCart
+                    ? widget.onOpenCart
+                    : canAdd
+                    ? _addToCart
+                    : null,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    canAdd
+                    inCart
+                        ? 'Ver carrito'
+                        : canAdd
                         ? 'Añadir al carrito · '
                               '${formatBs(_product.estimatedTotal(quantity))}'
                         : 'Producto agotado',

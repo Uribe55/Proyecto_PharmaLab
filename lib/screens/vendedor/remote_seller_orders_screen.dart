@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/staff_order_repository.dart';
 import '../../domain/spark_approval.dart';
+import '../../domain/seller_order_list.dart';
 import '../../models/order.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/seller_orders_view_model.dart';
@@ -21,15 +22,13 @@ class RemoteSellerOrdersScreen extends StatefulWidget {
 }
 
 class _RemoteSellerOrdersScreenState extends State<RemoteSellerOrdersScreen> {
-  bool _pendingOnly = true;
+  OrderStatus? _status;
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.viewModel,
     builder: (context, _) {
       final vm = widget.viewModel;
-      final orders = vm.orders
-          .where((order) => !_pendingOnly || order.isPending)
-          .toList();
+      final orders = sellerOrderList(vm.orders, status: _status);
       return Scaffold(
         body: SafeArea(
           child: Column(
@@ -61,22 +60,25 @@ class _RemoteSellerOrdersScreenState extends State<RemoteSellerOrdersScreen> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      children: [
-                        ChoiceChip(
-                          label: const Text('Pendientes'),
-                          selected: _pendingOnly,
-                          onSelected: (_) =>
-                              setState(() => _pendingOnly = true),
-                        ),
-                        ChoiceChip(
-                          label: const Text('Todos'),
-                          selected: !_pendingOnly,
-                          onSelected: (_) =>
-                              setState(() => _pendingOnly = false),
-                        ),
-                      ],
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final status in <OrderStatus?>[
+                            null,
+                            ...OrderStatus.values,
+                          ])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(orderFilterLabel(status)),
+                                selected: _status == status,
+                                onSelected: (_) =>
+                                    setState(() => _status = status),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                     if (!vm.loading && vm.error == null && orders.isEmpty)
                       const Padding(
@@ -97,7 +99,9 @@ class _RemoteSellerOrdersScreenState extends State<RemoteSellerOrdersScreen> {
                         ),
                         caption: order.fromCache
                             ? 'Información guardada'
-                            : 'Registrado en Firestore',
+                            : order.createdAtKnown
+                            ? 'Registrado en Firestore'
+                            : 'Fecha no disponible',
                       ),
                     ],
                   ],

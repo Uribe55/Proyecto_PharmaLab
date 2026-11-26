@@ -10,6 +10,7 @@ import '../../widgets/account_navigation.dart';
 import '../../widgets/client_avatar.dart';
 import '../../widgets/pharma_logo.dart';
 import '../../widgets/product_card.dart';
+import '../../widgets/cart_navigation.dart';
 import '../../widgets/section_header.dart';
 import 'catalog_screen.dart';
 import 'product_detail_screen.dart';
@@ -31,6 +32,7 @@ class HomeScreen extends StatelessWidget {
             openAccount?.call();
           },
           child: CatalogScreen(
+            onOpenCart: CartNavigation.of(context),
             initialCategory: category,
             initialCategoryId: categoryId,
           ),
@@ -41,11 +43,20 @@ class HomeScreen extends StatelessWidget {
 
   void _openProduct(BuildContext context, Product product) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(
+          product: product,
+          onOpenCart: CartNavigation.of(context),
+        ),
+      ),
     );
   }
 
   void _addToCart(BuildContext context, Product product) {
+    if (CartViewModel.instance.quantityFor(product) > 0) {
+      CartNavigation.of(context)?.call();
+      return;
+    }
     final added = CartViewModel.instance.add(product);
     final message = added
         ? '${product.name} se agregó al carrito.'
@@ -62,7 +73,11 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = CatalogViewModel.instance;
     return ListenableBuilder(
-      listenable: Listenable.merge([PharmaService.instance, vm]),
+      listenable: Listenable.merge([
+        PharmaService.instance,
+        vm,
+        CartViewModel.instance,
+      ]),
       builder: (context, _) {
         final pharmacy = PharmaService.instance.pharmacy;
         final remote = PharmaService.instance.usesFirebase;
@@ -242,6 +257,8 @@ class HomeScreen extends StatelessWidget {
                       final product = featured[index];
                       return ProductCard(
                         product: product,
+                        inCart: CartViewModel.instance.quantityFor(product) > 0,
+                        onViewCart: CartNavigation.of(context),
                         onTap: () => _openProduct(context, product),
                         onAdd: () => _addToCart(context, product),
                       );

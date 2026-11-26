@@ -37,6 +37,7 @@ class FirestoreLogisticsDataSource implements LogisticsRepository {
   @override
   Stream<List<DeliveryRecord>> watchDeliveries() async* {
     final actor = uid;
+    String? employeeId;
     Query<Map<String, dynamic>> query = db.collection('entregas');
     if (session.role.name == 'repartidor') {
       final employees = await db
@@ -52,13 +53,30 @@ class FirestoreLogisticsDataSource implements LogisticsRepository {
       if (active.length != 1) {
         throw StateError('Empleado activo no identificado de forma única.');
       }
-      query = query.where('id_repartidor', isEqualTo: active.single.id);
+      employeeId = active.single.id;
+      query = query.where('id_repartidor', isEqualTo: employeeId);
     }
     await for (final snapshot in query.snapshots()) {
       if (uid != actor) throw StateError('La sesión cambió.');
+      final names = <String, Future<String>>{};
       final records = await Future.wait(
         snapshot.docs.map((d) async {
           final data = d.data();
+          data['from_cache'] = snapshot.metadata.isFromCache;
+          if (employeeId == null && data['id_repartidor'] is String) {
+            final id = data['id_repartidor'] as String;
+            data['repartidor_nombre'] = await names.putIfAbsent(id, () async {
+              try {
+                final employee = (await db.doc('empleado/$id').get()).data();
+                return [employee?['nombre'], employee?['apellido']]
+                    .whereType<String>()
+                    .where((s) => s.trim().isNotEmpty)
+                    .join(' ');
+              } catch (_) {
+                return '';
+              }
+            });
+          }
           if (data['schema_version'] != 'spark_logistics_v1') {
             final details = await d.reference
                 .collection('detalle_entrega')
@@ -71,7 +89,15 @@ class FirestoreLogisticsDataSource implements LogisticsRepository {
         }),
       );
       if (uid != actor) throw StateError('La sesión cambió.');
-      yield records;
+      yield records
+          .where(
+            (record) =>
+                employeeId == null ||
+                (record.data['id_repartidor'] == employeeId &&
+                    (record.data['repartidor_uid'] == null ||
+                        record.data['repartidor_uid'] == actor)),
+          )
+          .toList();
     }
   }
 

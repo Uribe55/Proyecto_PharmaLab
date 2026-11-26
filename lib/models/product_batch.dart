@@ -5,17 +5,23 @@ class ProductBatch {
     required this.productId,
     required this.available,
     this.expiresAt,
+    this.active = true,
   });
 
   final String id;
   final String productId;
   final int available;
+  final bool active;
   final DateTime? expiresAt;
 
   bool eligible({required bool requiresExpiry, required DateTime today}) {
-    if (available <= 0) return false;
+    if (!active || available <= 0) return false;
     if (expiresAt == null) return !requiresExpiry;
-    final expiryDate = DateTime(expiresAt!.year, expiresAt!.month, expiresAt!.day);
+    final expiryDate = DateTime(
+      expiresAt!.year,
+      expiresAt!.month,
+      expiresAt!.day,
+    );
     final currentDate = DateTime(today.year, today.month, today.day);
     return !expiryDate.isBefore(currentDate);
   }

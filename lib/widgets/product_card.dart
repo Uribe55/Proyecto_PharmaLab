@@ -12,8 +12,12 @@ class ProductCard extends StatelessWidget {
     required this.product,
     required this.onTap,
     this.onAdd,
+    this.inCart = false,
+    this.onViewCart,
   });
 
+  final bool inCart;
+  final VoidCallback? onViewCart;
   final Product product;
   final VoidCallback onTap;
   final VoidCallback? onAdd;
@@ -101,16 +105,16 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        Text(
-                          'por ${product.saleUnit}',
-                          style: AppText.meta,
-                        ),
+                        Text('por ${product.saleUnit}', style: AppText.meta),
                       ],
                     ),
                   ),
                   _AddButton(
-                    enabled: product.isAvailable && onAdd != null,
-                    onTap: onAdd,
+                    enabled: inCart
+                        ? onViewCart != null
+                        : product.isAvailable && onAdd != null,
+                    inCart: inCart,
+                    onTap: inCart ? onViewCart : onAdd,
                   ),
                 ],
               ),
@@ -123,7 +127,9 @@ class ProductCard extends StatelessWidget {
 }
 
 class _AddButton extends StatelessWidget {
-  const _AddButton({required this.enabled, this.onTap});
+  const _AddButton({required this.enabled, this.onTap, this.inCart = false});
+
+  final bool inCart;
 
   final bool enabled;
   final VoidCallback? onTap;
@@ -137,13 +143,24 @@ class _AddButton extends StatelessWidget {
       child: InkWell(
         onTap: enabled ? onTap : null,
         child: SizedBox(
-          width: 32,
+          width: inCart ? 76 : 32,
           height: 32,
-          child: Icon(
-            Icons.add_rounded,
-            size: 20,
-            color: enabled ? Colors.white : AppColors.muted,
-          ),
+          child: inCart
+              ? const Center(
+                  child: Text(
+                    'Ver carrito',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              : Icon(
+                  Icons.add_rounded,
+                  size: 20,
+                  color: enabled ? Colors.white : AppColors.muted,
+                ),
         ),
       ),
     );

@@ -264,3 +264,13 @@ test('integracion main: cliente confirma, vendedor aprueba y asigna, repartidor 
  assert.equal((await getDoc(doc(customer,'lotes_productos/LOTE001'))).data().cantidad_disponible,99);
  assert.equal((await getDocs(collection(customer,`pedidos/${id}/historial_estado`))).size,4);
 });
+
+test('un lote desactivado no se puede vender aunque tenga existencias', async () => {
+ await env.withSecurityRulesDisabled(async context => {
+  const db=context.firestore(), batch=writeBatch(db);
+  batch.update(doc(db,'lotes_productos/LOTE001'),{estado:false});
+  await batch.commit();
+ });
+ const db=client();
+ await assertFails(commit(db,payload(db)));
+});

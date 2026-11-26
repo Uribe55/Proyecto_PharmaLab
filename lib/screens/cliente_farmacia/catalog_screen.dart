@@ -14,9 +14,11 @@ class CatalogScreen extends StatefulWidget {
   const CatalogScreen({
     super.key,
     this.initialCategory,
+    this.onOpenCart,
     this.initialCategoryId,
   });
 
+  final VoidCallback? onOpenCart;
   final ProductCategory? initialCategory;
   final String? initialCategoryId;
 
@@ -63,6 +65,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   void _addToCart(Product product) {
+    if (CartViewModel.instance.quantityFor(product) > 0) {
+      widget.onOpenCart?.call();
+      return;
+    }
     final added = CartViewModel.instance.add(product);
     final message = added
         ? '${product.name} se agregó al carrito.'
@@ -77,7 +83,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   void _openProduct(Product product) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(
+          product: product,
+          onOpenCart: widget.onOpenCart,
+        ),
+      ),
     );
   }
 
@@ -85,7 +96,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget build(BuildContext context) {
     final vm = CatalogViewModel.instance;
     return ListenableBuilder(
-      listenable: Listenable.merge([PharmaService.instance, vm]),
+      listenable: Listenable.merge([
+        PharmaService.instance,
+        vm,
+        CartViewModel.instance,
+      ]),
       builder: (context, _) {
         final remote = PharmaService.instance.usesFirebase;
         final products = _filterProducts(
@@ -239,6 +254,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                 final product = products[index];
                                 return ProductCard(
                                   product: product,
+                                  inCart:
+                                      CartViewModel.instance.quantityFor(
+                                        product,
+                                      ) >
+                                      0,
+                                  onViewCart: widget.onOpenCart,
                                   onTap: () => _openProduct(product),
                                   onAdd: () => _addToCart(product),
                                 );

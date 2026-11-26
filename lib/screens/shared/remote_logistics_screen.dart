@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../../widgets/delivery_card.dart';
+import '../../widgets/empty_state.dart';
+import '../../theme/app_theme.dart';
 
 import '../../data/datasources/firestore_logistics_data_source.dart';
 import '../../data/repositories/logistics_repository.dart';
@@ -10,7 +13,13 @@ import '../../widgets/app_header.dart';
 
 /// Vista remota sin precios ni acceso a documentos comerciales del repartidor.
 class RemoteLogisticsScreen extends StatefulWidget {
-  const RemoteLogisticsScreen({super.key, this.history = false, this.order});
+  const RemoteLogisticsScreen({
+    super.key,
+    this.history = false,
+    this.order,
+    this.repository,
+  });
+  final LogisticsRepository? repository;
   final bool history;
   final PharmacyOrder? order;
   @override
@@ -18,15 +27,13 @@ class RemoteLogisticsScreen extends StatefulWidget {
 }
 
 class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
-  late final vm = LogisticsViewModel(FirestoreLogisticsDataSource());
+  late final vm = LogisticsViewModel(
+    widget.repository ?? FirestoreLogisticsDataSource(),
+  );
   late final deliveries = vm.repository.watchDeliveries();
   late final drivers = vm.repository.watchDrivers();
   String? selected;
-  String dateLabel(dynamic value) {
-    final date = value is Timestamp ? value.toDate() : null;
-    if (date == null) return '';
-    return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
+  String? _filter;
 
   @override
   void dispose() {
@@ -48,7 +55,7 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
   Future<void> fail(DeliveryRecord d) async {
     String reason = 'Farmacia cerrada';
     final note = TextEditingController();
-    final confirmed = await showDialog<bool>(
+    final route = DialogRoute<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, update) => AlertDialog(
@@ -91,7 +98,9 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
         ),
       ),
     );
+    final confirmed = await Navigator.of(context).push(route);
     final observation = note.text;
+    await route.completed;
     note.dispose();
     if (confirmed == true && mounted) {
       await result(
@@ -105,7 +114,13 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
     listenable: vm,
     builder: (context, _) => Scaffold(
       appBar: AppPageAppBar(
-        title: widget.order != null ? 'Asignar repartidor' : 'Entregas reales',
+        title: widget.order != null
+            ? 'Asignar repartidor'
+            : widget.history
+            ? 'Historial de entregas'
+            : PharmaService.instance.role.name == 'repartidor'
+            ? 'Mis entregas'
+            : 'Entregas',
       ),
       body: widget.order != null
           ? StreamBuilder<List<LogisticsDriver>>(
@@ -159,91 +174,87 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final driver = PharmaService.instance.role.name == 'repartidor';
-                final records = s.data!
-                    .where(
-                      (d) =>
-                          !driver ||
-                          widget.history ==
-                              [
-                                'entregado',
-                                'fallida',
-                                'Entregado',
-                                'Fallida',
-                              ].contains(d.data['estado']),
-                    )
-                    .toList();
+                final records = deliveryList(
+                  s.data!,
+                  history: widget.history,
+                  filter: _filter,
+                );
                 return ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    if (records.isEmpty)
-                      const Text('No hay entregas en esta vista.'),
-                    for (final d in records)
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${d.data['numero_comercial'] ?? d.id} · ${d.data['pedido_numero'] ?? d.data['id_pedido']}',
-                              ),
-                              Text('Estado: ${d.data['estado']}'),
-                              Text(
-                                'Asignación: ${dateLabel(d.data['fecha_creacion'])}',
-                              ),
-                              for (final line
-                                  in d.data['detalles_historicos'] as List? ??
-                                      [])
-                                Text(
-                                  'Detalle ${line['id_detalle_pedido']}: ${line['cantidad_programada']} programadas, ${line['cantidad_entregada']} entregadas',
+                    Text(
+                      widget.history
+                          ? 'Entregas completadas'
+                          : 'Tu operación de entrega',
+                      style: AppText.h1,
+                    ),
+                    const SizedBox(height: 12),
+                    if (!widget.history)
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final entry in const <String?, String>{
+                              null: 'Todas',
+                              'asignada': 'Asignadas',
+                              'en_ruta': 'En ruta',
+                              'entregado': 'Entregadas',
+                              'fallida': 'Fallidas',
+                            }.entries)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(entry.value),
+                                  selected: _filter == entry.key,
+                                  onSelected: (_) =>
+                                      setState(() => _filter = entry.key),
                                 ),
-                              Text(
-                                '${d.data['farmacia'] ?? ''}\n${d.data['direccion'] ?? 'Dirección histórica no disponible'}\n${d.data['referencia'] ?? ''}',
                               ),
-                              Text(
-                                '${d.data['contacto'] ?? ''} ${d.data['telefono'] ?? ''}',
-                              ),
-                              Text(
-                                'Producto: ${d.data['producto_nombre'] ?? d.data['producto'] ?? 'Consultar detalle histórico'} · Cantidad: ${d.data['cantidad'] ?? '—'}',
-                              ),
-                              if (d.data['motivo'] != null)
-                                Text(
-                                  '${d.data['motivo']} ${d.data['observacion'] ?? ''}',
-                                ),
-                              if (d.data['fecha_estado'] != null)
-                                Text(dateLabel(d.data['fecha_estado'])),
-                              if (driver &&
-                                  d.data['schema_version'] ==
-                                      'spark_logistics_v1') ...[
-                                if (d.data['estado'] == 'asignada')
-                                  FilledButton(
-                                    onPressed: vm.busy
-                                        ? null
-                                        : () => result(
-                                            vm.transition(d, 'en_ruta'),
-                                          ),
-                                    child: const Text('INICIAR REPARTO'),
-                                  ),
-                                if (d.data['estado'] == 'en_ruta') ...[
-                                  FilledButton(
-                                    onPressed: vm.busy
-                                        ? null
-                                        : () => result(
-                                            vm.transition(d, 'entregado'),
-                                          ),
-                                    child: const Text('MARCAR COMO ENTREGADO'),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed: vm.busy ? null : () => fail(d),
-                                    child: const Text(
-                                      'REGISTRAR ENTREGA FALLIDA',
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ],
-                          ),
+                          ],
                         ),
+                      ),
+                    const SizedBox(height: 16),
+                    if (records.isEmpty)
+                      const EmptyState(
+                        icon: Icons.local_shipping_outlined,
+                        title: 'Sin entregas en esta vista',
+                        description: 'Las entregas aparecerán aquí cuando correspondan a la categoría seleccionada.',
+                      ),
+                    for (final d in records)
+                      DeliveryCard(
+                        delivery: d,
+                        showDriver: !driver,
+                        amount: !driver && d.data['total'] is num
+                            ? (d.data['total'] as num).toDouble()
+                            : null,
+                        actions: [
+                          if (!widget.history &&
+                              driver &&
+                              d.data['schema_version'] ==
+                                  'spark_logistics_v1' &&
+                              d.data['from_cache'] != true) ...[
+                            if (d.state == 'asignada')
+                              FilledButton(
+                                onPressed: vm.busy
+                                    ? null
+                                    : () => result(vm.transition(d, 'en_ruta')),
+                                child: const Text('INICIAR REPARTO'),
+                              ),
+                            if (d.state == 'en_ruta') ...[
+                              FilledButton(
+                                onPressed: vm.busy
+                                    ? null
+                                    : () =>
+                                          result(vm.transition(d, 'entregado')),
+                                child: const Text('MARCAR COMO ENTREGADO'),
+                              ),
+                              OutlinedButton(
+                                onPressed: vm.busy ? null : () => fail(d),
+                                child: const Text('REGISTRAR ENTREGA FALLIDA'),
+                              ),
+                            ],
+                          ],
+                        ],
                       ),
                   ],
                 );

@@ -230,9 +230,24 @@ mixin _PharmaUsers on _PharmaServiceState {
     if (usesFirebase) {
       try {
         final batch = _db.batch();
+        final employees = user.role == UserRole.cliente
+            ? null
+            : await _db
+                  .collection('empleado')
+                  .where('usuario_id', isEqualTo: user.id)
+                  .get(const GetOptions(source: Source.server));
+        if (employees != null && employees.docs.length > 1) {
+          return 'El vínculo del empleado no es único.';
+        }
+        final employee = employees?.docs.isNotEmpty == true
+            ? employees!.docs.single
+            : null;
+        if (employee != null) {
+          batch.update(employee.reference, {'telefono': updated.phone});
+        }
         batch.update(_db.collection('usuarios').doc(updated.id), {
           'nombre': updated.name,
-          'telefono': updated.phone,
+          if (employee == null) 'telefono': updated.phone,
           'direccion': updated.address,
         });
         final pharmacyId = _pharmacyId;

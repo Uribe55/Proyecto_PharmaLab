@@ -8,7 +8,7 @@ import '../datasources/firestore_catalog_data_source.dart';
 /// Transforma documentos Firestore en modelos usados por la aplicación.
 class CatalogRepository {
   CatalogRepository({FirestoreCatalogDataSource? dataSource})
-      : _source = dataSource;
+    : _source = dataSource;
 
   FirestoreCatalogDataSource? _source;
   FirestoreCatalogDataSource get source =>
@@ -18,7 +18,10 @@ class CatalogRepository {
       source.watchCategories().map((snapshot) {
         final categories = snapshot.docs.map((doc) {
           final name = _text(doc.data()['nombre']);
-          return CatalogCategory(id: doc.id, name: name.isEmpty ? doc.id : name);
+          return CatalogCategory(
+            id: doc.id,
+            name: name.isEmpty ? doc.id : name,
+          );
         }).toList();
         categories.sort((a, b) => a.id.compareTo(b.id));
         return categories;
@@ -33,6 +36,7 @@ class CatalogRepository {
             id: doc.id,
             productId: _text(data['producto_id']),
             available: _integer(data['cantidad_disponible']),
+            active: data['estado'] != false,
             expiresAt: rawDate is Timestamp ? rawDate.toDate() : null,
           );
         }).toList();
@@ -74,7 +78,9 @@ class CatalogRepository {
     final namesById = {for (final item in categories) item.id: item.name};
     final categoriesById = {for (final item in categories) item.id: item};
     final stockByProduct = <String, int>{};
-    final expiryByProduct = {for (final item in records) item.id: item.requiresExpiry};
+    final expiryByProduct = {
+      for (final item in records) item.id: item.requiresExpiry,
+    };
 
     for (final batch in batches) {
       if (!batch.eligible(
@@ -93,26 +99,28 @@ class CatalogRepository {
     final result = <Product>[];
     for (final record in records) {
       final category = categoriesById[record.categoryId];
-      result.add(Product(
-        id: record.id,
-        name: record.name,
-        brand: record.brand,
-        presentation: record.presentation,
-        category: category?.visualCategory ?? ProductCategory.insumosClinicos,
-        categoryId: record.categoryId,
-        categoryName: namesById[record.categoryId] ?? 'Sin categoría',
-        price: record.price,
-        stock: stockByProduct[record.id] ?? 0,
-        description: record.description,
-        isFeatured: record.featured,
-        code: record.code,
-        concentration: record.concentration,
-        material: record.material,
-        size: record.size,
-        requiresExpiry: record.requiresExpiry,
-        unitOfMeasure: record.unitOfMeasure,
-        unitsPerPackage: record.unitsPerPackage,
-      ));
+      result.add(
+        Product(
+          id: record.id,
+          name: record.name,
+          brand: record.brand,
+          presentation: record.presentation,
+          category: category?.visualCategory ?? ProductCategory.insumosClinicos,
+          categoryId: record.categoryId,
+          categoryName: namesById[record.categoryId] ?? 'Sin categoría',
+          price: record.price,
+          stock: stockByProduct[record.id] ?? 0,
+          description: record.description,
+          isFeatured: record.featured,
+          code: record.code,
+          concentration: record.concentration,
+          material: record.material,
+          size: record.size,
+          requiresExpiry: record.requiresExpiry,
+          unitOfMeasure: record.unitOfMeasure,
+          unitsPerPackage: record.unitsPerPackage,
+        ),
+      );
     }
     result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return result;
@@ -124,6 +132,7 @@ class CatalogRepository {
     final number = value.toInt();
     return number < 0 ? 0 : number;
   }
+
   static double _double(dynamic value) => value is num ? value.toDouble() : 0.0;
 }
 

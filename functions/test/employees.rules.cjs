@@ -414,3 +414,13 @@ test('admin inactivo no registra y empleado inactivo no opera', async () => {
 test('no se reutiliza un UID ya vinculado', async () => {
   await assertFails(createEmployee('admin', { employee: { usuario_id: 'seller' }, noUser: true }));
 });
+
+test('cada empleado lee y actualiza únicamente su propio teléfono', async () => {
+  await assertSucceeds(getDoc(doc(db('driver'), 'empleado/EMP002')));
+  await assertSucceeds(updateDoc(doc(db('driver'), 'empleado/EMP002'), { telefono: '77712345' }));
+  await assertSucceeds(updateDoc(doc(db('seller'), 'empleado/EMP001'), { telefono: '77799999' }));
+  await assertFails(updateDoc(doc(db('driver'), 'empleado/EMP003'), { telefono: '1' }));
+  await assertFails(updateDoc(doc(db('client'), 'empleado/EMP002'), { telefono: '1' }));
+  await assertFails(updateDoc(doc(db('driver'), 'empleado/EMP002'), { cargo: 'Vendedor' }));
+  await assertFails(updateDoc(doc(db('driver'), 'empleado/EMP002'), { estado: false }));
+});

@@ -66,7 +66,10 @@ class OrderListTile extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            caption ?? formatOrderDate(order.createdAt),
+            caption ??
+                (order.createdAtKnown
+                    ? formatOrderDate(order.createdAt)
+                    : 'Fecha no disponible'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppText.meta.copyWith(fontSize: 10.5),

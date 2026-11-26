@@ -7,14 +7,20 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/offline_banner.dart';
-import '../../widgets/order_list_tile.dart';
+import '../../widgets/delivery_card.dart';
 import '../../widgets/stat_card.dart';
 import 'driver_delivery_detail_screen.dart';
 
 /// Entregas asignadas al repartidor en sesión (RF-13).
-class DriverDeliveriesScreen extends StatelessWidget {
+class DriverDeliveriesScreen extends StatefulWidget {
   const DriverDeliveriesScreen({super.key});
 
+  @override
+  State<DriverDeliveriesScreen> createState() => _DriverDeliveriesScreenState();
+}
+
+class _DriverDeliveriesScreenState extends State<DriverDeliveriesScreen> {
+  OrderStatus? _filter;
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -29,6 +35,16 @@ class DriverDeliveriesScreen extends StatelessWidget {
             ? <PharmacyOrder>[]
             : service.ordersForDriver(driver.id);
 
+        final filtered = orders
+            .where(
+              (o) =>
+                  o.driverId == driver?.id &&
+                  (_filter == null ||
+                      (_filter == OrderStatus.reprogramado
+                          ? o.needsReschedule
+                          : o.status == _filter)),
+            )
+            .toList();
         final active = orders
             .where(
               (order) =>
@@ -97,29 +113,53 @@ class DriverDeliveriesScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       const OfflineBanner(),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final entry in const <OrderStatus?, String>{
+                              null: 'Todas',
+                              OrderStatus.aprobado: 'Asignadas',
+                              OrderStatus.enRuta: 'En ruta',
+                              OrderStatus.entregado: 'Entregadas',
+                              OrderStatus.reprogramado: 'Fallidas',
+                            }.entries)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(entry.value),
+                                  selected: _filter == entry.key,
+                                  onSelected: (_) =>
+                                      setState(() => _filter = entry.key),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           const Expanded(
-                            child: Text('Entregas activas', style: AppText.h3),
+                            child: Text('Tus entregas', style: AppText.h3),
                           ),
-                          Text('${active.length}', style: AppText.meta),
+                          Text('${filtered.length}', style: AppText.meta),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      if (active.isEmpty)
+                      if (filtered.isEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 24),
                           child: EmptyState(
                             icon: Icons.route_outlined,
-                            title: 'No tienes entregas en ruta',
+                            title: 'Sin entregas en esta categoría',
                             description:
                                 'Cuando el vendedor te asigne un pedido '
                                 'aparecerá aquí con la dirección de la farmacia.',
                           ),
                         )
                       else
-                        for (final order in active) ...[
-                          OrderListTile(
+                        for (final order in filtered) ...[
+                          OrderDeliveryCard(
                             order: order,
                             showTotal: false,
                             caption: _captionFor(order),
@@ -132,7 +172,8 @@ class DriverDeliveriesScreen extends StatelessWidget {
                               );
                             },
                           ),
-                          if (order != active.last) const SizedBox(height: 11),
+                          if (order != filtered.last)
+                            const SizedBox(height: 11),
                         ],
                     ],
                   ),

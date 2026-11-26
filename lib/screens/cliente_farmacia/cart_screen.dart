@@ -113,7 +113,10 @@ class CartScreen extends StatelessWidget {
                                 separatorBuilder: (_, _) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  return _CartItemCard(item: cart.items[index]);
+                                  return _CartItemCard(
+                                    key: ValueKey(cart.items[index].product.id),
+                                    item: cart.items[index],
+                                  );
                                 },
                               ),
                             ),
@@ -156,7 +159,7 @@ class _CartIntro extends StatelessWidget {
 }
 
 class _CartItemCard extends StatelessWidget {
-  const _CartItemCard({required this.item});
+  const _CartItemCard({super.key, required this.item});
 
   final CartItem item;
 
@@ -236,7 +239,16 @@ class _CartItemCard extends StatelessWidget {
                   children: [
                     QuantityStepper(
                       compact: true,
-                      min: 0,
+                      min: 1,
+                      editable: true,
+                      onLimitExceeded: (maximum) =>
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Solo hay $maximum unidades disponibles',
+                              ),
+                            ),
+                          ),
                       value: item.quantity,
                       max: product.stock,
                       onChanged: (value) =>

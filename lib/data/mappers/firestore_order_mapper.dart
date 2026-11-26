@@ -18,6 +18,7 @@ class FirestoreOrderMapper {
     'enRuta' || 'en_ruta' || 'En ruta' => OrderStatus.enRuta,
     'entregado' || 'Entregado' => OrderStatus.entregado,
     'fallida' || 'Fallida' || 'Entrega fallida' => OrderStatus.fallida,
+    'reprogramado' || 'Reprogramado' => OrderStatus.reprogramado,
     'cancelado' || 'Cancelado' => OrderStatus.cancelado,
     _ => throw const FormatException('Estado de pedido desconocido.'),
   };
@@ -35,12 +36,19 @@ class FirestoreOrderMapper {
       data['numero_comercial'],
       documentId,
     );
+    final rawDate = data['fecha_pedido'];
+    final created = rawDate is Timestamp
+        ? rawDate.toDate()
+        : rawDate is String
+        ? DateTime.tryParse(rawDate)
+        : null;
     final order = PharmacyOrder(
       number: number,
       documentId: documentId,
       operationId: data['id_operacion'] as String?,
       addressId: data['id_direccion'] as String?,
-      createdAt: date(data['fecha_pedido']),
+      createdAt: created ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      createdAtKnown: created != null,
       status: status(data['estado']),
       recordedTotal: (data['total'] as num).toDouble(),
       remote: true,

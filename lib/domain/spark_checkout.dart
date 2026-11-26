@@ -123,7 +123,8 @@ class SparkCheckout {
     }
     final stock = lot?['cantidad_disponible'];
     final expiry = lot?['fecha_vencimiento'];
-    if (lot?['producto_id'] != productId ||
+    if (lot?['estado'] == false ||
+        lot?['producto_id'] != productId ||
         stock is! int ||
         stock < quantity ||
         (product?['requiere_vencimiento'] == true &&

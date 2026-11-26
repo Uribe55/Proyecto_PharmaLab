@@ -1,0 +1,85 @@
+{
+  "fecha": "2026-11-26",
+  "rama": "main",
+  "formato": "dart format lib test ejecutado; formato ajeno retirado para preservar alcance",
+  "analisis": "flutter analyze: No issues found",
+  "flutterTest": {
+    "aprobadas": 182,
+    "fallos": 0,
+    "comando": "flutter test --no-pub --concurrency=1",
+    "incluye": [
+      "regresiones administrativas y scroll",
+      "carrito: navegación, edición y foco",
+      "perfil: cancelación segura",
+      "filtros y ordenamiento",
+      "historial y diálogos remotos",
+      "aprobación, entregas e inventario"
+    ]
+  },
+  "reglas": {
+    "aprobadas": 97,
+    "fallos": 0,
+    "host": "127.0.0.1:8085",
+    "proyecto": "demo-pharmalab-roles",
+    "sha256": "730e5865eff1f574b22d504cc4a1895e0de98b4b77d9151ea57f7b1d041811fc"
+  },
+  "archivosCreados": [
+    "docs/CORRECCIONES_POR_ROL.md",
+    "lib/domain/seller_order_list.dart",
+    "lib/widgets/cart_navigation.dart",
+    "lib/widgets/contact_edit_dialog.dart",
+    "lib/widgets/delivery_card.dart",
+    "test/remote_delivery_dialog_test.dart",
+    "test/role_functional_fixes_test.dart",
+    "docs/CORRECCIONES_POR_ROL_VERIFICACION.json"
+  ],
+  "archivosModificados": [
+    "firestore.rules",
+    "functions/test/employees.rules.cjs",
+    "functions/test/spark_checkout.rules.cjs",
+    "lib/data/datasources/firestore_logistics_data_source.dart",
+    "lib/data/datasources/firestore_spark_checkout.dart",
+    "lib/data/mappers/firestore_order_mapper.dart",
+    "lib/data/repositories/catalog_repository.dart",
+    "lib/data/repositories/logistics_repository.dart",
+    "lib/domain/spark_checkout.dart",
+    "lib/models/order.dart",
+    "lib/models/product_batch.dart",
+    "lib/screens/cliente_farmacia/cart_screen.dart",
+    "lib/screens/cliente_farmacia/catalog_screen.dart",
+    "lib/screens/cliente_farmacia/client_shell.dart",
+    "lib/screens/cliente_farmacia/home_screen.dart",
+    "lib/screens/cliente_farmacia/product_detail_screen.dart",
+    "lib/screens/cliente_farmacia/profile_screen.dart",
+    "lib/screens/repartidor/driver_deliveries_screen.dart",
+    "lib/screens/repartidor/driver_history_screen.dart",
+    "lib/screens/shared/employee_account_screen.dart",
+    "lib/screens/shared/remote_logistics_screen.dart",
+    "lib/screens/vendedor/remote_seller_orders_screen.dart",
+    "lib/screens/vendedor/seller_assignments_screen.dart",
+    "lib/screens/vendedor/seller_orders_screen.dart",
+    "lib/services/pharma/authentication.dart",
+    "lib/services/pharma/users.dart",
+    "lib/viewmodels/cart_view_model.dart",
+    "lib/widgets/order_detail_card.dart",
+    "lib/widgets/order_list_tile.dart",
+    "lib/widgets/product_card.dart",
+    "lib/widgets/quantity_stepper.dart",
+    "test/repartidor_flow_test.dart",
+    "test/spark_checkout_test.dart"
+  ],
+  "reglasPublicadas": false,
+  "datosProduccionModificados": false,
+  "dependenciasAgregadas": false,
+  "limitaciones": [
+    "Verificación de teléfono y credenciales con Firebase real pendiente",
+    "Revisión táctil en Android físico pendiente",
+    "Spark conserva un producto y un lote por pedido",
+    "Stock contado por unidad comercial; sin relaciones nuevas de conversión entre presentaciones"
+  ],
+  "verificacionFinalAdicional": {
+    "pruebasFocalizadas": 11,
+    "fallos": 0,
+    "analisis": "No issues found!"
+  }
+}

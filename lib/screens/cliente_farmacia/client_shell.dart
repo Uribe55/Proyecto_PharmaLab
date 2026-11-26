@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/account_navigation.dart';
+import '../../widgets/cart_navigation.dart';
 
 import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
@@ -60,16 +61,24 @@ class _ClientShellState extends State<ClientShell> {
         _selectTab(0);
       },
       child: Scaffold(
-        body: AccountNavigation(
-          onOpenAccount: () => _selectTab(3),
-          child: IndexedStack(
-            index: _index,
-            children: [
-              const HomeScreen(),
-              OrderHistoryScreen(onBrowse: () => _selectTab(0)),
-              CartScreen(onBrowse: () => _selectTab(0)),
-              const ProfileScreen(),
-            ],
+        body: CartNavigation(
+          open: () {
+            if (!mounted) return;
+            final route = ModalRoute.of(context);
+            Navigator.of(context).popUntil((candidate) => candidate == route);
+            _selectTab(2);
+          },
+          child: AccountNavigation(
+            onOpenAccount: () => _selectTab(3),
+            child: IndexedStack(
+              index: _index,
+              children: [
+                const HomeScreen(),
+                OrderHistoryScreen(onBrowse: () => _selectTab(0)),
+                CartScreen(onBrowse: () => _selectTab(0)),
+                const ProfileScreen(),
+              ],
+            ),
           ),
         ),
         bottomNavigationBar: DecoratedBox(

@@ -89,6 +89,14 @@ Future<void> prepare(
 );
 
 void main() {
+  test('lote desactivado rechaza la venta antes de escribir', () async {
+    final data = fixtures();
+    data['lotes_productos/LOTE001']!['estado'] = false;
+    final tx = CheckoutTransactionFake(data);
+    await expectLater(prepare(tx), throwsA(isA<RemoteOrderException>()));
+    expect(tx.writes, isEmpty);
+  });
+
   test(
     'seis escrituras atómicas y dos cajas descuentan 2, no 40 tabletas',
     () async {

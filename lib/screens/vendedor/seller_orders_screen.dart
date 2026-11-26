@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
+import '../../domain/seller_order_list.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
@@ -20,33 +21,8 @@ class SellerOrdersScreen extends StatefulWidget {
   State<SellerOrdersScreen> createState() => _SellerOrdersScreenState();
 }
 
-enum _SellerFilter {
-  todos('Todos'),
-  pendientes('Pendientes'),
-  porAsignar('Por asignar'),
-  reprogramados('Reprogramados'),
-  enRuta('En ruta'),
-  finalizados('Cerrados o con fallos');
-
-  const _SellerFilter(this.label);
-
-  final String label;
-
-  bool matches(PharmacyOrder order) {
-    return switch (this) {
-      _SellerFilter.todos => true,
-      _SellerFilter.pendientes => order.isPending,
-      _SellerFilter.porAsignar => order.isApproved,
-      _SellerFilter.reprogramados => order.needsReschedule,
-      _SellerFilter.enRuta => order.isInTransit,
-      _SellerFilter.finalizados =>
-        order.status.isFinal || order.status.isFailure,
-    };
-  }
-}
-
 class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
-  _SellerFilter _filter = _SellerFilter.todos;
+  OrderStatus? _filter;
 
   void _openOrder(PharmacyOrder order) {
     if (order.isPending) {
@@ -63,9 +39,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     }
     if (order.needsReschedule) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SellerRescheduleScreen(order: order),
-        ),
+        MaterialPageRoute(builder: (_) => SellerRescheduleScreen(order: order)),
       );
       return;
     }
@@ -78,7 +52,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
       listenable: PharmaService.instance,
       builder: (context, _) {
         final service = PharmaService.instance;
-        final orders = service.orders.where(_filter.matches).toList();
+        final orders = sellerOrderList(service.orders, status: _filter);
 
         return Scaffold(
           body: SafeArea(
@@ -136,13 +110,16 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            for (final filter in _SellerFilter.values) ...[
+                            for (final filter in <OrderStatus?>[
+                              null,
+                              ...OrderStatus.values,
+                            ]) ...[
                               _FilterChip(
-                                label: filter.label,
+                                label: orderFilterLabel(filter),
                                 selected: _filter == filter,
                                 onTap: () => setState(() => _filter = filter),
                               ),
-                              if (filter != _SellerFilter.values.last)
+                              if (filter != OrderStatus.values.last)
                                 const SizedBox(width: 8),
                             ],
                           ],
@@ -170,8 +147,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                                 'No hay pedidos con el filtro seleccionado. '
                                 'Prueba con “Todos” para ver el resto.',
                             action: OutlinedButton(
-                              onPressed: () =>
-                                  setState(() => _filter = _SellerFilter.todos),
+                              onPressed: () => setState(() => _filter = null),
                               child: const Text('Ver todos los pedidos'),
                             ),
                           ),

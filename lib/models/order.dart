@@ -82,6 +82,7 @@ class PharmacyOrder {
     this.addressId,
     this.recordedTotal,
     this.fromCache = false,
+    this.createdAtKnown = true,
   }) {
     // Migración lógica: conserva el fallo histórico sin atribuirle una entrega.
     if (status == OrderStatus.enRuta ||
@@ -114,6 +115,7 @@ class PharmacyOrder {
   final double? recordedTotal;
   final bool fromCache;
   final DateTime createdAt;
+  final bool createdAtKnown;
   final List<OrderLine> items;
   final String pharmacyName;
   final String address;

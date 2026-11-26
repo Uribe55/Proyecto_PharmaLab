@@ -125,7 +125,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['nombre', 'telefono', 'direccion'])
         && request.resource.data.nombre is string
-        && request.resource.data.telefono is string
+        && request.resource.data.get('telefono', '') is string
         && request.resource.data.direccion is string;
 
       // El administrador activo gestiona perfiles de empleados: estado,
@@ -427,6 +427,15 @@ service cloud.firestore {
       // Edición: solo datos descriptivos y estado. El ID EMP###, el usuario_id
       // y la fecha de ingreso son inmutables.
       allow update: if validEmployeeUpdate(empleadoId);
+      // Contacto propio: nunca modifica UID, cargo, estado ni numeración.
+      allow update: if signedIn()
+        && resource.data.usuario_id == request.auth.uid
+        && resource.data.estado == true
+        && (activeRole('repartidor') || activeRole('vendedor') || activeAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['telefono'])
+        && request.resource.data.telefono is string
+        && request.resource.data.telefono.size() > 0
+        && request.resource.data.telefono.size() <= 40;
 
       allow delete: if false;
     }
@@ -634,6 +643,7 @@ service cloud.firestore {
         && line.precio_unitario == product.precio
         && line.subtotal == product.precio * line.cantidad && order.total == line.subtotal
         && before.producto_id == line.id_producto && before.cantidad_disponible is int
+        && before.get('estado', true) != false
         && before.cantidad_disponible >= line.cantidad
         && product.get('requiere_vencimiento', false) is bool
         && (!product.get('requiere_vencimiento', false)

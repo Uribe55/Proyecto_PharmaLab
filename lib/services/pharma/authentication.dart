@@ -111,9 +111,25 @@ mixin _PharmaAuthentication on _PharmaServiceState {
           active: true,
         );
       } else {
+        final employees = await _db
+            .collection('empleado')
+            .where('usuario_id', isEqualTo: user.uid)
+            .get(const GetOptions(source: Source.server));
+        if (employees.docs.length > 1) {
+          return 'La cuenta tiene más de un empleado vinculado. Revisa la vinculación.';
+        }
+        final contact = employees.docs.isEmpty
+            ? null
+            : employees.docs.single.data();
+        final employeePhone = contact == null
+            ? ''
+            : _pickText(contact, const ['telefono', 'celular']);
         _currentUser = _appUserFrom(
           user.uid,
-          accountData,
+          {
+            ...accountData,
+            if (employeePhone.isNotEmpty) 'telefono': employeePhone,
+          },
           fallbackEmail: accountEmail,
           role: userRole,
         );

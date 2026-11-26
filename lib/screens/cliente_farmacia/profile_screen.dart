@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../viewmodels/cart_view_model.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/app_text_field.dart';
+import '../../widgets/contact_edit_dialog.dart';
 import '../../widgets/client_header.dart';
 import '../login_screen.dart' show LoginScreen;
 
@@ -22,72 +22,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _editProfile() async {
     final pharmacy = PharmaService.instance.pharmacy;
     final user = PharmaService.instance.currentUser;
-    final nameController = TextEditingController(
-      text: user?.name ?? pharmacy.responsible,
-    );
-    final phoneController = TextEditingController(text: pharmacy.phone);
-    final addressController = TextEditingController(text: pharmacy.address);
-
-    final shouldSave = await showDialog<bool>(
+    final draft = await showDialog<ContactDraft>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Editar datos de contacto'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                label: 'Nombre del responsable',
-                hint: 'Nombre y apellido',
-                controller: nameController,
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Teléfono',
-                hint: '+591 700-00000',
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Dirección de entrega',
-                hint: 'Calle, número y ciudad',
-                controller: addressController,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-            ],
-          ),
+      builder: (_) => ContactEditDialog(
+        initial: (
+          name: user?.name ?? pharmacy.responsible,
+          phone: pharmacy.phone,
+          address: pharmacy.address,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Guardar'),
-          ),
-        ],
       ),
     );
-
-    if (shouldSave != true || !mounted) {
-      nameController.dispose();
-      phoneController.dispose();
-      addressController.dispose();
-      return;
-    }
+    if (draft == null || !mounted) return;
 
     setState(() => _savingProfile = true);
     final warning = await PharmaService.instance.updateOwnProfile(
-      name: nameController.text,
-      phone: phoneController.text,
-      address: addressController.text,
+      name: draft.name,
+      phone: draft.phone,
+      address: draft.address,
     );
-    nameController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
 
     if (!mounted) return;
     setState(() => _savingProfile = false);
@@ -285,10 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     children: [
                       const Expanded(
-                        child: Text(
-                          'Datos de la farmacia',
-                          style: AppText.h3,
-                        ),
+                        child: Text('Datos de la farmacia', style: AppText.h3),
                       ),
                       TextButton.icon(
                         onPressed: _savingProfile ? null : _editProfile,

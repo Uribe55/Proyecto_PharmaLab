@@ -67,6 +67,8 @@ class CartViewModel extends ChangeNotifier {
     return null;
   }
 
+  int quantityFor(Product product) => _service.quantityFor(product);
+
   int remainingFor(Product product) {
     final latest = currentProduct(product);
     return latest == null ? 0 : _service.remainingFor(latest);

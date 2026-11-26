@@ -47,7 +47,8 @@ class FirestoreSparkCheckout {
             final data = doc.data();
             final stock = data['cantidad_disponible'];
             final expiry = data['fecha_vencimiento'];
-            return stock is int &&
+            return data['estado'] != false &&
+                stock is int &&
                 stock >= (item['quantity'] as int) &&
                 (!needsExpiry ||
                     (expiry is Timestamp && expiry.toDate().isAfter(now)));

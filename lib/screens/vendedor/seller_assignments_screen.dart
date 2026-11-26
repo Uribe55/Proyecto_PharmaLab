@@ -4,7 +4,7 @@ import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/order_detail_sheet.dart';
-import '../../widgets/order_list_tile.dart';
+import '../../widgets/delivery_card.dart';
 import 'seller_assign_screen.dart';
 import '../shared/order_operations_screen.dart';
 
@@ -77,7 +77,7 @@ class SellerAssignmentsScreen extends StatelessWidget {
                         )
                       else
                         for (final order in toAssign) ...[
-                          OrderListTile(
+                          OrderDeliveryCard(
                             order: order,
                             caption: 'Aprobado · listo para asignar',
                             onTap: () {
@@ -98,7 +98,7 @@ class SellerAssignmentsScreen extends StatelessWidget {
                         count: assigned.length,
                       ),
                       for (final order in assigned)
-                        OrderListTile(
+                        OrderDeliveryCard(
                           order: order,
                           caption:
                               'Asignado a ${order.driverName ?? ''} · Sin despachar',
@@ -115,7 +115,7 @@ class SellerAssignmentsScreen extends StatelessWidget {
                         )
                       else
                         for (final order in inTransit) ...[
-                          OrderListTile(
+                          OrderDeliveryCard(
                             order: order,
                             caption:
                                 'Repartidor: ${order.driverName ?? 'sin asignar'}',

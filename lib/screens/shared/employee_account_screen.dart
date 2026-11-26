@@ -4,7 +4,7 @@ import '../../models/app_user.dart';
 import '../../services/pharma_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
-import '../../widgets/app_text_field.dart';
+import '../../widgets/contact_edit_dialog.dart';
 import '../../widgets/user_avatar.dart';
 import '../login_screen.dart';
 
@@ -31,77 +31,25 @@ class _EmployeeAccountScreenState extends State<EmployeeAccountScreen> {
 
   /// RF-01: el repartidor edita nombre, teléfono y dirección.
   Future<void> _editProfile(AppUser user) async {
-    final nameController = TextEditingController(text: user.name);
-    final phoneController = TextEditingController(text: user.phone);
-    final addressController = TextEditingController(text: user.address);
-
-    final shouldSave = await showDialog<bool>(
+    final draft = await showDialog<ContactDraft>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Editar datos de contacto'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                label: 'Nombre completo',
-                hint: 'Nombre y apellido',
-                controller: nameController,
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Teléfono',
-                hint: '+591 700-00000',
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Dirección',
-                hint: 'Calle, número y ciudad',
-                controller: addressController,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Guardar'),
-          ),
-        ],
+      builder: (_) => ContactEditDialog(
+        initial: (name: user.name, phone: user.phone, address: user.address),
       ),
     );
-
-    if (shouldSave != true || !mounted) {
-      nameController.dispose();
-      phoneController.dispose();
-      addressController.dispose();
-      return;
-    }
+    if (draft == null || !mounted) return;
 
     setState(() => _savingProfile = true);
     final warning = await PharmaService.instance.updateOwnProfile(
-      name: nameController.text,
-      phone: phoneController.text,
-      address: addressController.text,
+      name: draft.name,
+      phone: draft.phone,
+      address: draft.address,
     );
-    nameController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
 
     if (!mounted) return;
     setState(() => _savingProfile = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(warning ?? 'Datos de contacto actualizados.'),
-      ),
+      SnackBar(content: Text(warning ?? 'Datos de contacto actualizados.')),
     );
   }
 
@@ -213,7 +161,9 @@ class _EmployeeAccountScreenState extends State<EmployeeAccountScreen> {
                       _InfoRow(
                         icon: Icons.phone_outlined,
                         label: 'Teléfono',
-                        value: user.phone,
+                        value: user.phone.trim().isEmpty
+                            ? 'Sin teléfono registrado'
+                            : user.phone,
                       ),
                       if (user.address.trim().isNotEmpty) ...[
                         const Divider(),
