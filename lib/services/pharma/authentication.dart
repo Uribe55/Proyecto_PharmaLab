@@ -126,8 +126,8 @@ mixin _PharmaAuthentication on _PharmaServiceState {
         pharmacy: _currentPharmacy,
         remote: true,
       );
-      _resetDemoData();
-      // No mostrar pedidos ficticios como historial de una farmacia real.
+      // El login real no carga semillas ni pedidos de demostración.
+      _products.clear();
       _orders.clear();
       success = true;
       notifyListeners();

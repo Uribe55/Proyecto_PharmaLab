@@ -43,6 +43,7 @@ class OrderLine {
     required this.presentation,
     required this.unitPrice,
     required this.quantity,
+    this.saleUnit = '',
   });
 
   final String productId;
@@ -51,6 +52,7 @@ class OrderLine {
   final String presentation;
   final double unitPrice;
   final int quantity;
+  final String saleUnit;
 
   double get subtotal => unitPrice * quantity;
 }
@@ -75,6 +77,11 @@ class PharmacyOrder {
     this.customerId,
     this.remote = false,
     this.failedAt,
+    this.documentId,
+    this.operationId,
+    this.addressId,
+    this.recordedTotal,
+    this.fromCache = false,
   }) {
     // Migración lógica: conserva el fallo histórico sin atribuirle una entrega.
     if (status == OrderStatus.enRuta ||
@@ -103,6 +110,9 @@ class PharmacyOrder {
   }
 
   final String number;
+  final String? documentId, operationId, addressId;
+  final double? recordedTotal;
+  final bool fromCache;
   final DateTime createdAt;
   final List<OrderLine> items;
   final String pharmacyName;
@@ -137,6 +147,7 @@ class PharmacyOrder {
   /// (RF-11, RF-12, RF-14 y RF-17).
   OrderStatus status;
   String? driverId;
+  String? deliveryId;
   String? driverName;
   DateTime? deliveredAt;
   String? failureReason;
@@ -148,7 +159,8 @@ class PharmacyOrder {
 
   int get totalUnits => items.fold(0, (sum, item) => sum + item.quantity);
 
-  double get total => items.fold(0.0, (sum, item) => sum + item.subtotal);
+  double get total =>
+      recordedTotal ?? items.fold(0.0, (sum, item) => sum + item.subtotal);
 
   /// Posición dentro de los cuatro pasos del seguimiento. Una entrega fallida
   /// se detiene en el paso "En ruta".

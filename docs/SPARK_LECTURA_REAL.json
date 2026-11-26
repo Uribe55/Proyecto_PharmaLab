@@ -1,0 +1,44 @@
+﻿{
+    "Project":  "proyecto-pharmalab",
+    "Database":  "(default)",
+    "ReadOnly":  true,
+    "ObservedAtUtc":  "2026-11-25T15:16:26.8710356Z",
+    "Versions":  [
+                     {
+                         "Path":  "pedidos/PED001",
+                         "UpdateTime":  "2026-11-18T21:58:22.595500Z"
+                     },
+                     {
+                         "Path":  "productos/PROD001",
+                         "UpdateTime":  "2026-11-25T14:03:57.734327Z"
+                     },
+                     {
+                         "Path":  "productos/PROD002",
+                         "UpdateTime":  "2026-11-18T16:38:20.939620Z"
+                     },
+                     {
+                         "Path":  "lotes_productos/LOTE001",
+                         "UpdateTime":  "2026-11-18T20:13:57.318414Z"
+                     },
+                     {
+                         "Path":  "lotes_productos/LOTE002",
+                         "UpdateTime":  "2026-11-18T20:17:19.637150Z"
+                     },
+                     {
+                         "Path":  "pedidos/PED001/detalle_pedido/DET001",
+                         "UpdateTime":  "2026-11-18T21:34:46.759290Z"
+                     },
+                     {
+                         "Path":  "pedidos/PED001/detalle_pedido/DET002",
+                         "UpdateTime":  "2026-11-18T21:37:56.269583Z"
+                     },
+                     {
+                         "Path":  "pedidos/PED001/historial_estado/HIST001",
+                         "UpdateTime":  "2026-11-18T22:18:32.392621Z"
+                     },
+                     {
+                         "Path":  "pedidos/PED001/historial_estado/HIST002",
+                         "UpdateTime":  "2026-11-21T19:34:14.094128Z"
+                     }
+                 ]
+}

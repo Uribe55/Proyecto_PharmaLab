@@ -304,7 +304,7 @@ class _OrderLifecyclePanelState extends State<OrderLifecyclePanel> {
                         style: AppText.label,
                       ),
                       subtitle: Text(
-                        '${formatOrderDate(event.at)} · ${event.actorId} (${event.role.label})\n${event.note}',
+                        '${formatOrderDate(event.at)} · ${event.actorId} (${event.role?.label ?? 'Rol no registrado'})\n${event.note}',
                         style: AppText.meta,
                       ),
                     ),

@@ -13,7 +13,9 @@ mixin _PharmaOrders on _PharmaServiceState {
     ),
   );
   List<PharmacyOrder> get orders => List.unmodifiable(
-    _orders.where((order) => OrderPolicy.canRead(order, currentUser)),
+    _orders.where(
+      (order) => !usesFirebase && OrderPolicy.canRead(order, currentUser),
+    ),
   );
   List<PharmacyOrder> get pendingOrders =>
       orders.where((order) => order.isPending).toList();

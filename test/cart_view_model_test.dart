@@ -203,7 +203,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Tu carrito está listo. La confirmación de pedidos estará disponible próximamente.',
+          'Esta versión permite un producto y un único lote por pedido, hasta 1000 cajas. No se dividen compras ni se eliminan productos del carrito.',
         ),
         findsOneWidget,
       );

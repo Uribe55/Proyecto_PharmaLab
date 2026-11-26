@@ -90,7 +90,7 @@ class OrderHistoryEvent {
   final OrderStatus before, after;
   final String operation;
   final DateTime at;
-  final UserRole role;
+  final UserRole? role;
   Map<String, Object?> toMap() => {
     'id': id,
     'pedido_id': orderNumber,
@@ -99,7 +99,7 @@ class OrderHistoryEvent {
     'operacion': operation,
     'fecha': at.toUtc().toIso8601String(),
     'usuario_id': actorId,
-    'rol': role.name,
+    'rol': role?.name,
     'observaciones': note,
   };
 }

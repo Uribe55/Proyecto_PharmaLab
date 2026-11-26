@@ -2,11 +2,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'services/notification_service.dart';
 import 'services/pharma_service.dart';
+import 'services/firebase_environment.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -93,9 +93,10 @@ class _PharmaLabAppState extends State<PharmaLabApp> {
                         child: SizedBox(
                           width: double.infinity,
                           child: Text(
-                            service.usesFirebase
-                                ? 'Firebase activo · Catálogo real en Firestore. '
-                                      'Los pedidos aún no están habilitados.'
+                            FirebaseEnvironment .emulatorOrdersEnabled
+                                ? 'Entorno local de pruebas · Datos de demostración en Firebase Emulator Suite.'
+                                : service.usesFirebase
+                                ? 'Firebase real · Pedidos Spark: un producto y un lote por compra.'
                                 : 'Modo local de demostración · Catálogo, '
                                       'pedidos y usuarios de prueba.',
                             textAlign: TextAlign.center,

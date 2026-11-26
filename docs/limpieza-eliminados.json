@@ -1,0 +1,46 @@
+﻿[
+    {
+        "value":  [
+                      {
+                          "Path":  "android/.gradle",
+                          "Bytes":  10062452
+                      },
+                      {
+                          "Path":  "functions/node_modules",
+                          "Bytes":  188605563
+                      },
+                      {
+                          "Path":  "firebase-debug.log",
+                          "Bytes":  2179090
+                      },
+                      {
+                          "Path":  "firestore-debug.log",
+                          "Bytes":  321992
+                      },
+                      {
+                          "Path":  "logistics-rules-test.log",
+                          "Bytes":  1465616
+                      },
+                      {
+                          "Path":  "spark-tracking-test-output.log",
+                          "Bytes":  490
+                      }
+                  ],
+        "Count":  6
+    },
+    {
+        "Path":  "android/.gradle",
+        "Bytes":  2551225,
+        "Stage":  "PostVerification"
+    },
+    {
+        "Path":  "android/.kotlin",
+        "Bytes":  64,
+        "Stage":  "PostVerification"
+    },
+    {
+        "Path":  "android/hs_err_pid28016.log",
+        "Bytes":  530417,
+        "Stage":  "PostVerification"
+    }
+]

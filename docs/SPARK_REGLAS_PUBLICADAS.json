@@ -1,0 +1,8 @@
+﻿{
+    "Project":  "proyecto-pharmalab",
+    "Release":  "projects/proyecto-pharmalab/releases/cloud.firestore",
+    "Ruleset":  "projects/proyecto-pharmalab/rulesets/33f8ba18-0155-4332-bbee-bad53090d818",
+    "Updated":  "2026-11-25T14:43:56.837810Z",
+    "Local":  "firestore.rules",
+    "Sha256":  "B8C7697A45DB6C384FAF240BAD15A023CCB073F856F4A0752C54BDB72965E552"
+}

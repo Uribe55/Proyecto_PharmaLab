@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:proyecto_final_movil/models/dashboard_metrics.dart';
@@ -66,6 +66,18 @@ class _DeniedInventoryRepository extends DashboardRepository {
   }
 }
 
+class _DeniedOrdersRepository extends _DeniedInventoryRepository {
+  @override
+  Stream<DashboardFeed> watchOrders() => Stream.value(
+    DashboardFeed(
+      orders: const [],
+      origin: DashboardOrigin.permissionDenied,
+      updatedAt: DateTime(2026, 6, 18),
+      message: 'Permisos insuficientes.',
+    ),
+  );
+}
+
 class _FailingOrdersRepository extends DashboardRepository {
   @override
   Stream<DashboardFeed> watchOrders() async* {
@@ -131,6 +143,24 @@ Future<void> _openTab(WidgetTester tester, String label) async {
 }
 
 void main() {
+  testWidgets(
+    'Permisos denegados no presentan pedidos demo ni indicadores en cero',
+    (tester) async {
+      await _pumpDashboard(
+        tester,
+        size: const Size(390, 844),
+        repository: _DeniedOrdersRepository(),
+      );
+      expect(
+        find.text('Permisos denegados · pedidos no disponibles'),
+        findsOneWidget,
+      );
+      expect(find.text('No se pudieron cargar los pedidos.'), findsOneWidget);
+      expect(find.text('Recibidos hoy'), findsNothing);
+      expect(find.textContaining('pedidos de demostración'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('la tarjeta KPI muestra el valor y navega', (tester) async {
     var taps = 0;
     await tester.pumpWidget(
@@ -286,9 +316,7 @@ void main() {
   });
 
   testWidgets('el gráfico vacío no inventa cifras', (tester) async {
-    await tester.pumpWidget(
-      _wrap(const DeliveredValueTrendChart(points: [])),
-    );
+    await tester.pumpWidget(_wrap(const DeliveredValueTrendChart(points: [])));
     expect(
       find.text('Sin datos suficientes para graficar la evolución.'),
       findsOneWidget,

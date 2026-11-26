@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'firebase_environment.dart';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/dashboard_models.dart';
@@ -10,8 +13,7 @@ import 'pharma_service.dart';
 /// Repositorio del dashboard administrativo.
 ///
 /// - Pedidos: escucha `pedidos` en Firestore y complementa con `entregas`.
-/// - Si Firestore no tiene pedidos (o no se puede leer), usa los pedidos
-///   locales de la aplicación y lo informa a la vista.
+/// - Una consulta vacía o denegada nunca se sustituye por pedidos demo.
 /// - Inventario: lee `productos`, `lotes_productos` y `categorias`. En modo
 ///   local usa el stock del catálogo de demostración, sin inventar lotes ni
 ///   fechas de vencimiento.
@@ -28,7 +30,7 @@ class DashboardRepository {
   final int maxOrders;
   final int maxLots;
 
-  FirebaseFirestore get _db => FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseEnvironment.firestore;
 
   static const int defaultLowStockThreshold = 10;
 
@@ -62,19 +64,15 @@ class DashboardRepository {
       }
       if (!ordersLoaded) return;
 
-      if (remoteOrders.isEmpty) {
-        final message =
-            ordersError ??
-            'Firestore no tiene pedidos registrados. Se muestran los pedidos '
-                'locales de demostración.';
+      if (ordersError != null) {
         controller.add(
           DashboardFeed(
-            orders: _localOrders(),
+            orders: const [],
             origin: ordersDenied
                 ? DashboardOrigin.permissionDenied
-                : DashboardOrigin.localFallback,
+                : DashboardOrigin.error,
             updatedAt: DateTime.now(),
-            message: message,
+            message: ordersError,
           ),
         );
         return;
@@ -227,6 +225,7 @@ class DashboardRepository {
     ]);
     final parsed = _parseStatus(rawStatus);
     final number = _text(data, const [
+      'numero_comercial',
       'numero',
       'numero_pedido',
       'codigo',
@@ -282,7 +281,11 @@ class DashboardRepository {
 
     return DashboardOrder(
       id: id,
-      number: number.isEmpty ? 'PED-$id' : number,
+      number: RegExp(r'^PED[0-9]{3,}$').hasMatch(number)
+          ? number
+          : RegExp(r'^PED[0-9]{3,}$').hasMatch(id)
+          ? id
+          : 'Pedido sin número comercial',
       createdAt: createdAt,
       status: parsed.status,
       cancelled: parsed.cancelled,
@@ -411,7 +414,8 @@ class DashboardRepository {
     return _DeliveryInfo(
       id: id,
       orderId: _refId(
-        data['pedido_id'] ??
+        data['id_pedido'] ??
+            data['pedido_id'] ??
             data['pedidoId'] ??
             data['order_id'] ??
             data['pedido'],
@@ -424,7 +428,8 @@ class DashboardRepository {
       status: rawStatus.isEmpty ? null : parsed.status,
       cancelled: parsed.cancelled,
       driverId: _refId(
-        data['repartidor_id'] ??
+        data['id_repartidor'] ??
+            data['repartidor_id'] ??
             data['repartidorId'] ??
             data['empleado_id'] ??
             data['driver_id'] ??
@@ -672,10 +677,7 @@ class DashboardRepository {
   }
 
   Future<
-    ({
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-      Object? error,
-    })
+    ({List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, Object? error})
   >
   _readCollection(String name, int limit) async {
     try {
@@ -750,9 +752,7 @@ class DashboardRepository {
         hasLotData: false,
         productsWithoutLots: productsWithoutLots,
         lowStockThreshold: lowStockThreshold,
-        note: additionalNote == null
-            ? emptyNote
-            : '$emptyNote $additionalNote',
+        note: additionalNote == null ? emptyNote : '$emptyNote $additionalNote',
       );
     }
 
@@ -888,6 +888,12 @@ class DashboardRepository {
     }
     if (value.contains('cancel') || value.contains('anul')) {
       return (status: OrderStatus.pendiente, cancelled: true);
+    }
+    if (value.contains('fall')) {
+      return (status: OrderStatus.fallida, cancelled: false);
+    }
+    if (value.contains('asign')) {
+      return (status: OrderStatus.aprobado, cancelled: false);
     }
     if (value.contains('entreg') ||
         value.contains('deliver') ||

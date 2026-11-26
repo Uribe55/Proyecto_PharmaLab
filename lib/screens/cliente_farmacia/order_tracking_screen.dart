@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../models/order.dart';
+import '../../data/datasources/firestore_order_data_source.dart';
+import '../../data/repositories/remote_order_repository.dart';
 import '../../services/pharma_service.dart';
 import '../../domain/order_policy.dart';
 import '../../widgets/order_lifecycle_panel.dart';
@@ -10,15 +12,31 @@ import '../../utils/formatters.dart';
 import '../../widgets/client_header.dart';
 import '../../widgets/status_chip.dart';
 
-class OrderTrackingScreen extends StatelessWidget {
+class OrderTrackingScreen extends StatefulWidget {
   const OrderTrackingScreen({
     super.key,
     required this.order,
     this.showConfirmation = false,
+    this.repository,
   });
 
   final PharmacyOrder order;
   final bool showConfirmation;
+  final RemoteOrderRepository? repository;
+
+  @override
+  State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
+}
+
+class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+  PharmacyOrder get order => _latest ?? widget.order;
+  PharmacyOrder? _latest;
+  bool get showConfirmation => widget.showConfirmation;
+  late final Stream<PharmacyOrder>? _stream = widget.order.remote
+      ? (widget.repository ?? FirestoreOrderDataSource()).watchOrder(
+          widget.order.documentId!,
+        )
+      : null;
 
   void _openSummary(BuildContext context) {
     showModalBottomSheet<void>(
@@ -29,9 +47,25 @@ class OrderTrackingScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: PharmaService.instance,
-    builder: (context, _) => _buildPage(context),
+  Widget build(BuildContext context) => StreamBuilder<PharmacyOrder>(
+    stream: _stream,
+    builder: (context, snapshot) {
+      if (snapshot.hasError) {
+        return Scaffold(
+          appBar: const ClientPageAppBar(title: 'Seguimiento'),
+          body: const Center(
+            child: Text(
+              'No se pudo actualizar el pedido. Revisa tu conexión y permisos.',
+            ),
+          ),
+        );
+      }
+      if (snapshot.hasData) _latest = snapshot.data;
+      return ListenableBuilder(
+        listenable: PharmaService.instance,
+        builder: (context, _) => _buildPage(context),
+      );
+    },
   );
 
   Widget _buildPage(BuildContext context) {
@@ -55,6 +89,16 @@ class OrderTrackingScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
         children: [
+          if (order.fromCache)
+            const Text(
+              'Información guardada; pendiente de actualizar con el servidor.',
+              style: AppText.muted,
+            ),
+          if (order.remote)
+            const Text(
+              'Las cancelaciones y otras operaciones remotas aún no están disponibles.',
+              style: AppText.muted,
+            ),
           if (showConfirmation) ...[
             const _ConfirmationBanner(),
             const SizedBox(height: 14),

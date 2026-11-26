@@ -1,0 +1,159 @@
+﻿{
+    "Root":  "D:\\Sexto Semestre\\Proyecto Final\\Desarrollo_aplicaciones_moviles\\Proyecto_PharmaLab",
+    "AtUtc":  "2026-11-24T23:38:09.6277445Z",
+    "Files":  785,
+    "Directories":  360,
+    "Bytes":  12324295,
+    "Top":  [
+                {
+                    "Path":  "android",
+                    "Files":  43,
+                    "Directories":  42,
+                    "Bytes":  10039850
+                },
+                {
+                    "Path":  ".git",
+                    "Files":  509,
+                    "Directories":  246,
+                    "Bytes":  893341
+                },
+                {
+                    "Path":  "lib",
+                    "Files":  108,
+                    "Directories":  20,
+                    "Bytes":  785857
+                },
+                {
+                    "Path":  "functions",
+                    "Files":  7,
+                    "Directories":  4,
+                    "Bytes":  167691
+                },
+                {
+                    "Path":  "docs",
+                    "Files":  8,
+                    "Directories":  1,
+                    "Bytes":  103911
+                },
+                {
+                    "Path":  "test",
+                    "Files":  18,
+                    "Directories":  1,
+                    "Bytes":  101976
+                },
+                {
+                    "Path":  "ios",
+                    "Files":  50,
+                    "Directories":  21,
+                    "Bytes":  72123
+                },
+                {
+                    "Path":  "web",
+                    "Files":  7,
+                    "Directories":  2,
+                    "Bytes":  43615
+                },
+                {
+                    "Path":  ".dart_tool",
+                    "Files":  5,
+                    "Directories":  3,
+                    "Bytes":  35348
+                },
+                {
+                    "Path":  "pubspec.lock",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  20856
+                },
+                {
+                    "Path":  ".firebase",
+                    "Files":  12,
+                    "Directories":  11,
+                    "Bytes":  17825
+                },
+                {
+                    "Path":  "firestore.rules",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  11427
+                },
+                {
+                    "Path":  "assets",
+                    "Files":  1,
+                    "Directories":  2,
+                    "Bytes":  8438
+                },
+                {
+                    "Path":  ".flutter-plugins-dependencies",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  8210
+                },
+                {
+                    "Path":  "pubspec.yaml",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  4070
+                },
+                {
+                    "Path":  "scripts",
+                    "Files":  2,
+                    "Directories":  1,
+                    "Bytes":  3116
+                },
+                {
+                    "Path":  "analysis_options.yaml",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  1535
+                },
+                {
+                    "Path":  ".github",
+                    "Files":  3,
+                    "Directories":  5,
+                    "Bytes":  1309
+                },
+                {
+                    "Path":  ".metadata",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  1296
+                },
+                {
+                    "Path":  ".gitignore",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  1140
+                },
+                {
+                    "Path":  "firebase.json",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  429
+                },
+                {
+                    "Path":  "firebase.emulator.json",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  422
+                },
+                {
+                    "Path":  "firestore.indexes.json",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  231
+                },
+                {
+                    "Path":  ".vscode",
+                    "Files":  1,
+                    "Directories":  1,
+                    "Bytes":  166
+                },
+                {
+                    "Path":  "README.md",
+                    "Files":  1,
+                    "Directories":  0,
+                    "Bytes":  113
+                }
+            ]
+}

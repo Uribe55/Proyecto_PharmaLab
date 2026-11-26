@@ -1,0 +1,421 @@
+﻿{
+    "BeforeBytes":  1611458948,
+    "FileCount":  17064,
+    "LargestFolders":  [
+                           {
+                               "Path":  "build",
+                               "Bytes":  1302456279
+                           },
+                           {
+                               "Path":  "build\\app",
+                               "Bytes":  1133854162
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates",
+                               "Bytes":  945009491
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\merged_native_libs\\debug\\mergeDebugNativeLibs\\out\\lib",
+                               "Bytes":  644869464
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\merged_native_libs",
+                               "Bytes":  644869464
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\merged_native_libs\\debug\\mergeDebugNativeLibs\\out",
+                               "Bytes":  644869464
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\merged_native_libs\\debug",
+                               "Bytes":  644869464
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\merged_native_libs\\debug\\mergeDebugNativeLibs",
+                               "Bytes":  644869464
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\merged_native_libs\\debug\\mergeDebugNativeLibs\\out\\lib\\arm64-v8a",
+                               "Bytes":  644204336
+                           },
+                           {
+                               "Path":  "functions",
+                               "Bytes":  188845168
+                           },
+                           {
+                               "Path":  "build\\app\\outputs",
+                               "Bytes":  188784027
+                           },
+                           {
+                               "Path":  "functions\\node_modules",
+                               "Bytes":  188605563
+                           },
+                           {
+                               "Path":  ".dart_tool",
+                               "Bytes":  102918395
+                           },
+                           {
+                               "Path":  "functions\\node_modules\\@firebase",
+                               "Bytes":  102844694
+                           },
+                           {
+                               "Path":  "build\\app\\outputs\\apk",
+                               "Bytes":  94342284
+                           },
+                           {
+                               "Path":  "build\\app\\outputs\\apk\\debug",
+                               "Bytes":  94342284
+                           },
+                           {
+                               "Path":  "build\\app\\outputs\\flutter-apk",
+                               "Bytes":  94341908
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\flutter",
+                               "Bytes":  93453990
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\flutter\\debug",
+                               "Bytes":  93453990
+                           },
+                           {
+                               "Path":  "build\\app\\intermediates\\assets\\debug",
+                               "Bytes":  93252481
+                           }
+                       ],
+    "LargestFiles":  [
+                         {
+                             "Path":  "build\\app\\intermediates\\merged_native_libs\\debug\\mergeDebugNativeLibs\\out\\lib\\arm64-v8a\\libflutter.so",
+                             "Length":  395316440
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\merged_native_libs\\debug\\mergeDebugNativeLibs\\out\\lib\\arm64-v8a\\libVkLayer_khronos_validation.so",
+                             "Length":  248644248
+                         },
+                         {
+                             "Path":  "build\\app\\outputs\\flutter-apk\\app-debug.apk",
+                             "Length":  94341868
+                         },
+                         {
+                             "Path":  "build\\app\\outputs\\apk\\debug\\app-debug.apk",
+                             "Length":  94341868
+                         },
+                         {
+                             "Path":  ".dart_tool\\flutter_build\\c6920b18eed9b8676618469407f9b241\\app.dill",
+                             "Length":  79554264
+                         },
+                         {
+                             "Path":  "build\\d0696d852dd2020891e703a70b763145.cache.dill.track.dill",
+                             "Length":  79554264
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\flutter\\debug\\flutter_assets\\kernel_blob.bin",
+                             "Length":  79554264
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\assets\\debug\\mergeDebugAssets\\flutter_assets\\kernel_blob.bin",
+                             "Length":  79554264
+                         },
+                         {
+                             "Path":  "build\\test_cache\\build\\d0696d852dd2020891e703a70b763145.cache.dill.track.dill",
+                             "Length":  75078544
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\stripped_native_libs\\debug\\stripDebugDebugSymbols\\out\\lib\\arm64-v8a\\libflutter.so",
+                             "Length":  38828704
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\compressed_assets\\debug\\compressDebugAssets\\out\\assets\\flutter_assets\\kernel_blob.bin.jar",
+                             "Length":  25236258
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\stripped_native_libs\\debug\\stripDebugDebugSymbols\\out\\lib\\arm64-v8a\\libVkLayer_khronos_validation.so",
+                             "Length":  15240080
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\assets\\debug\\mergeDebugAssets\\flutter_assets\\isolate_snapshot_data",
+                             "Length":  11647016
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\flutter\\debug\\flutter_assets\\isolate_snapshot_data",
+                             "Length":  11647016
+                         },
+                         {
+                             "Path":  ".dart_tool\\hooks_runner\\objective_c\\68c609493f\\hook.dill",
+                             "Length":  11286560
+                         },
+                         {
+                             "Path":  ".dart_tool\\hooks_runner\\objective_c\\8e04c28b44\\hook.dill",
+                             "Length":  11286560
+                         },
+                         {
+                             "Path":  "android\\.gradle\\9.3.1\\executionHistory\\executionHistory.bin",
+                             "Length":  9420432
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex",
+                             "Length":  8467368
+                         },
+                         {
+                             "Path":  "build\\app\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex",
+                             "Length":  8393496
+                         },
+                         {
+                             "Path":  "functions\\node_modules\\firebase\\firebase-compat.js.map",
+                             "Length":  6582388
+                         }
+                     ],
+    "TopLevel":  [
+                     {
+                         "Path":  "build",
+                         "Bytes":  1302456279
+                     },
+                     {
+                         "Path":  "functions",
+                         "Bytes":  188845168
+                     },
+                     {
+                         "Path":  ".dart_tool",
+                         "Bytes":  102918395
+                     },
+                     {
+                         "Path":  "android",
+                         "Bytes":  10671571
+                     },
+                     {
+                         "Path":  "firebase-debug.log",
+                         "Bytes":  2179090
+                     },
+                     {
+                         "Path":  "logistics-rules-test.log",
+                         "Bytes":  1465616
+                     },
+                     {
+                         "Path":  ".git",
+                         "Bytes":  1205049
+                     },
+                     {
+                         "Path":  "lib",
+                         "Bytes":  851162
+                     },
+                     {
+                         "Path":  "firestore-debug.log",
+                         "Bytes":  321992
+                     },
+                     {
+                         "Path":  "docs",
+                         "Bytes":  194982
+                     },
+                     {
+                         "Path":  "test",
+                         "Bytes":  132976
+                     },
+                     {
+                         "Path":  "ios",
+                         "Bytes":  71861
+                     },
+                     {
+                         "Path":  "web",
+                         "Bytes":  43615
+                     },
+                     {
+                         "Path":  "firestore.rules",
+                         "Bytes":  33203
+                     },
+                     {
+                         "Path":  "pubspec.lock",
+                         "Bytes":  20062
+                     },
+                     {
+                         "Path":  ".firebase",
+                         "Bytes":  17825
+                     },
+                     {
+                         "Path":  "assets",
+                         "Bytes":  8438
+                     },
+                     {
+                         "Path":  ".flutter-plugins-dependencies",
+                         "Bytes":  7152
+                     },
+                     {
+                         "Path":  "pubspec.yaml",
+                         "Bytes":  4043
+                     },
+                     {
+                         "Path":  "scripts",
+                         "Bytes":  3116
+                     },
+                     {
+                         "Path":  "analysis_options.yaml",
+                         "Bytes":  1535
+                     },
+                     {
+                         "Path":  ".github",
+                         "Bytes":  1309
+                     },
+                     {
+                         "Path":  ".metadata",
+                         "Bytes":  1296
+                     },
+                     {
+                         "Path":  ".gitignore",
+                         "Bytes":  1140
+                     },
+                     {
+                         "Path":  "spark-tracking-test-output.log",
+                         "Bytes":  490
+                     },
+                     {
+                         "Path":  "firebase.json",
+                         "Bytes":  429
+                     },
+                     {
+                         "Path":  "firebase.emulator.json",
+                         "Bytes":  422
+                     },
+                     {
+                         "Path":  "firestore.indexes.json",
+                         "Bytes":  231
+                     },
+                     {
+                         "Path":  "firebase.logistics-test.json",
+                         "Bytes":  222
+                     },
+                     {
+                         "Path":  ".vscode",
+                         "Bytes":  166
+                     },
+                     {
+                         "Path":  "README.md",
+                         "Bytes":  113
+                     }
+                 ],
+    "VerificationGenerated":  [
+                                  {
+                                      "Path":  "build",
+                                      "Bytes":  1223070161
+                                  },
+                                  {
+                                      "Path":  ".dart_tool",
+                                      "Bytes":  102971086
+                                  },
+                                  {
+                                      "Path":  "android/.gradle",
+                                      "Bytes":  2551225
+                                  },
+                                  {
+                                      "Path":  "android/.kotlin",
+                                      "Bytes":  64
+                                  }
+                              ],
+    "AfterBytes":  3027005,
+    "FreedBytes":  1608431943,
+    "ProtectedFilesVerified":  292,
+    "AfterTopLevel":  [
+                          {
+                              "Path":  ".git",
+                              "Bytes":  1205049
+                          },
+                          {
+                              "Path":  "lib",
+                              "Bytes":  851162
+                          },
+                          {
+                              "Path":  "docs",
+                              "Bytes":  263892
+                          },
+                          {
+                              "Path":  "functions",
+                              "Bytes":  239605
+                          },
+                          {
+                              "Path":  "test",
+                              "Bytes":  132976
+                          },
+                          {
+                              "Path":  "android",
+                              "Bytes":  78638
+                          },
+                          {
+                              "Path":  "ios",
+                              "Bytes":  71861
+                          },
+                          {
+                              "Path":  "web",
+                              "Bytes":  43615
+                          },
+                          {
+                              "Path":  ".dart_tool",
+                              "Bytes":  33649
+                          },
+                          {
+                              "Path":  "firestore.rules",
+                              "Bytes":  33203
+                          },
+                          {
+                              "Path":  "pubspec.lock",
+                              "Bytes":  20062
+                          },
+                          {
+                              "Path":  ".firebase",
+                              "Bytes":  17825
+                          },
+                          {
+                              "Path":  "assets",
+                              "Bytes":  8438
+                          },
+                          {
+                              "Path":  ".flutter-plugins-dependencies",
+                              "Bytes":  7152
+                          },
+                          {
+                              "Path":  "pubspec.yaml",
+                              "Bytes":  4043
+                          },
+                          {
+                              "Path":  "scripts",
+                              "Bytes":  3116
+                          },
+                          {
+                              "Path":  "analysis_options.yaml",
+                              "Bytes":  1535
+                          },
+                          {
+                              "Path":  ".gitignore",
+                              "Bytes":  1327
+                          },
+                          {
+                              "Path":  ".github",
+                              "Bytes":  1309
+                          },
+                          {
+                              "Path":  ".metadata",
+                              "Bytes":  1296
+                          },
+                          {
+                              "Path":  "firebase.json",
+                              "Bytes":  429
+                          },
+                          {
+                              "Path":  "firebase.emulator.json",
+                              "Bytes":  422
+                          },
+                          {
+                              "Path":  "firestore.indexes.json",
+                              "Bytes":  231
+                          },
+                          {
+                              "Path":  "firebase.logistics-test.json",
+                              "Bytes":  222
+                          },
+                          {
+                              "Path":  ".vscode",
+                              "Bytes":  166
+                          },
+                          {
+                              "Path":  "README.md",
+                              "Bytes":  113
+                          }
+                      ]
+}

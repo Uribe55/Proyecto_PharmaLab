@@ -22,7 +22,18 @@ abstract class _PharmaServiceState extends ChangeNotifier {
 
   UserRole get role => _currentUser?.role ?? UserRole.cliente;
 
-  PharmacyProfile get pharmacy => _currentPharmacy ?? PharmaService.demoProfile;
+  PharmacyProfile get pharmacy =>
+      _currentPharmacy ??
+      (usesFirebase
+          ? const PharmacyProfile(
+              commercialName: 'Farmacia no disponible',
+              nit: '',
+              responsible: '',
+              phone: '',
+              address: '',
+              email: '',
+            )
+          : PharmaService.demoProfile);
 
   bool get isLoggedIn => _currentUser != null;
 
@@ -40,8 +51,8 @@ abstract class _PharmaServiceState extends ChangeNotifier {
     }
   }
 
-  FirebaseAuth get _auth => FirebaseAuth.instance;
-  FirebaseFirestore get _db => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseEnvironment.auth;
+  FirebaseFirestore get _db => FirebaseEnvironment.firestore;
 
   void _resetDemoData() {
     _products
