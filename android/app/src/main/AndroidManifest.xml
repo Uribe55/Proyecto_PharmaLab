@@ -3,7 +3,8 @@
     <application
         android:label="PharmaLab"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_pharmalab"
+        android:roundIcon="@mipmap/ic_pharmalab">
         <activity
             android:name=".MainActivity"
             android:exported="true"
