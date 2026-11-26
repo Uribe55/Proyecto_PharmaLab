@@ -17,7 +17,7 @@ class FirestoreOrderMapper {
     'aprobado' || 'Aprobado' => OrderStatus.aprobado,
     'enRuta' || 'en_ruta' || 'En ruta' => OrderStatus.enRuta,
     'entregado' || 'Entregado' => OrderStatus.entregado,
-    'fallida' || 'Fallida' => OrderStatus.fallida,
+    'fallida' || 'Fallida' || 'Entrega fallida' => OrderStatus.fallida,
     'cancelado' || 'Cancelado' => OrderStatus.cancelado,
     _ => throw const FormatException('Estado de pedido desconocido.'),
   };
@@ -67,6 +67,13 @@ class FirestoreOrderMapper {
           ),
       ],
     );
+    order.deliveryId = data['id_entrega'] as String?;
+    if (data['fecha_logistica'] != null) {
+      final at = date(data['fecha_logistica']);
+      if (order.status == OrderStatus.entregado) order.deliveredAt = at;
+      if (order.status == OrderStatus.fallida) order.failedAt = at;
+      if (order.status == OrderStatus.enRuta) order.dispatchedAt = at;
+    }
     for (final line in details) {
       if (line['id_lote'] is String) {
         order.lotAllocations.add(

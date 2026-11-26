@@ -627,6 +627,9 @@ service cloud.firestore {
         ).data.get('usuario_id', '') == request.auth.uid
         && get(
           /databases/$(database)/documents/empleado/$(empId)
+        ).data.get('cargo', '') == 'Repartidor'
+        && get(
+          /databases/$(database)/documents/empleado/$(empId)
         ).data.get('estado', false) == true;
     }
 
@@ -674,6 +677,96 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Logística Spark: alcance de una línea, documentos históricos inmutables.
+    function logisticsDetail(d, delivered) {
+      return {'id_detalle_pedido': 'DET001', 'cantidad_programada': d.cantidad,
+        'cantidad_entregada': delivered ? d.cantidad : 0};
+    }
+
+    function logisticsAssignment(id, d) {
+      let o = get(/databases/$(database)/documents/pedidos/$(d.id_pedido)).data;
+      let emp = get(/databases/$(database)/documents/empleado/$(d.id_repartidor)).data;
+      let user = get(/databases/$(database)/documents/usuarios/$(emp.usuario_id)).data;
+      let farm = get(/databases/$(database)/documents/farmacia_cliente/$(o.id_cliente)).data;
+      let address = get(/databases/$(database)/documents/direcciones/$(o.id_direccion)).data;
+      let line = get(/databases/$(database)/documents/pedidos/$(d.id_pedido)/detalle_pedido/DET001).data;
+      let product = get(/databases/$(database)/documents/productos/$(line.id_producto)).data;
+      return activeStaff() && id.matches('^[A-Za-z0-9]{20}$')
+        && o.schema_version == 'spark_single_v2' && o.estado == 'aprobado'
+        && o.get('id_entrega', null) == null
+        && emp.cargo == 'Repartidor' && emp.estado == true
+        && user.rol == 'repartidor' && user.estado == true
+        && d == {'schema_version': 'spark_logistics_v1', 'estado': 'asignada',
+          'fecha_creacion': request.time, 'fecha_programada': null,
+          'id_pedido': d.id_pedido, 'id_repartidor': d.id_repartidor,
+          'repartidor_uid': emp.usuario_id, 'asignado_por': request.auth.uid,
+          'numero_comercial': 'ENT-' + o.numero_comercial, 'pedido_numero': o.numero_comercial,
+          'farmacia': farm.nombre_farmacia, 'contacto': farm.responsable,
+          'telefono': farm.telefono, 'direccion': address.direccion,
+          'referencia': address.get('referencia', ''),
+          'producto': line.id_producto, 'producto_nombre': product.get('nombre', line.id_producto), 'cantidad': line.cantidad}
+        && getAfter(/databases/$(database)/documents/pedidos/$(d.id_pedido)).data.id_entrega == id
+        && getAfter(/databases/$(database)/documents/entregas/$(id)/detalle_entrega/DENT001).data == logisticsDetail(d, false);
+    }
+
+    function logisticsTransition(id, before, after) {
+      let o = get(/databases/$(database)/documents/pedidos/$(before.id_pedido)).data;
+      let next = getAfter(/databases/$(database)/documents/pedidos/$(before.id_pedido)).data;
+      let event = getAfter(/databases/$(database)/documents/pedidos/$(before.id_pedido)/historial_estado/$("LOG_" + after.estado)).data;
+      return before.schema_version == 'spark_logistics_v1'
+        && assignedDriver(before.id_repartidor) && before.repartidor_uid == request.auth.uid
+        && o.id_entrega == id
+        && ((before.estado == 'asignada' && o.estado == 'aprobado' && after.estado == 'en_ruta')
+          || (before.estado == 'en_ruta' && o.estado == 'en_ruta' && after.estado in ['entregado', 'fallida']))
+        && after.diff(before).affectedKeys().hasOnly(['estado', 'fecha_estado', 'motivo', 'observacion'])
+        && after.fecha_estado == request.time
+        && after.motivo is string && after.observacion is string
+        && after.motivo.size() <= 100 && after.observacion.size() <= 180
+        && (after.estado == 'fallida' ? after.motivo.size() > 0 : after.motivo == '' && after.observacion == '')
+        && next.estado == after.estado && next.fecha_logistica == request.time
+        && event == {'estado_anterior': o.estado, 'estado_nuevo': after.estado,
+          'fecha_cambio': request.time, 'id_usuario': request.auth.uid,
+          'observaciones': after.estado == 'fallida' ? after.motivo + ': ' + after.observacion : ''}
+        && (after.estado != 'entregado'
+          || getAfter(/databases/$(database)/documents/entregas/$(id)/detalle_entrega/DENT001).data == logisticsDetail(before, true));
+    }
+
+    match /pedidos/{id} {
+      allow update: if activeStaff()
+        && resource.data.schema_version == 'spark_single_v2' && resource.data.estado == 'aprobado'
+        && resource.data.get('id_entrega', null) == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id_entrega'])
+        && !exists(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega))
+        && getAfter(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega)).data.id_pedido == id;
+      allow update: if resource.data.get('id_entrega', null) is string
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'fecha_logistica'])
+        && logisticsTransition(resource.data.id_entrega,
+          get(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data,
+          getAfter(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data);
+      match /historial_estado/{eventId} {
+        allow create: if eventId in ['LOG_en_ruta', 'LOG_entregado', 'LOG_fallida']
+          && logisticsTransition(get(/databases/$(database)/documents/pedidos/$(id)).data.id_entrega,
+            get(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(id)).data.id_entrega)).data,
+            getAfter(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(id)).data.id_entrega)).data)
+          && eventId == 'LOG_' + request.resource.data.estado_nuevo;
+      }
+    }
+    match /entregas/{id} {
+      allow create: if logisticsAssignment(id, request.resource.data);
+      allow update: if logisticsTransition(id, resource.data, request.resource.data);
+      match /detalle_entrega/{detailId} {
+        allow create: if detailId == 'DENT001' && activeStaff()
+          && !exists(/databases/$(database)/documents/entregas/$(id))
+          && getAfter(/databases/$(database)/documents/entregas/$(id)).data.schema_version == 'spark_logistics_v1'
+          && request.resource.data == logisticsDetail(getAfter(/databases/$(database)/documents/entregas/$(id)).data, false);
+        allow update: if detailId == 'DENT001'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cantidad_entregada'])
+          && logisticsTransition(id, get(/databases/$(database)/documents/entregas/$(id)).data,
+            getAfter(/databases/$(database)/documents/entregas/$(id)).data)
+          && getAfter(/databases/$(database)/documents/entregas/$(id)).data.estado == 'entregado';
+      }
+    }
+
     // 9. DENEGAR TODO LO NO AUTORIZADO
     // ============================================
 

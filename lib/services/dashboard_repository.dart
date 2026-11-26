@@ -414,7 +414,8 @@ class DashboardRepository {
     return _DeliveryInfo(
       id: id,
       orderId: _refId(
-        data['pedido_id'] ??
+        data['id_pedido'] ??
+            data['pedido_id'] ??
             data['pedidoId'] ??
             data['order_id'] ??
             data['pedido'],
@@ -427,7 +428,8 @@ class DashboardRepository {
       status: rawStatus.isEmpty ? null : parsed.status,
       cancelled: parsed.cancelled,
       driverId: _refId(
-        data['repartidor_id'] ??
+        data['id_repartidor'] ??
+            data['repartidor_id'] ??
             data['repartidorId'] ??
             data['empleado_id'] ??
             data['driver_id'] ??
@@ -885,6 +887,12 @@ class DashboardRepository {
     }
     if (value.contains('cancel') || value.contains('anul')) {
       return (status: OrderStatus.pendiente, cancelled: true);
+    }
+    if (value.contains('fall')) {
+      return (status: OrderStatus.fallida, cancelled: false);
+    }
+    if (value.contains('asign')) {
+      return (status: OrderStatus.aprobado, cancelled: false);
     }
     if (value.contains('entreg') ||
         value.contains('deliver') ||

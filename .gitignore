@@ -67,3 +67,13 @@ node_modules/
 *service-account*.json
 *serviceAccount*.json
 *application_default_credentials*.json
+
+# Additional regenerable test/build outputs
+**/node_modules/
+/test-results/
+*.tmp
+*.temp
+*.hprof
+# Private keys (keep public Firebase client configuration tracked)
+*.pem
+*.key

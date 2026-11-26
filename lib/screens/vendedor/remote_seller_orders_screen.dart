@@ -1,3 +1,5 @@
+import '../shared/remote_logistics_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/staff_order_repository.dart';
@@ -179,6 +181,18 @@ class _RemoteSellerOrderDetailScreenState
                     ),
                   const SizedBox(height: 16),
                   OrderDetailCard(order: order),
+                  if (order.isApproved && order.deliveryId == null)
+                    OutlinedButton(
+                      onPressed: order.fromCache
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    RemoteLogisticsScreen(order: order),
+                              ),
+                            ),
+                      child: const Text('ASIGNAR REPARTIDOR'),
+                    ),
                   const SizedBox(height: 16),
                   OrderLifecyclePanel(order: order, showActions: false),
                   const SizedBox(height: 16),

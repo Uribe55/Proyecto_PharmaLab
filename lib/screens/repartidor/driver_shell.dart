@@ -1,3 +1,5 @@
+import '../shared/remote_logistics_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../widgets/account_navigation.dart';
@@ -37,7 +39,7 @@ class _DriverShellState extends State<DriverShell> {
       builder: (context, _) {
         final service = PharmaService.instance;
         final driver = service.currentUser;
-        final active = driver == null
+        final active = service.usesFirebase || driver == null
             ? 0
             : service
                   .ordersForDriver(driver.id)
@@ -55,10 +57,16 @@ class _DriverShellState extends State<DriverShell> {
               onOpenAccount: () => _selectTab(2),
               child: IndexedStack(
                 index: _index,
-                children: const [
-                  DriverDeliveriesScreen(),
-                  DriverHistoryScreen(),
-                  DriverAccountScreen(),
+                children: [
+                  if (service.usesFirebase)
+                    const RemoteLogisticsScreen()
+                  else
+                    const DriverDeliveriesScreen(),
+                  if (service.usesFirebase)
+                    const RemoteLogisticsScreen(history: true)
+                  else
+                    const DriverHistoryScreen(),
+                  const DriverAccountScreen(),
                 ],
               ),
             ),

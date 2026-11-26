@@ -139,6 +139,7 @@ class PharmacyOrder {
   /// (RF-11, RF-12, RF-14 y RF-17).
   OrderStatus status;
   String? driverId;
+  String? deliveryId;
   String? driverName;
   DateTime? deliveredAt;
   String? failureReason;

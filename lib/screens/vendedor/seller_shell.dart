@@ -1,3 +1,5 @@
+import '../shared/remote_logistics_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../widgets/account_navigation.dart';
@@ -104,11 +106,7 @@ class _SellerShellState extends State<SellerShell> {
                   else
                     const SellerOrdersScreen(),
                   if (_remote != null)
-                    const Center(
-                      child: Text(
-                        'Las asignaciones remotas todavía no están habilitadas.',
-                      ),
-                    )
+                    const RemoteLogisticsScreen()
                   else
                     const SellerAssignmentsScreen(),
                   const SellerAccountScreen(),
