@@ -24,7 +24,7 @@ class TestCart extends ChangeNotifier implements CartViewModel {
         name: 'Paracetamol',
         brand: '',
         presentation: 'Caja de 20 tabletas',
-        category: ProductCategory.genericos,
+        category: ProductCategory.insumosClinicos,
         price: 150,
         stock: 15,
       ),

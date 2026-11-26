@@ -605,11 +605,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed:
-                      !(_checkout?.canConfirm ?? cart.canConfirm) || _loading
-                      !cart.canConfirm ||
+                      !(_checkout?.canConfirm ?? cart.canConfirm) ||
                           _loading ||
-                          hasDebt ||
-                          PharmaService.instance.usesFirebase
+                          hasDebt
                       ? null
                       : _confirmOrder,
                   child: _loading || (_checkout?.busy ?? false)
@@ -627,14 +625,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                (_checkout?.hasPending ?? false)
-                                    ? 'Reintentar misma operación'
-                                    : 'Confirmar pedido',
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded, size: 18),
                                 hasDebt
                                     ? 'Deuda vencida'
+                                    : (_checkout?.hasPending ?? false)
+                                    ? 'Reintentar misma operación'
                                     : 'Confirmar pedido',
                               ),
                               const SizedBox(width: 8),

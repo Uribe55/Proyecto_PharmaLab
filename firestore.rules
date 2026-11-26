@@ -283,28 +283,20 @@ service cloud.firestore {
     // ============================================
 
     match /categorias/{categoriaId} {
-      allow get, list: if activeClient()
-        || activeStaff();
-
-      allow create, update, delete: if false;
+      allow get, list: if activeClient() || activeStaff();
+      allow create, update, delete: if activeAdmin();
     }
 
     match /productos/{productoId} {
-      allow get, list: if (
-        activeClient()
-        && resource.data.get('estado', false) == true
-      ) || activeStaff();
-
-      allow create, update, delete: if false;
+      allow get, list: if (activeClient() && resource.data.get('estado', false) == true)
+        || activeStaff();
+      allow create, update, delete: if activeAdmin();
     }
 
     match /lotes_productos/{loteId} {
-
-      allow get, list: if activeClient()
-        || activeStaff();
-
-      allow update: if validSparkLotDebit(loteId);
-      allow create, delete: if false;
+      allow get, list: if activeClient() || activeStaff();
+      allow update: if validSparkLotDebit(loteId) || activeAdmin();
+      allow create, delete: if activeAdmin();
     }
 
     // ============================================
@@ -601,6 +593,13 @@ service cloud.firestore {
           ).data.fecha_aprobacion == request.time);
 
         allow update, delete: if false;
+
+        allow create: if eventoId in ['LOG_en_ruta', 'LOG_entregado', 'LOG_fallida']
+          && logisticsTransition(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data.id_entrega,
+            get(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data.id_entrega)).data,
+            getAfter(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data.id_entrega)).data)
+          && eventoId == 'LOG_' + request.resource.data.estado_nuevo;
+
       }
 
       match /asignaciones_lotes/{asignacionId} {
@@ -612,6 +611,20 @@ service cloud.firestore {
 
         allow create, update, delete: if false;
       }
+
+      allow update: if activeStaff()
+        && resource.data.schema_version == 'spark_single_v2' && resource.data.estado == 'aprobado'
+        && resource.data.get('id_entrega', null) == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id_entrega'])
+        && !exists(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega))
+        && getAfter(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega)).data.id_pedido == pedidoId;
+      allow update: if resource.data.get('id_entrega', null) is string
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'fecha_logistica'])
+        && logisticsTransition(resource.data.id_entrega,
+          get(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data,
+          getAfter(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data);
+
+
     }
 
     // ============================================
@@ -689,7 +702,7 @@ service cloud.firestore {
           resource.data.get('id_repartidor', '')
         );
 
-      allow create, update, delete: if false;
+      allow delete: if false;
 
       match /detalle_entrega/{detalleId} {
 
@@ -699,8 +712,24 @@ service cloud.firestore {
           ).data
         );
 
-        allow create, update, delete: if false;
+        allow delete: if false;
+
+        allow create: if detalleId == 'DENT001' && activeStaff()
+          && !exists(/databases/$(database)/documents/entregas/$(entregaId))
+          && getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data.schema_version == 'spark_logistics_v1'
+          && request.resource.data == logisticsDetail(getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data, false);
+        allow update: if detalleId == 'DENT001'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cantidad_entregada'])
+          && logisticsTransition(entregaId, get(/databases/$(database)/documents/entregas/$(entregaId)).data,
+            getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data)
+          && getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data.estado == 'entregado';
+
       }
+
+      allow create: if logisticsAssignment(entregaId, request.resource.data);
+      allow update: if logisticsTransition(entregaId, resource.data, request.resource.data);
+
+
     }
 
     // ============================================
@@ -756,60 +785,6 @@ service cloud.firestore {
           'observaciones': after.estado == 'fallida' ? after.motivo + ': ' + after.observacion : ''}
         && (after.estado != 'entregado'
           || getAfter(/databases/$(database)/documents/entregas/$(id)/detalle_entrega/DENT001).data == logisticsDetail(before, true));
-    // Catálogo en lectura para farmacias autenticadas y activas.
-    // Al consultar productos se exige el filtro estado == true.
-    match /productos/{productoId} {
-      allow get, list: if (activeClient() && resource.data.estado == true)
-        || activeAdmin();
-      allow create, update, delete: if activeAdmin();
-    }
-
-    match /categorias/{categoriaId} {
-      allow get, list: if activeClient() || activeAdmin();
-      allow create, update, delete: if activeAdmin();
-    }
-
-    // Los lotes se leen para calcular la disponibilidad; el administrador
-    // registra las entradas de mercadería (RF-19).
-    match /lotes_productos/{loteId} {
-      allow get, list: if activeClient() || activeAdmin();
-      allow create, update, delete: if activeAdmin();
-    }
-
-    match /pedidos/{id} {
-      allow update: if activeStaff()
-        && resource.data.schema_version == 'spark_single_v2' && resource.data.estado == 'aprobado'
-        && resource.data.get('id_entrega', null) == null
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id_entrega'])
-        && !exists(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega))
-        && getAfter(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega)).data.id_pedido == id;
-      allow update: if resource.data.get('id_entrega', null) is string
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'fecha_logistica'])
-        && logisticsTransition(resource.data.id_entrega,
-          get(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data,
-          getAfter(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data);
-      match /historial_estado/{eventId} {
-        allow create: if eventId in ['LOG_en_ruta', 'LOG_entregado', 'LOG_fallida']
-          && logisticsTransition(get(/databases/$(database)/documents/pedidos/$(id)).data.id_entrega,
-            get(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(id)).data.id_entrega)).data,
-            getAfter(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(id)).data.id_entrega)).data)
-          && eventId == 'LOG_' + request.resource.data.estado_nuevo;
-      }
-    }
-    match /entregas/{id} {
-      allow create: if logisticsAssignment(id, request.resource.data);
-      allow update: if logisticsTransition(id, resource.data, request.resource.data);
-      match /detalle_entrega/{detailId} {
-        allow create: if detailId == 'DENT001' && activeStaff()
-          && !exists(/databases/$(database)/documents/entregas/$(id))
-          && getAfter(/databases/$(database)/documents/entregas/$(id)).data.schema_version == 'spark_logistics_v1'
-          && request.resource.data == logisticsDetail(getAfter(/databases/$(database)/documents/entregas/$(id)).data, false);
-        allow update: if detailId == 'DENT001'
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cantidad_entregada'])
-          && logisticsTransition(id, get(/databases/$(database)/documents/entregas/$(id)).data,
-            getAfter(/databases/$(database)/documents/entregas/$(id)).data)
-          && getAfter(/databases/$(database)/documents/entregas/$(id)).data.estado == 'entregado';
-      }
     }
 
     // 9. DENEGAR TODO LO NO AUTORIZADO

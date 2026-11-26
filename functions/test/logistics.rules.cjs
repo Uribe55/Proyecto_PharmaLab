@@ -39,3 +39,27 @@ for(const uid of ['client','seller','otherDriver'])test(uid+' no despacha',async
 test('historial obligatorio',async()=>{await assign();await assertFails(transition('en_ruta','driver',{noHistory:true}));});
 test('total inmutable',async()=>{await assign();await assertFails(transition('en_ruta','driver',{total:true}));});
 test('cantidades obligatorias',async()=>{await assign();await transition('en_ruta');await assertFails(transition('entregado','driver',{noDetail:true}));});
+
+test('integracion: permisos administrativos de catalogo conservados',async()=>{
+ const d=db('admin');
+ for(const collectionName of ['productos','categorias','lotes_productos']){
+  const ref=doc(d,collectionName+'/INTEGRATION');
+  let b=writeBatch(d);b.set(ref,{estado:true,nombre:'Prueba',cantidad_disponible:10});await assertSucceeds(b.commit());
+  b=writeBatch(d);b.update(ref,{nombre:'Actualizado'});await assertSucceeds(b.commit());
+  b=writeBatch(d);b.delete(ref);await assertSucceeds(b.commit());
+ }
+});
+for(const role of ['client','seller','driver'])test('integracion: '+role+' no modifica catalogo ni stock libremente',async()=>{
+ const d=db(role);
+ for(const collectionName of ['productos','categorias','lotes_productos']){
+  const b=writeBatch(d);b.set(doc(d,collectionName+'/INTEGRATION'),{estado:true,nombre:'No autorizado'});
+  await assertFails(b.commit());
+ }
+ const b=writeBatch(d);b.update(doc(d,'lotes_productos/LOT001'),{cantidad_disponible:999});await assertFails(b.commit());
+});
+test('integracion: vendedor conserva lectura de productos inactivos, cliente y repartidor no',async()=>{
+ await seed('productos/PROD001',{estado:false});
+ await assertSucceeds(getDoc(doc(db('seller'),'productos/PROD001')));
+ await assertFails(getDoc(doc(db('client'),'productos/PROD001')));
+ await assertFails(getDoc(doc(db('driver'),'productos/PROD001')));
+});

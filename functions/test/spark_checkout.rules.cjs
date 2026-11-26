@@ -217,3 +217,50 @@ test('dos pedidos o direcciones no comparten el incremento de un contador',async
  const x=addressPayload(db),y=addressPayload(db);
  await assertFails(commit(db,{writes:[x.writes[0],...y.writes]}));
 });
+
+test('integracion main: cliente confirma, vendedor aprueba y asigna, repartidor inicia y entrega', async()=>{
+ await env.withSecurityRulesDisabled(async context=>{
+  const d=context.firestore(),b=writeBatch(d);
+  b.set(doc(d,'usuarios/driver'),{rol:'repartidor',estado:true});
+  b.set(doc(d,'empleado/EMP002'),{cargo:'Repartidor',estado:true,usuario_id:'driver'});
+  await b.commit();
+ });
+ const customer=client(),seller=client('seller'),driver=client('driver');
+ const id=await assertSucceeds(confirm(customer));
+ await assertSucceeds(approve(seller,id));
+ const order=(await getDoc(doc(seller,`pedidos/${id}`))).data();
+ const farm=(await getDoc(doc(seller,`farmacia_cliente/${order.id_cliente}`))).data();
+ const address=(await getDoc(doc(seller,`direcciones/${order.id_direccion}`))).data();
+ const line=(await getDoc(doc(seller,`pedidos/${id}/detalle_pedido/DET001`))).data();
+ const product=(await getDoc(doc(seller,`productos/${line.id_producto}`))).data();
+ const delivery=doc(collection(seller,'entregas')),b=writeBatch(seller);
+ b.set(delivery,{schema_version:'spark_logistics_v1',estado:'asignada',fecha_creacion:serverTimestamp(),fecha_programada:null,
+  id_pedido:id,id_repartidor:'EMP002',repartidor_uid:'driver',asignado_por:'seller',
+  numero_comercial:`ENT-${order.numero_comercial}`,pedido_numero:order.numero_comercial,
+  farmacia:farm.nombre_farmacia,contacto:farm.responsable,telefono:farm.telefono,
+  direccion:address.direccion,referencia:address.referencia??'',producto:line.id_producto,
+  producto_nombre:product.nombre??line.id_producto,cantidad:line.cantidad});
+ b.set(doc(seller,`entregas/${delivery.id}/detalle_entrega/DENT001`),{id_detalle_pedido:'DET001',cantidad_programada:line.cantidad,cantidad_entregada:0});
+ b.update(doc(seller,`pedidos/${id}`),{id_entrega:delivery.id});
+ await assertSucceeds(b.commit());
+ assert.equal((await getDoc(doc(customer,`pedidos/${id}`))).data().estado,'aprobado');
+ assert.equal((await getDocs(query(collection(driver,'entregas'),where('id_repartidor','==','EMP002')))).size,1);
+ for(const [before,state] of [['aprobado','en_ruta'],['en_ruta','entregado']]){
+  let unsubscribe=()=>{};
+  const observed=new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>{unsubscribe();reject(Error('Snapshot cliente no recibido'));},10000);
+   unsubscribe=onSnapshot(doc(customer,`pedidos/${id}`),s=>{
+    if(s.data()?.estado===state){clearTimeout(timer);unsubscribe();resolve();}
+   },e=>{clearTimeout(timer);reject(e);});
+  });
+  const change=writeBatch(driver);
+  change.update(doc(driver,`entregas/${delivery.id}`),{estado:state,fecha_estado:serverTimestamp(),motivo:'',observacion:''});
+  change.update(doc(driver,`pedidos/${id}`),{estado:state,fecha_logistica:serverTimestamp()});
+  change.set(doc(driver,`pedidos/${id}/historial_estado/LOG_${state}`),{estado_anterior:before,estado_nuevo:state,fecha_cambio:serverTimestamp(),id_usuario:'driver',observaciones:''});
+  if(state==='entregado')change.update(doc(driver,`entregas/${delivery.id}/detalle_entrega/DENT001`),{cantidad_entregada:line.cantidad});
+  await assertSucceeds(change.commit());await observed;
+ }
+ assert.equal((await getDoc(doc(customer,`pedidos/${id}`))).data().total,order.total);
+ assert.equal((await getDoc(doc(customer,'lotes_productos/LOTE001'))).data().cantidad_disponible,99);
+ assert.equal((await getDocs(collection(customer,`pedidos/${id}/historial_estado`))).size,4);
+});
