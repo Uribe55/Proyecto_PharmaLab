@@ -1,9 +1,10 @@
 import '../data/repositories/remote_order_repository.dart';
 import 'spark_approval.dart';
+import 'commercial_number.dart';
 
-/// Contrato finito: un producto, un lote y cinco escrituras atómicas.
+/// Contrato finito: un producto, un lote y seis escrituras atómicas.
 class SparkCheckout {
-  static const schema = 'spark_single_v1';
+  static const schema = 'spark_single_v2';
   static const limitMessage =
       'Esta versión permite un producto y un único lote por pedido, hasta 1000 cajas. No se dividen compras ni se eliminan productos del carrito.';
 
@@ -132,6 +133,8 @@ class SparkCheckout {
         definitive: true,
       );
     }
+    final counter = await tx.read('configuracion/contadores_pedidos');
+    final number = CommercialNumber.next(counter, 'PED');
     final line = <String, dynamic>{
       'id_producto': productId,
       'id_lote': lotId,
@@ -148,11 +151,11 @@ class SparkCheckout {
       'total': line['subtotal'],
       'usuario_id': uid,
       'id_operacion': id,
-      'numero_comercial': 'PED-$id',
+      'numero_comercial': CommercialNumber.code('PED', number),
       'linea': line,
       'observaciones': request['notes'],
     });
-    tx.create('$orderPath/detalle_pedido/LINEA1', line);
+    tx.create('$orderPath/detalle_pedido/DET001', line);
     tx.create('$orderPath/historial_estado/CONFIRMACION', {
       'estado_anterior': null,
       'estado_nuevo': 'pendiente',
@@ -171,5 +174,9 @@ class SparkCheckout {
       'cantidad_disponible': stock - quantity,
       'ultimo_pedido_id': id,
     });
+    tx.update(
+      'configuracion/contadores_pedidos',
+      CommercialNumber.counter('PED', number, id),
+    );
   }
 }

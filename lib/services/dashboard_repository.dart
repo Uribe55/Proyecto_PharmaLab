@@ -225,6 +225,7 @@ class DashboardRepository {
     ]);
     final parsed = _parseStatus(rawStatus);
     final number = _text(data, const [
+      'numero_comercial',
       'numero',
       'numero_pedido',
       'codigo',
@@ -280,7 +281,11 @@ class DashboardRepository {
 
     return DashboardOrder(
       id: id,
-      number: number.isEmpty ? 'PED-$id' : number,
+      number: RegExp(r'^PED[0-9]{3,}$').hasMatch(number)
+          ? number
+          : RegExp(r'^PED[0-9]{3,}$').hasMatch(id)
+          ? id
+          : 'Pedido sin número comercial',
       createdAt: createdAt,
       status: parsed.status,
       cancelled: parsed.cancelled,

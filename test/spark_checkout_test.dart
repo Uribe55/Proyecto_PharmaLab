@@ -14,6 +14,11 @@ Map<String, dynamic> request({int quantity = 2, int price = 15000}) => {
   ],
 };
 Map<String, Map<String, dynamic>> fixtures() => {
+  'configuracion/contadores_pedidos': {
+    'ultimo_numero': 2,
+    'ultimo_id': 'PED002',
+    'ultimo_documento_id': 'existingOrder',
+  },
   'usuarios/client': {'rol': 'cliente', 'estado': true},
   'farmacia_cliente/FARM001': {'usuario_id': 'client', 'estado': true},
   'direcciones/DIR001': {'id_cliente': 'FARM001', 'estado': true},
@@ -85,24 +90,24 @@ Future<void> prepare(
 
 void main() {
   test(
-    'cinco escrituras atómicas y dos cajas descuentan 2, no 40 tabletas',
+    'seis escrituras atómicas y dos cajas descuentan 2, no 40 tabletas',
     () async {
       final tx = CheckoutTransactionFake(fixtures());
       await prepare(tx);
-      expect(tx.reads, 7);
-      expect(tx.writes.length, 5);
+      expect(tx.reads, 8);
+      expect(tx.writes.length, 6);
       final order = tx.writes['pedidos/$operationId']!;
       expect(order['estado'], 'pendiente');
       expect(order['fecha_pedido'], 'SERVER');
       expect(order['total'], 300);
       expect(
         order['linea'],
-        tx.writes['pedidos/$operationId/detalle_pedido/LINEA1'],
+        tx.writes['pedidos/$operationId/detalle_pedido/DET001'],
       );
       expect(tx.writes['lotes_productos/LOTE001']!['cantidad_disponible'], 98);
       expect(tx.writes.containsKey('pedidos/PED001'), isFalse);
       expect(
-        tx.writes.keys.any((p) => p.startsWith('configuracion/')),
+        tx.writes.containsKey('configuracion/contadores_farmacia'),
         isFalse,
       );
     },

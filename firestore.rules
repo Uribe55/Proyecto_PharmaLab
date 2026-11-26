@@ -65,6 +65,28 @@ service cloud.firestore {
       ).data;
     }
 
+    function commercialCode(prefix, n) {
+      return n < 10 ? prefix + '00' + string(n)
+        : n < 100 ? prefix + '0' + string(n) : prefix + string(n);
+    }
+
+    // El ID interno vincula el incremento con UN documento nuevo de esta operación.
+    function validCommercialCounter(prefix) {
+      let before = resource.data;
+      let after = request.resource.data;
+      return before.ultimo_numero is int && before.ultimo_numero >= 1
+        && before.ultimo_numero < 999999999
+        && before.ultimo_id == commercialCode(prefix, before.ultimo_numero)
+        && before.ultimo_documento_id is string && before.ultimo_documento_id.size() > 0
+        && after.keys().hasOnly(['ultimo_numero', 'ultimo_id', 'ultimo_documento_id'])
+        && after.keys().hasAll(['ultimo_numero', 'ultimo_id', 'ultimo_documento_id'])
+        && after.ultimo_numero is int
+        && after.ultimo_numero == before.ultimo_numero + 1
+        && after.ultimo_id == commercialCode(prefix, after.ultimo_numero)
+        && after.ultimo_documento_id is string
+        && after.ultimo_documento_id.matches('^[A-Za-z0-9]{20}$');
+    }
+
     match /usuarios/{uid} {
 
       allow get: if (
@@ -289,7 +311,7 @@ service cloud.firestore {
     function validAddress(data) {
       return data.keys().hasOnly([
           'id_cliente', 'nombre', 'direccion',
-          'referencia', 'latitud', 'longitud', 'estado'
+          'referencia', 'latitud', 'longitud', 'estado', 'numero_comercial'
         ])
         && data.keys().hasAll([
           'id_cliente', 'nombre', 'direccion', 'estado'
@@ -320,21 +342,35 @@ service cloud.firestore {
             && data.get('longitud', null) <= 180
           )
         )
-        && data.estado is bool;
+        && data.estado is bool
+        && (!('numero_comercial' in data)
+          || (data.numero_comercial is string && data.numero_comercial.matches('^DIR[0-9]{3,}$')));
+    }
+
+    function numberedAddress(data, id) {
+      let counter = getAfter(/databases/$(database)/documents/configuracion/contadores_direcciones).data;
+      return validAddress(data) && data.estado == true
+        && id.matches('^[A-Za-z0-9]{20}$')
+        && counter.ultimo_numero == get(/databases/$(database)/documents/configuracion/contadores_direcciones).data.ultimo_numero + 1
+        && counter.ultimo_documento_id == id
+        && data.numero_comercial == counter.ultimo_id;
     }
 
     match /direcciones/{direccionId} {
 
-      allow get, list: if
+      allow get: if (activeClient() && !exists(/databases/$(database)/documents/direcciones/$(direccionId)))
+        || ownsFarm(resource.data.get('id_cliente', '')) || activeStaff();
+      allow list: if
         ownsFarm(resource.data.get('id_cliente', ''))
         || activeStaff();
 
-      allow create: if validAddress(request.resource.data);
+      allow create: if numberedAddress(request.resource.data, direccionId);
 
       allow update: if
         ownsFarm(resource.data.get('id_cliente', ''))
         && request.resource.data.id_cliente
           == resource.data.id_cliente
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['numero_comercial'])
         && validAddress(request.resource.data);
 
       allow delete: if false;
@@ -354,7 +390,7 @@ service cloud.firestore {
         );
     }
 
-    // Contrato académico finito. Un detalle LINEA1 y un lote por pedido.
+    // v2: DET001 y contador, además del contrato de inventario v1.
     function sparkInitialEvent(uid) {
       return {'estado_anterior': null, 'estado_nuevo': 'pendiente',
         'fecha_cambio': request.time, 'id_usuario': uid};
@@ -373,18 +409,23 @@ service cloud.firestore {
       let product = get(/databases/$(database)/documents/productos/$(line.id_producto)).data;
       let before = get(/databases/$(database)/documents/lotes_productos/$(line.id_lote)).data;
       let after = getAfter(/databases/$(database)/documents/lotes_productos/$(line.id_lote)).data;
-      return activeClient()
+      let counter = getAfter(/databases/$(database)/documents/configuracion/contadores_pedidos).data;
+      // El rol activo se comprueba en las escrituras obligatorias de lote y operación.
+      // Aquí evita una lectura extra: máximo 10 accesos por escritura.
+      return signedIn()
         && id.matches('^[A-Za-z0-9]{20}$')
         && order.keys().hasOnly(['schema_version', 'estado', 'fecha_pedido', 'id_cliente',
           'id_direccion', 'total', 'usuario_id', 'id_operacion', 'numero_comercial', 'linea', 'observaciones'])
         && order.keys().hasAll(['schema_version', 'estado', 'fecha_pedido', 'id_cliente',
           'id_direccion', 'total', 'usuario_id', 'id_operacion', 'numero_comercial', 'linea', 'observaciones'])
-        && order.schema_version == 'spark_single_v1'
+        && order.schema_version == 'spark_single_v2'
         && order.estado == 'pendiente' && order.fecha_pedido == request.time
         && order.usuario_id == request.auth.uid && order.id_operacion == id
         && order.id_cliente.matches('^FARM[0-9]{3,}$')
         && order.id_direccion.matches('^[A-Za-z0-9_-]{1,100}$')
-        && order.numero_comercial == 'PED-' + id
+        && counter.ultimo_documento_id == id
+        && counter.ultimo_numero == get(/databases/$(database)/documents/configuracion/contadores_pedidos).data.ultimo_numero + 1
+        && order.numero_comercial == counter.ultimo_id
         && order.observaciones is string && order.observaciones.size() <= 500
         && farm.usuario_id == request.auth.uid && farm.estado == true
         && address.id_cliente == order.id_cliente && address.estado == true
@@ -406,7 +447,7 @@ service cloud.firestore {
           || (before.fecha_vencimiento is timestamp && before.fecha_vencimiento > request.time))
         && after.cantidad_disponible == before.cantidad_disponible - line.cantidad
         && after.ultimo_pedido_id == id
-        && getAfter(/databases/$(database)/documents/pedidos/$(id)/detalle_pedido/LINEA1).data == line
+        && getAfter(/databases/$(database)/documents/pedidos/$(id)/detalle_pedido/DET001).data == line
         && getAfter(/databases/$(database)/documents/pedidos/$(id)/historial_estado/CONFIRMACION).data == sparkInitialEvent(request.auth.uid)
         && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)/operaciones_pedido/$(id)).data == sparkOperation(order, id);
     }
@@ -414,7 +455,7 @@ service cloud.firestore {
     function newSparkParent(id) {
       let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
       return activeClient() && !exists(/databases/$(database)/documents/pedidos/$(id))
-        && order.schema_version == 'spark_single_v1'
+        && order.schema_version == 'spark_single_v2'
         && order.usuario_id == request.auth.uid && order.id_operacion == id
         && order.estado == 'pendiente' && order.fecha_pedido == request.time;
     }
@@ -488,7 +529,7 @@ service cloud.firestore {
           ).data
         );
 
-        allow create: if detalleId == 'LINEA1' && newSparkParent(pedidoId)
+        allow create: if detalleId == 'DET001' && newSparkParent(pedidoId)
           && request.resource.data == getAfter(/databases/$(database)/documents/pedidos/$(pedidoId)).data.linea;
         allow update, delete: if false;
       }
@@ -552,9 +593,22 @@ service cloud.firestore {
 
     match /configuracion/contadores_pedidos {
 
-      // Pendiente de contrato transaccional
-      // que garantice IDs y cantidades.
-      allow read, write: if false;
+      allow get: if activeClient();
+      allow update: if activeClient() && validCommercialCounter('PED')
+        && newSparkParent(request.resource.data.ultimo_documento_id)
+        && getAfter(/databases/$(database)/documents/pedidos/$(request.resource.data.ultimo_documento_id)).data.numero_comercial
+          == request.resource.data.ultimo_id;
+      allow create, list, delete: if false;
+    }
+
+    match /configuracion/contadores_direcciones {
+      allow get: if activeClient();
+      allow update: if activeClient() && validCommercialCounter('DIR')
+        && !exists(/databases/$(database)/documents/direcciones/$(request.resource.data.ultimo_documento_id))
+        && numberedAddress(
+          getAfter(/databases/$(database)/documents/direcciones/$(request.resource.data.ultimo_documento_id)).data,
+          request.resource.data.ultimo_documento_id);
+      allow create, list, delete: if false;
     }
 
     // ============================================

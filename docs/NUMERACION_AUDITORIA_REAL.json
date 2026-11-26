@@ -1,0 +1,193 @@
+﻿{
+    "ReadAtUtc":  "2026-11-25T21:25:40.0906832Z",
+    "Project":  "proyecto-pharmalab",
+    "ProductionWrites":  false,
+    "Records":  [
+                    {
+                        "Path":  "pedidos/TD1pMWCdXAcwdPnIkkfa",
+                        "Types":  {
+                                      "fecha_aprobacion":  "timestampValue",
+                                      "aprobado_por":  "stringValue",
+                                      "usuario_id":  "stringValue",
+                                      "observaciones":  "stringValue",
+                                      "id_direccion":  "stringValue",
+                                      "id_cliente":  "stringValue",
+                                      "estado":  "stringValue",
+                                      "numero_comercial":  "stringValue",
+                                      "schema_version":  "stringValue",
+                                      "linea":  "mapValue",
+                                      "id_operacion":  "stringValue",
+                                      "total":  "doubleValue",
+                                      "fecha_pedido":  "timestampValue"
+                                  },
+                        "SelectedValues":  {
+                                               "total":  {
+                                                             "doubleValue":  150
+                                                         },
+                                               "numero_comercial":  {
+                                                                        "stringValue":  "PED-TD1pMWCdXAcwdPnIkkfa"
+                                                                    },
+                                               "id_cliente":  {
+                                                                  "stringValue":  "FARM004"
+                                                              },
+                                               "id_direccion":  {
+                                                                    "stringValue":  "KKp8HDRwSfgBBiGAaVpr"
+                                                                },
+                                               "id_operacion":  {
+                                                                    "stringValue":  "TD1pMWCdXAcwdPnIkkfa"
+                                                                },
+                                               "schema_version":  {
+                                                                      "stringValue":  "spark_single_v1"
+                                                                  },
+                                               "estado":  {
+                                                              "stringValue":  "aprobado"
+                                                          }
+                                           }
+                    },
+                    {
+                        "Path":  "pedidos/TD1pMWCdXAcwdPnIkkfa/detalle_pedido/LINEA1",
+                        "Types":  {
+                                      "precio_unitario":  "doubleValue",
+                                      "subtotal":  "doubleValue",
+                                      "id_producto":  "stringValue",
+                                      "id_lote":  "stringValue",
+                                      "cantidad":  "integerValue"
+                                  },
+                        "SelectedValues":  {
+                                               "cantidad":  {
+                                                                "integerValue":  "1"
+                                                            },
+                                               "precio_unitario":  {
+                                                                       "doubleValue":  150
+                                                                   },
+                                               "subtotal":  {
+                                                                "doubleValue":  150
+                                                            }
+                                           }
+                    },
+                    {
+                        "Path":  "pedidos/TD1pMWCdXAcwdPnIkkfa/historial_estado/CONFIRMACION",
+                        "Types":  {
+                                      "estado_anterior":  "nullValue",
+                                      "estado_nuevo":  "stringValue",
+                                      "fecha_cambio":  "timestampValue",
+                                      "id_usuario":  "stringValue"
+                                  },
+                        "SelectedValues":  {
+                                               "estado_anterior":  {
+                                                                       "nullValue":  null
+                                                                   },
+                                               "estado_nuevo":  {
+                                                                    "stringValue":  "pendiente"
+                                                                }
+                                           }
+                    },
+                    {
+                        "Path":  "pedidos/TD1pMWCdXAcwdPnIkkfa/historial_estado/APROBACION",
+                        "Types":  {
+                                      "id_usuario":  "stringValue",
+                                      "fecha_cambio":  "timestampValue",
+                                      "estado_anterior":  "stringValue",
+                                      "estado_nuevo":  "stringValue"
+                                  },
+                        "SelectedValues":  {
+                                               "estado_anterior":  {
+                                                                       "stringValue":  "pendiente"
+                                                                   },
+                                               "estado_nuevo":  {
+                                                                    "stringValue":  "aprobado"
+                                                                }
+                                           }
+                    },
+                    {
+                        "Path":  "direcciones/KKp8HDRwSfgBBiGAaVpr",
+                        "Types":  {
+                                      "id_cliente":  "stringValue",
+                                      "direccion":  "stringValue",
+                                      "referencia":  "stringValue",
+                                      "nombre":  "stringValue",
+                                      "estado":  "booleanValue",
+                                      "latitud":  "nullValue",
+                                      "longitud":  "nullValue"
+                                  },
+                        "SelectedValues":  {
+                                               "id_cliente":  {
+                                                                  "stringValue":  "FARM004"
+                                                              },
+                                               "estado":  {
+                                                              "booleanValue":  true
+                                                          }
+                                           }
+                    },
+                    {
+                        "Path":  "productos/PROD001",
+                        "Types":  {
+                                      "presentacion":  "stringValue",
+                                      "precio":  "doubleValue",
+                                      "categoria_id":  "stringValue",
+                                      "unidad_medida":  "stringValue",
+                                      "unidad_por_envase":  "integerValue",
+                                      "descripcion":  "stringValue",
+                                      "nombre":  "stringValue",
+                                      "estado":  "booleanValue",
+                                      "concentracion":  "stringValue",
+                                      "requiere_vencimiento":  "booleanValue",
+                                      "codigo":  "stringValue"
+                                  },
+                        "SelectedValues":  {
+                                               "estado":  {
+                                                              "booleanValue":  true
+                                                          }
+                                           }
+                    },
+                    {
+                        "Path":  "lotes_productos/LOTE001",
+                        "Types":  {
+                                      "cantidad_disponible":  "integerValue",
+                                      "fecha_ingreso":  "timestampValue",
+                                      "fecha_vencimiento":  "timestampValue",
+                                      "producto_id":  "stringValue",
+                                      "numero_lote":  "stringValue",
+                                      "ultimo_pedido_id":  "stringValue"
+                                  },
+                        "SelectedValues":  {
+                                               "cantidad_disponible":  {
+                                                                           "integerValue":  "99"
+                                                                       },
+                                               "producto_id":  {
+                                                                   "stringValue":  "PROD001"
+                                                               }
+                                           }
+                    },
+                    {
+                        "Path":  "configuracion/contadores_pedidos",
+                        "Types":  {
+                                      "ultimo_id":  "stringValue",
+                                      "ultimo_numero":  "integerValue"
+                                  },
+                        "SelectedValues":  {
+                                               "ultimo_numero":  {
+                                                                     "integerValue":  "2"
+                                                                 },
+                                               "ultimo_id":  {
+                                                                 "stringValue":  "PED002"
+                                                             }
+                                           }
+                    },
+                    {
+                        "Path":  "configuracion/contadores_direcciones",
+                        "Types":  {
+                                      "ultimo_numero":  "integerValue",
+                                      "ultimo_id":  "stringValue"
+                                  },
+                        "SelectedValues":  {
+                                               "ultimo_numero":  {
+                                                                     "integerValue":  "2"
+                                                                 },
+                                               "ultimo_id":  {
+                                                                 "stringValue":  "DIR002"
+                                                             }
+                                           }
+                    }
+                ]
+}

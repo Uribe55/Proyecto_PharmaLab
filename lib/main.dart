@@ -52,7 +52,7 @@ class PharmaLabApp extends StatelessWidget {
                         child: SizedBox(
                           width: double.infinity,
                           child: Text(
-                            FirebaseEnvironment.emulatorOrdersEnabled
+                            FirebaseEnvironment .emulatorOrdersEnabled
                                 ? 'Entorno local de pruebas · Datos de demostración en Firebase Emulator Suite.'
                                 : service.usesFirebase
                                 ? 'Firebase real · Pedidos Spark: un producto y un lote por compra.'

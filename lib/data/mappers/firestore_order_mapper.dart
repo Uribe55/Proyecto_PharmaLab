@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/app_user.dart';
+import '../../domain/commercial_number.dart';
 import '../../models/order.dart';
 import '../../models/order_lifecycle.dart';
 
@@ -30,7 +31,10 @@ class FirestoreOrderMapper {
     bool fromCache = false,
   }) {
     final delivery = Map<String, dynamic>.from(data['entrega'] as Map? ?? {});
-    final number = data['numero_comercial'] as String? ?? documentId;
+    final number = CommercialNumber.orderLabel(
+      data['numero_comercial'],
+      documentId,
+    );
     final order = PharmacyOrder(
       number: number,
       documentId: documentId,

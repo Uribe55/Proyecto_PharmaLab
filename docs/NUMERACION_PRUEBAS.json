@@ -1,0 +1,69 @@
+﻿{
+    "CheckedAtUtc":  "2026-11-25T21:38:29.5052936Z",
+    "Branch":  "pedidos-firestore-transaccionales",
+    "PubGet":  "passed",
+    "Analyze":  "No issues found",
+    "FlutterTests":  150,
+    "SecurityTests":  50,
+    "SecurityFailures":  0,
+    "RulesSHA256":  "5E1CAD2CD975EE27FA8AE2DEFCE262DEECCEFB9349FC1C5965B8DA3FDC8B82ED",
+    "SecurityProject":  "demo-pharmalab-spark-regression",
+    "SecurityHost":  "127.0.0.1:8080",
+    "ProductionWrites":  false,
+    "RulesDeployed":  false,
+    "AndroidPurchaseTest":  "not performed",
+    "NpmInstall":  "293 packages installed; exit 1: postinstall allowScripts policy; tests executed successfully; scripts not approved",
+    "ManualPreparation":  "PED002/DIR002 and ultimo_documento_id fields pending",
+    "Cleanup":  [
+                    {
+                        "Path":  "functions/node_modules",
+                        "Files":  14236,
+                        "Bytes":  188604146
+                    },
+                    {
+                        "Path":  "build",
+                        "Files":  1757,
+                        "Bytes":  1302328655
+                    },
+                    {
+                        "Path":  ".dart_tool/flutter_build",
+                        "Files":  20,
+                        "Bytes":  80251621
+                    },
+                    {
+                        "Path":  ".dart_tool/hooks_runner",
+                        "Files":  19,
+                        "Bytes":  22615664
+                    },
+                    {
+                        "Path":  "spark-numeracion-npm.log",
+                        "Files":  1,
+                        "Bytes":  2652
+                    },
+                    {
+                        "Path":  "spark-numeracion-reglas.log",
+                        "Files":  1,
+                        "Bytes":  1119232
+                    },
+                    {
+                        "Path":  "spark-numeracion-flutter.log",
+                        "Files":  1,
+                        "Bytes":  54190
+                    },
+                    {
+                        "Path":  "spark-numeracion-analyze.log",
+                        "Files":  1,
+                        "Bytes":  200
+                    },
+                    {
+                        "Path":  "firebase-debug.log",
+                        "Files":  1,
+                        "Bytes":  2539741
+                    },
+                    {
+                        "Path":  "firestore-debug.log",
+                        "Files":  1,
+                        "Bytes":  245552
+                    }
+                ]
+}

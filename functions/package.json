@@ -4,7 +4,8 @@
   "main": "src/index.js",
   "engines": { "node": "22" },
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/*.test.js"
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "test:spark-rules": "node --test --test-concurrency=1 test/spark_checkout.rules.cjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

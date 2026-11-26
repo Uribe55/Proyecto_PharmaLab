@@ -1,0 +1,125 @@
+{
+  "FarmId": "FARM004",
+  "Uid": "client",
+  "AddressId": "KKp8HDRwSfgBBiGAaVpr",
+  "Documents": {
+    "usuarios/client": {
+      "nombre": {
+        "stringValue": "dato-de-prueba"
+      },
+      "estado": {
+        "booleanValue": true
+      },
+      "correo": {
+        "stringValue": "client@test.invalid"
+      },
+      "rol": {
+        "stringValue": "cliente"
+      },
+      "fecha_registro": {
+        "timestampValue": "2026-01-01T00:00:00Z"
+      }
+    },
+    "farmacia_cliente/FARM004": {
+      "estado": {
+        "booleanValue": true
+      },
+      "responsable": {
+        "stringValue": "dato-de-prueba"
+      },
+      "usuario_id": {
+        "stringValue": "client"
+      },
+      "direccion_fiscal": {
+        "stringValue": "dato-de-prueba"
+      },
+      "nit": {
+        "stringValue": "123456789"
+      },
+      "nombre_farmacia": {
+        "stringValue": "dato-de-prueba"
+      },
+      "telefono": {
+        "stringValue": "dato-de-prueba"
+      },
+      "fecha_registro": {
+        "timestampValue": "2026-01-01T00:00:00Z"
+      }
+    },
+    "direcciones/KKp8HDRwSfgBBiGAaVpr": {
+      "latitud": {
+        "nullValue": null
+      },
+      "longitud": {
+        "nullValue": null
+      },
+      "estado": {
+        "booleanValue": true
+      },
+      "id_cliente": {
+        "stringValue": "FARM004"
+      },
+      "direccion": {
+        "stringValue": "dato-de-prueba"
+      },
+      "nombre": {
+        "stringValue": "dato-de-prueba"
+      },
+      "referencia": {
+        "stringValue": "dato-de-prueba"
+      }
+    },
+    "productos/PROD001": {
+      "codigo": {
+        "stringValue": "MED-001"
+      },
+      "presentacion": {
+        "stringValue": "Caja de 2 blísteres de 10 tabletas"
+      },
+      "categoria_id": {
+        "stringValue": "CAT001"
+      },
+      "unidad_por_envase": {
+        "integerValue": "20"
+      },
+      "concentracion": {
+        "stringValue": "500 mg"
+      },
+      "requiere_vencimiento": {
+        "booleanValue": true
+      },
+      "descripcion": {
+        "stringValue": "Paracetamol de 500 mg"
+      },
+      "estado": {
+        "booleanValue": true
+      },
+      "nombre": {
+        "stringValue": "Paracetamol"
+      },
+      "unidad_medida": {
+        "stringValue": "Caja"
+      },
+      "precio": {
+        "doubleValue": 150
+      }
+    },
+    "lotes_productos/LOTE001": {
+      "producto_id": {
+        "stringValue": "PROD001"
+      },
+      "numero_lote": {
+        "stringValue": "PAR-2026-001"
+      },
+      "fecha_ingreso": {
+        "timestampValue": "2026-11-18T04:00:00Z"
+      },
+      "fecha_vencimiento": {
+        "timestampValue": "2027-06-30T04:00:00Z"
+      },
+      "cantidad_disponible": {
+        "integerValue": "100"
+      }
+    }
+  }
+}

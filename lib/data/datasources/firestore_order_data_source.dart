@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/spark_checkout.dart';
+import '../../domain/spark_address.dart';
 import '../../models/delivery_address.dart';
 import '../../models/order.dart';
 import '../../services/pharma_service.dart';
 import '../../services/firebase_environment.dart';
 import 'firestore_order_reader.dart';
 import 'firestore_spark_checkout.dart';
+import 'checkout_diagnostics.dart';
+import 'numbered_transaction.dart';
 import '../repositories/remote_order_repository.dart';
 
 class FirestoreOrderDataSource implements RemoteOrderRepository {
@@ -15,6 +18,8 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
       _session = session ?? PharmaService.instance;
   final FirebaseFirestore _db;
   final PharmaService _session;
+  // Conserva el ID ante un error de red/resultado incierto durante esta sesión.
+  final Map<String, String> _addressAttempts = {};
   String get _farm =>
       _session.pharmacyId ?? (throw StateError('Farmacia no identificada.'));
   String get _uid =>
@@ -65,10 +70,25 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
       );
     }
     final uid = _uid, farm = _farm;
+    final diagnostics = CheckoutDiagnostics(
+      uid: uid,
+      farmId: farm,
+      orderId: operationId,
+      projectId: _db.app.options.projectId,
+    );
     try {
+      diagnostics.mark(
+        'idempotencia.lectura',
+        document: 'usuarios/$uid/operaciones_pedido/$operationId',
+      );
       final operation = await _db
           .doc('usuarios/$uid/operaciones_pedido/$operationId')
           .get(const GetOptions(source: Source.server));
+      diagnostics.mark(
+        'idempotencia.leida',
+        document: operation.reference.path,
+        exists: operation.exists,
+      );
       if (_session.uid != uid || _session.pharmacyId != farm) {
         throw StateError('La sesión cambió.');
       }
@@ -80,8 +100,10 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
           definitive: true,
         );
       }
+      diagnostics.mark('pedido.carga_relacionados');
       return await _load(operationId, server: true);
     } on FirebaseException catch (error) {
+      diagnostics.failure(error);
       throw RemoteOrderException(
         error.code == 'permission-denied'
             ? 'No tienes permisos para consultar la operación. Revisa la sesión y las reglas publicadas.'
@@ -145,7 +167,10 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
             .map(
               (doc) => DeliveryAddress(
                 id: doc.id,
-                name: doc.data()['nombre'] as String? ?? doc.id,
+                name: doc.data()['nombre'] as String? ?? 'Dirección',
+                commercialNumber:
+                    doc.data()['numero_comercial'] as String? ??
+                    (RegExp(r'^DIR[0-9]{3,}$').hasMatch(doc.id) ? doc.id : ''),
                 address: doc.data()['direccion'] as String? ?? '',
                 reference: doc.data()['referencia'] as String? ?? '',
               ),
@@ -158,14 +183,37 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
     if (name.trim().isEmpty || address.trim().isEmpty) {
       throw StateError('Completa la dirección.');
     }
-    await _db.collection('direcciones').add({
-      'id_cliente': _farm,
-      'nombre': name.trim(),
-      'direccion': address.trim(),
-      'referencia': reference.trim(),
-      'latitud': null,
-      'longitud': null,
-      'estado': true,
+    final uid = _uid, farm = _farm;
+    final attemptKey = [
+      uid,
+      farm,
+      name.trim(),
+      address.trim(),
+      reference.trim(),
+    ].map((part) => '${part.length}:$part').join();
+    final id = _addressAttempts.putIfAbsent(
+      attemptKey,
+      () => _db.collection('direcciones').doc().id,
+    );
+    await numberedTransaction(_db, 'configuracion/contadores_direcciones', (
+      tx,
+    ) async {
+      if (_session.uid != uid || _session.pharmacyId != farm) {
+        throw StateError('La sesión cambió.');
+      }
+      await SparkAddress.prepare(
+        SparkTransactionAdapter(_db, tx),
+        uid: uid,
+        farmId: farm,
+        documentId: id,
+        name: name,
+        address: address,
+        reference: reference,
+      );
+      if (_session.uid != uid || _session.pharmacyId != farm) {
+        throw StateError('La sesión cambió.');
+      }
     });
+    _addressAttempts.remove(attemptKey);
   }
 }

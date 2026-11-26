@@ -1,0 +1,108 @@
+﻿{
+    "Project":  "proyecto-pharmalab",
+    "Ruleset":  "projects/proyecto-pharmalab/rulesets/33f8ba18-0155-4332-bbee-bad53090d818",
+    "Updated":  "2026-11-25T14:43:56.837810Z",
+    "PublishedSha256":  "B8C7697A45DB6C384FAF240BAD15A023CCB073F856F4A0752C54BDB72965E552",
+    "LocalSha256":  "E4527C1B23FF60E31C31F44E4EE2B65B658D708C1DC312F01B61E6DBD7DD3DF0",
+    "ExactMatch":  false,
+    "Data":  {
+                 "Source":  "IAM REST de solo lectura; no equivale a la sesión del teléfono",
+                 "FarmId":  "FARM004",
+                 "UserExists":  true,
+                 "Role":  "cliente",
+                 "UserActive":  true,
+                 "FarmActive":  true,
+                 "Addresses":  [
+                                   {
+                                       "Id":  "KKp8HDRwSfgBBiGAaVpr",
+                                       "OwnerMatches":  true,
+                                       "Active":  true,
+                                       "MatchesReportedAddress":  true
+                                   },
+                                   {
+                                       "Id":  "vBmZeLXojEQTbmzq69F0",
+                                       "OwnerMatches":  true,
+                                       "Active":  true,
+                                       "MatchesReportedAddress":  false
+                                   }
+                               ],
+                 "ProductActive":  true,
+                 "Price":  {
+                               "doubleValue":  150
+                           },
+                 "Lots":  [
+                              {
+                                  "Id":  "LOTE001",
+                                  "Product":  "PROD001",
+                                  "Stock":  {
+                                                "integerValue":  "100"
+                                            },
+                                  "Expiry":  {
+                                                 "timestampValue":  "2027-06-30T04:00:00Z"
+                                             }
+                              }
+                          ]
+             },
+    "Cause":  "Reglas publicadas anteriores: lectura de pedido inexistente rechazada antes de las cinco escrituras; creación y stock también bloqueados",
+    "ReproducedFailureStage":  "order-read",
+    "SecurityTests":  25,
+    "SecurityPassed":  25,
+    "FlutterTests":  138,
+    "RulesChanged":  false,
+    "ProductionWrites":  false,
+    "Deployment":  "Pendiente de autorización",
+    "Cleanup":  [
+                    {
+                        "Path":  ".firebase/diagnostico-confirmacion",
+                        "Files":  3,
+                        "Bytes":  28706
+                    },
+                    {
+                        "Path":  "functions/node_modules",
+                        "Files":  14236,
+                        "Bytes":  188604146
+                    },
+                    {
+                        "Path":  "build",
+                        "Files":  1756,
+                        "Bytes":  1302280408
+                    },
+                    {
+                        "Path":  ".dart_tool/flutter_build",
+                        "Files":  20,
+                        "Bytes":  80240547
+                    },
+                    {
+                        "Path":  ".dart_tool/hooks_runner",
+                        "Files":  19,
+                        "Bytes":  22615664
+                    },
+                    {
+                        "Path":  "spark-diagnostico-npm.log",
+                        "Files":  1,
+                        "Bytes":  3288
+                    },
+                    {
+                        "Path":  "spark-diagnostico-reglas.log",
+                        "Files":  1,
+                        "Bytes":  620246
+                    },
+                    {
+                        "Path":  "spark-diagnostico-flutter.log",
+                        "Files":  1,
+                        "Bytes":  49364
+                    },
+                    {
+                        "Path":  "firebase-debug.log",
+                        "Files":  1,
+                        "Bytes":  291722
+                    },
+                    {
+                        "Path":  "firestore-debug.log",
+                        "Files":  1,
+                        "Bytes":  133751
+                    }
+                ],
+    "RecheckedAtUtc":  "2026-11-25T19:24:13.6146844Z",
+    "PublishedRulesetUnchanged":  true
+}

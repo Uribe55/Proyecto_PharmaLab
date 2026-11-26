@@ -342,7 +342,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         DropdownMenuItem(
                           value: address.id,
                           child: Text(
-                            '${address.name}: ${address.address}',
+                            '${address.label}: ${address.address}',
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
