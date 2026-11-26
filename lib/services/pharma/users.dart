@@ -92,8 +92,15 @@ mixin _PharmaUsers on _PharmaServiceState {
     if (role == UserRole.cliente) {
       return 'Las cuentas de cliente se crean desde el registro de farmacia.';
     }
+    if (role == UserRole.administrador) {
+      return 'Las cuentas administrador no se crean desde este panel.';
+    }
     if (password.length < 6) {
       return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+
+    if (usesFirebase) {
+      return 'Utiliza Gestionar empleados EMP### para registrar personal.';
     }
 
     final baseEmail = AppUser.employeeEmail(name, role);
@@ -115,8 +122,7 @@ mixin _PharmaUsers on _PharmaServiceState {
     );
 
     if (usesFirebase) {
-      final authError = await _createFirebaseUser(user, password);
-      if (authError != null) return authError;
+      return 'Utiliza Gestionar empleados EMP###.';
     } else {
       _accounts[email] = _Account(password: password, user: user);
     }
@@ -133,6 +139,11 @@ mixin _PharmaUsers on _PharmaServiceState {
     required String phone,
     required UserRole role,
   }) async {
+    if (usesFirebase &&
+        user.role != UserRole.cliente &&
+        user.role != UserRole.administrador) {
+      return 'Edita el personal desde Gestionar empleados EMP###.';
+    }
     final normalized = email.trim().toLowerCase();
     final previousEmail = user.email.toLowerCase();
     final account = _accounts[previousEmail];
@@ -152,6 +163,12 @@ mixin _PharmaUsers on _PharmaServiceState {
     if (account.pharmacy == null && role == UserRole.cliente) {
       return 'Un usuario interno no puede convertirse en cliente.';
     }
+    if (role == UserRole.administrador && user.role != UserRole.administrador) {
+      return 'No se puede asignar el rol administrador desde este panel.';
+    }
+    if (user.role == UserRole.administrador && role != UserRole.administrador) {
+      return 'La cuenta administrador no puede cambiar de rol.';
+    }
 
     final updated = user.copyWith(
       name: _titleCase(name),
@@ -159,6 +176,8 @@ mixin _PharmaUsers on _PharmaServiceState {
       phone: phone.trim(),
       role: role,
     );
+    final profileError = await _pushUserProfile(updated);
+    if (profileError != null) return profileError;
     account.user = updated;
 
     final pharmacy = account.pharmacy;
@@ -180,7 +199,6 @@ mixin _PharmaUsers on _PharmaServiceState {
       _currentPharmacy = account.pharmacy;
     }
 
-    _pushUserProfile(updated);
     notifyListeners();
     return null;
   }
@@ -208,8 +226,31 @@ mixin _PharmaUsers on _PharmaServiceState {
       phone: phone.trim(),
       address: address.trim(),
     );
-    account.user = updated;
     final pharmacy = account.pharmacy;
+    if (usesFirebase) {
+      try {
+        final batch = _db.batch();
+        batch.update(_db.collection('usuarios').doc(updated.id), {
+          'nombre': updated.name,
+          'telefono': updated.phone,
+          'direccion': updated.address,
+        });
+        final pharmacyId = _pharmacyId;
+        if (pharmacyId != null) {
+          batch.update(_db.collection('farmacia_cliente').doc(pharmacyId), {
+            'responsable': updated.name,
+            'telefono': updated.phone,
+            'direccion_fiscal': updated.address,
+          });
+        }
+        await batch.commit();
+      } on FirebaseException catch (error) {
+        return 'No se guardó el perfil en Firestore (${error.code}).';
+      } catch (_) {
+        return 'No se pudo guardar el perfil.';
+      }
+    }
+    account.user = updated;
     if (pharmacy != null) {
       account.pharmacy = pharmacy.copyWith(
         responsible: updated.name,
@@ -217,68 +258,44 @@ mixin _PharmaUsers on _PharmaServiceState {
         address: updated.address,
       );
     }
-
     _currentUser = updated;
-    if (account.pharmacy != null) _currentPharmacy = account.pharmacy;
+    _currentPharmacy = account.pharmacy;
     notifyListeners();
-
-    if (!usesFirebase) return null;
-
-    try {
-      await _db.collection('usuarios').doc(updated.id).set({
-        'nombre': updated.name,
-        'telefono': updated.phone,
-        'direccion': updated.address,
-      }, SetOptions(merge: true));
-
-      final pharmacyId = _pharmacyId;
-      if (pharmacyId != null) {
-        await _db.collection('farmacia_cliente').doc(pharmacyId).set({
-          'responsable': updated.name,
-          'telefono': updated.phone,
-          'direccion_fiscal': updated.address,
-        }, SetOptions(merge: true));
-      }
-    } on FirebaseException catch (e) {
-      debugPrint('No se pudo persistir el perfil: ${e.code}');
-      return 'Los datos se actualizaron en esta sesión, pero Firestore '
-          'rechazó la escritura (${e.code}).';
-    } catch (e) {
-      debugPrint('No se pudo persistir el perfil: ${e.runtimeType}');
-      return 'Los datos se actualizaron en esta sesión, pero no se pudieron '
-          'guardar en Firestore.';
-    }
     return null;
   }
 
   /// Actualiza el estado de cuenta simulado del cliente (RF-07).
   ///
-  /// Se usa en la demostración para probar el bloqueo del checkout. En
-  /// Firestore el campo viaja como `tiene_deuda_vencida`.
+  /// En Firebase el campo `tiene_deuda_vencida` es de solo lectura para el
+  /// cliente: las reglas impiden que lo modifique. La simulación se aplica
+  /// únicamente en el modo local de demostración.
   void setDebtStatus({required bool hasDebt}) {
     final user = _currentUser;
     if (user == null) return;
+    if (usesFirebase) return;
     final updated = user.copyWith(tieneDeudaVencida: hasDebt);
     _currentUser = updated;
     final account = _accounts[user.email.toLowerCase()];
     if (account != null) account.user = updated;
 
     if (usesFirebase) {
-      unawaited(
-        _db
-            .collection('usuarios')
-            .doc(user.id)
-            .set({'tiene_deuda_vencida': hasDebt}, SetOptions(merge: true))
-            .catchError((Object error) {
-              debugPrint('No se pudo actualizar la deuda: $error');
-            }),
+      debugPrint(
+        'tiene_deuda_vencida es administrado por el servidor; no se escribe '
+        'desde la sesión del cliente.',
       );
     }
     notifyListeners();
   }
 
   /// Activa o desactiva una cuenta (RF-19).
-  String? setUserActive(AppUser user, bool active) {
+  ///
+  /// Devuelve `null` solo cuando Firestore confirmó la escritura. En Firebase
+  /// el estado local no se modifica si la operación falla.
+  Future<String?> setUserActive(AppUser user, bool active) async {
+    if (usesFirebase &&
+        (user.role == UserRole.vendedor || user.role == UserRole.repartidor)) {
+      return 'Cambia el estado desde Gestionar empleados EMP###.';
+    }
     if (!active && _currentUser?.id == user.id) {
       return 'No puedes desactivar tu propia cuenta.';
     }
@@ -286,23 +303,26 @@ mixin _PharmaUsers on _PharmaServiceState {
     final account = _accounts[user.email.toLowerCase()];
     if (account == null) return 'No encontramos la cuenta del usuario.';
 
+    if (usesFirebase) {
+      try {
+        await _db.collection('usuarios').doc(user.id).update({
+          'estado': active,
+        });
+      } on FirebaseException catch (error) {
+        return error.code == 'permission-denied'
+            ? 'Firestore denegó el cambio de estado. Revisa las reglas y que '
+                  'tu cuenta siga siendo administrador activo.'
+            : 'No se pudo actualizar el estado (${error.code}).';
+      } catch (error) {
+        debugPrint('No se pudo actualizar el estado del usuario: $error');
+        return 'No se pudo actualizar el estado del usuario.';
+      }
+    }
+
     account.user = account.user.copyWith(active: active);
     if (_currentUser?.id == user.id) {
       _currentUser = account.user;
     }
-
-    if (usesFirebase) {
-      unawaited(
-        _db
-            .collection('usuarios')
-            .doc(user.id)
-            .update({'estado': active})
-            .catchError((Object error) {
-              debugPrint('No se pudo actualizar el estado del usuario: $error');
-            }),
-      );
-    }
-
     notifyListeners();
     return null;
   }
@@ -311,10 +331,27 @@ mixin _PharmaUsers on _PharmaServiceState {
 
   /// Crea la cuenta de Firebase Auth sin cerrar la sesión del administrador.
   /// Se usa una instancia secundaria de Firebase que se elimina al terminar.
-  Future<String?> _createFirebaseUser(AppUser user, String password) async {
+  Future<({String? uid, String? error})> createStaffAccess(
+    String email,
+    String password,
+  ) async {
+    if (_currentUser?.role != UserRole.administrador ||
+        _currentUser?.active != true) {
+      return (uid: null, error: 'Se requiere administrador activo.');
+    }
     FirebaseApp? secondary;
-    User? created;
     try {
+      final admin = await _db
+          .collection('usuarios')
+          .doc(_auth.currentUser!.uid)
+          .get(const GetOptions(source: Source.server));
+      if (admin.data()?['rol'] != 'administrador' ||
+          admin.data()?['estado'] != true) {
+        return (
+          uid: null,
+          error: 'Se requiere administrador activo en Firestore.',
+        );
+      }
       secondary = await Firebase.initializeApp(
         name: 'pharmalab-admin-${DateTime.now().microsecondsSinceEpoch}',
         options: _auth.app.options,
@@ -327,77 +364,60 @@ mixin _PharmaUsers on _PharmaServiceState {
           automaticHostMapping: false,
         );
       }
-      final credential = await secondaryAuth.createUserWithEmailAndPassword(
-        email: user.email,
-        password: password,
-      );
-      created = credential.user;
-      if (created == null) return 'No se pudo crear la cuenta de acceso.';
-
-      await _db.collection('usuarios').doc(created.uid).set({
-        'nombre': user.name,
-        'correo': user.email,
-        'telefono': user.phone,
-        'rol': user.role.name,
-        'estado': true,
-        'creado_en': FieldValue.serverTimestamp(),
-      });
-
-      // El identificador local pasa a ser el UID real de Firebase Auth.
-      _accounts[user.email] = _Account(
-        password: password,
-        user: AppUser(
-          id: created.uid,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-        ),
-        remote: true,
-      );
-      return null;
-    } on FirebaseAuthException catch (e) {
-      return _authError(e);
-    } on FirebaseException catch (e) {
+      UserCredential credential;
       try {
-        await created?.delete();
-      } catch (_) {
-        debugPrint('No se pudo revertir la cuenta de Auth.');
+        credential = await secondaryAuth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (error) {
+        if (error.code != 'email-already-in-use') rethrow;
+        // Recovery after restart proves the real UID using existing credentials.
+        credential = await secondaryAuth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
       }
-      if (e.code == 'permission-denied') {
-        return 'Firestore denegó el alta del usuario. Revisa las reglas.';
-      }
-      return 'No se pudo guardar el usuario (${e.code}).';
-    } catch (e) {
-      debugPrint('Error al crear el usuario: ${e.runtimeType}');
-      return 'No se pudo crear el usuario.';
+      return (
+        uid: credential.user?.uid,
+        error: credential.user == null
+            ? 'Authentication no devolvió UID.'
+            : null,
+      );
+    } on FirebaseAuthException catch (error) {
+      return (uid: null, error: _authError(error));
+    } catch (error) {
+      return (uid: null, error: 'No se pudo crear la cuenta de acceso.');
     } finally {
       if (secondary != null) {
         try {
           await secondary.delete();
         } catch (_) {
-          debugPrint('No se pudo liberar la instancia secundaria de Firebase.');
+          debugPrint('No se pudo liberar Firebase secundario.');
         }
       }
     }
   }
 
-  void _pushUserProfile(AppUser user) {
-    if (!usesFirebase) return;
-    unawaited(
-      _db
-          .collection('usuarios')
-          .doc(user.id)
-          .update({
-            'nombre': user.name,
-            'telefono': user.phone,
-            'direccion': user.address,
-            'rol': user.role.name,
-          })
-          .catchError((Object error) {
-            debugPrint('No se pudo actualizar el perfil del usuario: $error');
-          }),
-    );
+  Future<String?> _pushUserProfile(AppUser user) async {
+    if (!usesFirebase) return null;
+    try {
+      await _db.collection('usuarios').doc(user.id).update({
+        'nombre': user.name,
+        'telefono': user.phone,
+        'direccion': user.address,
+        'rol': user.role.name,
+      });
+      return null;
+    } on FirebaseException catch (error) {
+      debugPrint('No se pudo actualizar el perfil del usuario: ${error.code}');
+      return error.code == 'permission-denied'
+          ? 'Firestore denegó la actualización del perfil. Revisa las reglas.'
+          : 'No se pudo guardar el perfil en Firestore (${error.code}).';
+    } catch (error) {
+      debugPrint('No se pudo actualizar el perfil del usuario: $error');
+      return 'No se pudo guardar el perfil en Firestore.';
+    }
   }
 
   /// Nombre legible de una cuenta a partir del correo cuando falta el nombre.

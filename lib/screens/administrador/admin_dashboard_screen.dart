@@ -17,6 +17,7 @@ import '../../widgets/dashboard/dashboard_period_selector.dart';
 import '../../widgets/empty_state.dart';
 import 'admin_inventory_screen.dart';
 import 'admin_orders_screen.dart';
+import 'admin_employees_screen.dart';
 
 /// Pestañas internas del panel administrativo.
 enum AdminDashboardTab {
@@ -31,7 +32,8 @@ enum AdminDashboardTab {
     'Inventario',
     Icons.inventory_2_outlined,
     Icons.inventory_2_rounded,
-  );
+  ),
+  empleados('Empleados', Icons.badge_outlined, Icons.badge_rounded);
 
   const AdminDashboardTab(this.label, this.icon, this.selectedIcon);
 
@@ -265,6 +267,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       inventory: inventory,
                       viewModel: _vm,
                       onOpenInventory: _openInventory,
+                    ),
+                    AdminDashboardTab.empleados => const AdminEmployeesPanel(
+                      embedded: true,
                     ),
                   },
                 ),
@@ -694,6 +699,101 @@ class _VentasTab extends StatelessWidget {
                   : 'Sin período comparable',
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        DashboardSectionTitle(
+          title: 'Indicadores financieros',
+          caption: 'Importes históricos por estado · sin cobros registrados',
+        ),
+        const SizedBox(height: 10),
+        DashboardKpiGrid(
+          columnsBuilder: (width) => width >= 760 ? 4 : 2,
+          children: [
+            DashboardKpiCard(
+              label: 'Pedidos registrados',
+              value: '${metrics.totalInPeriod}',
+              icon: Icons.receipt_long_outlined,
+              caption: formatBs(metrics.registeredValueInPeriod),
+            ),
+            DashboardKpiCard(
+              label: 'Pedidos del mes',
+              value: '${metrics.receivedMonth}',
+              icon: Icons.calendar_month_outlined,
+              caption: 'Por fecha de pedido · Bolivia',
+            ),
+            DashboardKpiCard(
+              label: 'Valor total registrado',
+              value: formatBs(metrics.registeredValueAll),
+              icon: Icons.receipt_long_outlined,
+              caption: 'Historial leído, excluye cancelados',
+            ),
+            DashboardKpiCard(
+              label: 'Importe pendiente',
+              value: formatBs(metrics.pendingValue),
+              icon: Icons.hourglass_empty_rounded,
+              accent: AppColors.pendingText,
+              background: AppColors.pendingBackground,
+              caption: 'Pedidos por aprobar',
+            ),
+            DashboardKpiCard(
+              label: 'Importe aprobado',
+              value: formatBs(metrics.approvedValue),
+              icon: Icons.verified_outlined,
+              accent: AppColors.approvedText,
+              background: AppColors.approvedBackground,
+              caption: 'Listos para asignar',
+            ),
+            DashboardKpiCard(
+              label: 'Importe en ruta',
+              value: formatBs(metrics.inTransitValue),
+              icon: Icons.local_shipping_outlined,
+              caption: 'Pedidos en camino',
+            ),
+            DashboardKpiCard(
+              label: 'Importe con entrega fallida',
+              value: formatBs(metrics.failedValue),
+              icon: Icons.report_gmailerrorred_outlined,
+              accent: AppColors.danger,
+              background: AppColors.dangerBackground,
+              caption: 'No entregados',
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        DashboardKpiGrid(
+          columnsBuilder: (width) => width >= 760 ? 3 : 2,
+          children: [
+            DashboardKpiCard(
+              label: 'Ventas entregadas hoy',
+              value: formatBs(metrics.salesToday),
+              icon: Icons.today_rounded,
+              accent: AppColors.successText,
+              background: AppColors.successBackground,
+              caption: 'Por fecha real de entrega',
+            ),
+            DashboardKpiCard(
+              label: 'Ventas del mes',
+              value: formatBs(metrics.salesMonth),
+              icon: Icons.calendar_month_outlined,
+              accent: AppColors.successText,
+              background: AppColors.successBackground,
+              caption: 'Mes calendario en Bolivia',
+            ),
+            DashboardKpiCard(
+              label: 'Ventas del trimestre',
+              value: formatBs(metrics.salesQuarter),
+              icon: Icons.date_range_outlined,
+              accent: AppColors.successText,
+              background: AppColors.successBackground,
+              caption: 'Trimestre calendario en Bolivia',
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        DashboardChartCard(
+          title: 'Productos por importe',
+          caption: 'Ranking sobre el valor histórico entregado',
+          child: ProductAmountBars(products: metrics.topProductsByAmount),
         ),
         const SizedBox(height: 12),
         DashboardChartCard(

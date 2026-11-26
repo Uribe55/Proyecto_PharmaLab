@@ -83,7 +83,7 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
           orElse: () => original,
         );
         if (updated.active != _active) {
-          error = service.setUserActive(updated, _active);
+          error = await service.setUserActive(updated, _active);
         }
       }
     } else {
@@ -211,18 +211,19 @@ class _AdminUserFormScreenState extends State<AdminUserFormScreen> {
             const SizedBox(height: 9),
             if (_isClient)
               _ClientRoleCard(user: widget.user!)
+            else if (widget.user?.role == UserRole.administrador)
+              _AdminRoleCard(user: widget.user!)
             else
               for (final role in const [
                 UserRole.vendedor,
                 UserRole.repartidor,
-                UserRole.administrador,
               ]) ...[
                 _RoleOption(
                   role: role,
                   selected: _role == role,
                   onTap: () => setState(() => _role = role),
                 ),
-                if (role != UserRole.administrador) const SizedBox(height: 8),
+                if (role != UserRole.repartidor) const SizedBox(height: 8),
               ],
             if (widget.isEditing) ...[
               const SizedBox(height: 20),
@@ -419,6 +420,56 @@ class _ClientRoleCard extends StatelessWidget {
                 Text(
                   'El rol de las cuentas de farmacia no se modifica desde este '
                   'panel. Puedes actualizar sus datos de contacto y su estado.',
+                  style: AppText.meta.copyWith(fontSize: 10.5),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminRoleCard extends StatelessWidget {
+  const _AdminRoleCard({required this.user});
+
+  final AppUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.mint.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.admin_panel_settings_outlined,
+            size: 20,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cuenta administrador',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'El rol administrador no se crea ni se reasigna desde este '
+                  'panel. Puedes actualizar el nombre, teléfono y estado.',
                   style: AppText.meta.copyWith(fontSize: 10.5),
                 ),
               ],

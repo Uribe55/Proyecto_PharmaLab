@@ -6,6 +6,7 @@ import '../models/dashboard_metrics.dart';
 import '../models/dashboard_models.dart';
 import '../services/dashboard_repository.dart';
 import '../services/pharma_service.dart';
+import '../utils/bolivia_time.dart';
 
 /// ViewModel del dashboard administrativo.
 ///
@@ -17,7 +18,7 @@ class AdminDashboardViewModel extends ChangeNotifier {
     DashboardRepository? repository,
     DateTime Function()? clock,
   }) : _repository = repository ?? DashboardRepository(),
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? BoliviaTime.now;
 
   final DashboardRepository _repository;
   final DateTime Function() _clock;
@@ -72,8 +73,7 @@ class AdminDashboardViewModel extends ChangeNotifier {
       _origin == DashboardOrigin.permissionDenied ||
       _inventory.isPermissionDenied;
 
-  bool get hasOrdersError =>
-      _origin == DashboardOrigin.error || _ordersError != null;
+  bool get hasOrdersError => _origin == DashboardOrigin.error;
 
   bool get isLoading => _loadingOrders || _loadingInventory;
 

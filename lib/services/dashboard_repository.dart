@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_environment.dart';
+import '../utils/bolivia_time.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -39,16 +40,39 @@ class DashboardRepository {
   /// Emite pedidos en tiempo real. El consumidor debe cancelar la suscripción.
   Stream<DashboardFeed> watchOrders() {
     final controller = StreamController<DashboardFeed>();
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? ordersSub;
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? deliveriesSub;
+    StreamSubscription<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
+    ordersSub;
+    StreamSubscription<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
+    deliveriesSub;
     VoidCallback? localListener;
+    var rawOrders = <({String id, Map<String, dynamic> data})>[];
     var remoteOrders = <DashboardOrder>[];
     var deliveries = <String, _DeliveryInfo>{};
+    var products = const <String, _ProductInfo>{};
+    var employeeNames = const <String, String>{};
     var ordersLoaded = false;
     String? ordersError;
     var ordersDenied = false;
     String? deliveriesWarning;
+    final detailCache = <String, List<DashboardOrderLine>>{};
+    final detailsRequested = <String>{};
     var closed = false;
+
+    void rebuild() {
+      remoteOrders = [
+        for (final raw in rawOrders)
+          _orderFromFirestore(
+            raw.id,
+            raw.data,
+            products: products,
+            employeeNames: employeeNames,
+          ).copyWith(
+            items: _linesFrom(raw.data, products: products).isNotEmpty
+                ? _linesFrom(raw.data, products: products)
+                : detailCache[raw.id],
+          ),
+      ];
+    }
 
     void emit() {
       if (closed) return;
@@ -83,6 +107,7 @@ class DashboardRepository {
           _mergeDelivery(
             order,
             deliveries[order.id] ?? deliveries[order.number],
+            employeeNames,
           ),
       ];
       controller.add(
@@ -90,9 +115,54 @@ class DashboardRepository {
           orders: merged,
           origin: DashboardOrigin.firestore,
           updatedAt: DateTime.now(),
-          message: _combineMessages(ordersError, deliveriesWarning),
+          message: _combineMessages(
+            'Cobertura: todos los pedidos y entregas leídos por páginas; actualización cada minuto. Las páginas no forman una instantánea atómica.',
+            deliveriesWarning,
+          ),
         ),
       );
+    }
+
+    /// Algunos pedidos históricos no traen `linea` en el documento principal.
+    /// Se completa como máximo una vez desde `detalle_pedido/DET001`.
+    void requestMissingDetails() {
+      if (closed) return;
+      final missing = remoteOrders
+          .where(
+            (order) =>
+                order.items.isEmpty && !detailsRequested.contains(order.id),
+          )
+          .toList();
+      if (missing.isEmpty) return;
+      detailsRequested.addAll(missing.map((order) => order.id));
+      unawaited(() async {
+        var changed = false;
+        for (final order in missing) {
+          try {
+            final snapshot = await _db
+                .collection('pedidos')
+                .doc(order.id)
+                .collection('detalle_pedido')
+                .get(const GetOptions(source: Source.server));
+            final lines = snapshot.docs
+                .map((doc) => _lineFromMap(doc.data(), products: products))
+                .whereType<DashboardOrderLine>()
+                .toList();
+            detailCache[order.id] = lines;
+            final index = remoteOrders.indexWhere(
+              (item) => item.id == order.id,
+            );
+            if (index < 0) continue;
+            remoteOrders[index] = remoteOrders[index].copyWith(items: lines);
+            changed = true;
+          } catch (error) {
+            detailsRequested.remove(order.id);
+            deliveriesWarning = 'Hay detalles de productos que no se pudieron leer; los rankings pueden ser incompletos.';
+            debugPrint('No se pudo leer detalle_pedido de ${order.id}: $error');
+          }
+        }
+        if (changed && !closed) emit();
+      }());
     }
 
     controller.onListen = () {
@@ -103,55 +173,64 @@ class DashboardRepository {
         return;
       }
 
-      ordersSub = _db
-          .collection('pedidos')
-          .limit(maxOrders)
-          .snapshots()
-          .listen(
-            (snapshot) {
-              remoteOrders = [
-                for (final doc in snapshot.docs)
-                  _orderFromFirestore(doc.id, doc.data()),
-              ];
-              ordersLoaded = true;
-              ordersError = null;
-              ordersDenied = false;
-              emit();
-            },
-            onError: (Object error) {
-              ordersError = _friendlyError(error, 'los pedidos');
-              ordersDenied = _isPermissionError(error);
-              ordersLoaded = true;
-              emit();
-            },
-          );
+      unawaited(() async {
+        final catalog = await _loadProductCatalog();
+        if (closed) return;
+        products = catalog;
+        rebuild();
+        emit();
+        requestMissingDetails();
+      }());
+      unawaited(() async {
+        final names = await _loadEmployeeNames();
+        if (closed) return;
+        employeeNames = names;
+        rebuild();
+        emit();
+      }());
 
-      // `entregas` complementa fechas y repartidor cuando el pedido no los
-      // tiene. Si falla, no se bloquea el dashboard de pedidos.
-      deliveriesSub = _db
-          .collection('entregas')
-          .limit(maxOrders)
-          .snapshots()
-          .listen(
-            (snapshot) {
-              final next = <String, _DeliveryInfo>{};
-              for (final doc in snapshot.docs) {
-                final info = _deliveryFromFirestore(doc.id, doc.data());
-                if (info.orderId.isEmpty && info.orderNumber.isEmpty) continue;
-                if (info.orderId.isNotEmpty) next[info.orderId] = info;
-                if (info.orderNumber.isNotEmpty) {
-                  next[info.orderNumber] = info;
-                }
-              }
-              deliveries = next;
-              deliveriesWarning = null;
-              emit();
-            },
-            onError: (Object error) {
-              deliveriesWarning = _friendlyError(error, 'las entregas');
-              emit();
-            },
-          );
+      ordersSub = _watchPaged('pedidos').listen(
+        (snapshot) {
+          rawOrders = [
+            for (final doc in snapshot) (id: doc.id, data: doc.data()),
+          ];
+          rebuild();
+          ordersLoaded = true;
+          ordersError = null;
+          ordersDenied = false;
+          emit();
+          requestMissingDetails();
+        },
+        onError: (Object error) {
+          ordersError = _friendlyError(error, 'los pedidos');
+          ordersDenied = _isPermissionError(error);
+          ordersLoaded = true;
+          emit();
+        },
+      );
+
+      // `entregas` complementa fechas, farmacia y repartidor cuando el pedido
+      // no los tiene. Si falla, no se bloquea el dashboard de pedidos.
+      deliveriesSub = _watchPaged('entregas').listen(
+        (snapshot) {
+          final next = <String, _DeliveryInfo>{};
+          for (final doc in snapshot) {
+            final info = _deliveryFromFirestore(doc.id, doc.data());
+            if (info.orderId.isEmpty && info.orderNumber.isEmpty) continue;
+            if (info.orderId.isNotEmpty) next[info.orderId] = info;
+            if (info.orderNumber.isNotEmpty) {
+              next[info.orderNumber] = info;
+            }
+          }
+          deliveries = next;
+          deliveriesWarning = null;
+          emit();
+        },
+        onError: (Object error) {
+          deliveriesWarning = _friendlyError(error, 'las entregas');
+          emit();
+        },
+      );
     };
 
     controller.onCancel = () async {
@@ -164,6 +243,115 @@ class DashboardRepository {
     };
 
     return controller.stream;
+  }
+
+  /// Full-history pagination retains documents missing legacy date fields.
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _watchPaged(
+    String name,
+  ) {
+    late StreamController<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+    controller;
+    Timer? timer;
+    var busy = false;
+    Future<void> reload() async {
+      if (busy || controller.isClosed) return;
+      busy = true;
+      try {
+        final docs = await _readAll(name, maxOrders);
+        if (!controller.isClosed) controller.add(docs);
+      } catch (error, stack) {
+        if (!controller.isClosed) controller.addError(error, stack);
+      } finally {
+        busy = false;
+      }
+    }
+
+    controller = StreamController(
+      onListen: () {
+        unawaited(reload());
+        timer = Timer.periodic(
+          const Duration(minutes: 1),
+          (_) => unawaited(reload()),
+        );
+      },
+      onCancel: () {
+        timer?.cancel();
+      },
+    );
+    return controller.stream;
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _readAll(
+    String name,
+    int pageSize,
+  ) async {
+    final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final base = _db
+        .collection(name)
+        .orderBy(FieldPath.documentId)
+        .limit(pageSize > 0 ? pageSize : 300);
+    QueryDocumentSnapshot<Map<String, dynamic>>? cursor;
+    while (true) {
+      final page =
+          await (cursor == null ? base : base.startAfterDocument(cursor)).get(
+            const GetOptions(source: Source.server),
+          );
+      docs.addAll(page.docs);
+      if (page.docs.length < (pageSize > 0 ? pageSize : 300)) return docs;
+      cursor = page.docs.last;
+    }
+  }
+
+  Future<Map<String, _ProductInfo>> _loadProductCatalog() async {
+    try {
+      final categoriesRead = await _readCollection('categorias', 200);
+      final categoryNames = <String, String>{};
+      for (final doc in categoriesRead.docs) {
+        final name = _text(doc.data(), const [
+          'nombre',
+          'nombre_categoria',
+          'descripcion',
+          'categoria',
+        ]);
+        if (name.isNotEmpty) categoryNames[doc.id] = name;
+      }
+      final productsRead = await _readCollection('productos', 500);
+      return {
+        for (final doc in productsRead.docs)
+          doc.id: _ProductInfo(
+            name: _text(doc.data(), const [
+              'nombre',
+              'nombre_producto',
+              'descripcion',
+              'producto',
+            ]),
+            category: _categoryName(
+              doc.data()['categoria'] ??
+                  doc.data()['categoria_id'] ??
+                  doc.data()['categoriaId'],
+              categoryNames,
+            ),
+          ),
+      };
+    } catch (error) {
+      debugPrint('No se pudo cargar el catálogo del dashboard: $error');
+      return const {};
+    }
+  }
+
+  Future<Map<String, String>> _loadEmployeeNames() async {
+    final read = await _readCollection('empleado', 500);
+    return {
+      for (final doc in read.docs)
+        if (_employeeName(doc.data()).isNotEmpty)
+          doc.id: _employeeName(doc.data()),
+    };
+  }
+
+  String _employeeName(Map<String, dynamic> data) {
+    final name = _text(data, const ['nombre', 'nombres']);
+    final lastName = _text(data, const ['apellido', 'apellidos']);
+    return [name, lastName].where((part) => part.isNotEmpty).join(' ');
   }
 
   List<DashboardOrder> _localOrders() {
@@ -216,7 +404,16 @@ class DashboardRepository {
     return orders;
   }
 
-  DashboardOrder _orderFromFirestore(String id, Map<String, dynamic> data) {
+  @visibleForTesting
+  DashboardOrder mapOrder(String id, Map<String, dynamic> data) =>
+      _orderFromFirestore(id, data);
+
+  DashboardOrder _orderFromFirestore(
+    String id,
+    Map<String, dynamic> data, {
+    Map<String, _ProductInfo> products = const {},
+    Map<String, String> employeeNames = const {},
+  }) {
     final rawStatus = _text(data, const [
       'estado',
       'status',
@@ -233,22 +430,24 @@ class DashboardRepository {
       'number',
     ]);
     final createdAt = _date(data, const [
-      'creado_en',
       'fecha_pedido',
+      'creado_en',
       'fecha_creacion',
       'created_at',
       'fecha',
       'timestamp',
     ]);
+    // `fecha_logistica` es la fecha real de la transición final en Spark.
+    // `fecha_estado` aparece en entregas; se acepta también en pedidos.
     final deliveredAt = _date(data, const [
       'fecha_entrega',
+      'fecha_logistica',
+      'fecha_estado',
       'entregado_en',
       'delivered_at',
       'fecha_finalizacion',
-      'updated_at',
-      'actualizado_en',
     ]);
-    final items = _linesFrom(data);
+    final items = _linesFrom(data, products: products);
     final declaredTotal = _number(data, const [
       'total',
       'monto_total',
@@ -269,12 +468,18 @@ class DashboardRepository {
       'driver_name',
       'nombre_empleado',
     ]);
+    final employeeName = employeeNames[driverId] ?? '';
     final driverName = driverNameText.isNotEmpty
         ? driverNameText
-        : (driverId.isEmpty && driverRaw is String ? driverRaw.trim() : '');
+        : (employeeName.isNotEmpty
+              ? employeeName
+              : (driverId.isEmpty && driverRaw is String
+                    ? driverRaw.trim()
+                    : ''));
     final pharmacyName = _text(data, const [
       'farmacia_nombre',
       'nombre_farmacia',
+      'farmacia',
       'cliente_nombre',
       'pharmacy_name',
     ]);
@@ -320,92 +525,104 @@ class DashboardRepository {
     );
   }
 
-  List<DashboardOrderLine> _linesFrom(Map<String, dynamic> data) {
-    final raw =
+  List<DashboardOrderLine> _linesFrom(
+    Map<String, dynamic> data, {
+    Map<String, _ProductInfo> products = const {},
+  }) {
+    // Spark guarda una única línea en `linea`. Los pedidos históricos usan
+    // listas en otros nombres. Un mapa suelto se trata como una línea.
+    dynamic raw =
+        data['linea'] ??
         data['items'] ??
         data['detalle'] ??
         data['detalles'] ??
         data['productos'] ??
         data['lineas'] ??
         data['lineas_pedido'];
+    if (raw is Map) raw = [raw];
     if (raw is! List) return const [];
 
     final lines = <DashboardOrderLine>[];
     for (final element in raw) {
       if (element is! Map) continue;
-      final line = Map<String, dynamic>.from(element);
-      final productRaw = line['producto'];
-      final productMap = productRaw is Map
-          ? Map<String, dynamic>.from(productRaw)
-          : null;
-      final productId = _refId(
-        line['producto_id'] ??
-            line['productoId'] ??
-            line['id_producto'] ??
-            productRaw,
+      final line = _lineFromMap(
+        Map<String, dynamic>.from(element),
+        products: products,
       );
-      final name =
-          _text(line, const [
-            'nombre',
-            'producto_nombre',
-            'nombre_producto',
-            'descripcion',
-          ]).isNotEmpty
-          ? _text(line, const [
-              'nombre',
-              'producto_nombre',
-              'nombre_producto',
-              'descripcion',
-            ])
-          : (productMap == null
-                ? 'Producto sin nombre'
-                : _text(productMap, const [
-                    'nombre',
-                    'nombre_producto',
-                    'descripcion',
-                  ]));
-      final quantity =
-          _int(line, const [
-            'cantidad',
-            'unidades',
-            'quantity',
-            'cantidad_pedida',
-          ]) ??
-          0;
-      final price =
-          _number(line, const [
-            'precio_unitario',
-            'precio',
-            'unit_price',
-            'valor_unitario',
-          ]) ??
-          0;
-      if (quantity <= 0) continue;
-
-      final categoryRaw =
-          line['categoria'] ?? line['categoria_id'] ?? productMap?['categoria'];
-      final category = categoryRaw is Map
-          ? _text(Map<String, dynamic>.from(categoryRaw), const [
-              'nombre',
-              'nombre_categoria',
-              'descripcion',
-              'id',
-            ])
-          : (categoryRaw is String ? categoryRaw : 'Sin categoría');
-
-      lines.add(
-        DashboardOrderLine(
-          productId: productId.isEmpty ? name : productId,
-          name: name.isEmpty ? 'Producto sin nombre' : name,
-          quantity: quantity,
-          unitPrice: price,
-          category: category.isEmpty ? 'Sin categoría' : category,
-          brand: _text(line, const ['marca', 'brand']),
-          presentation: _text(line, const ['presentacion', 'presentation']),
-        ),
-      );
+      if (line != null) lines.add(line);
     }
     return lines;
+  }
+
+  DashboardOrderLine? _lineFromMap(
+    Map<String, dynamic> line, {
+    Map<String, _ProductInfo> products = const {},
+  }) {
+    final productRaw = line['producto'];
+    final productMap = productRaw is Map
+        ? Map<String, dynamic>.from(productRaw)
+        : null;
+    final productId = _refId(
+      line['producto_id'] ??
+          line['productoId'] ??
+          line['id_producto'] ??
+          productRaw,
+    );
+    final catalog = products[productId];
+    final nameFromLine = _text(line, const [
+      'nombre',
+      'producto_nombre',
+      'nombre_producto',
+      'descripcion',
+    ]);
+    final nameFromProduct = productMap == null
+        ? ''
+        : _text(productMap, const ['nombre', 'nombre_producto', 'descripcion']);
+    final name = nameFromLine.isNotEmpty
+        ? nameFromLine
+        : (nameFromProduct.isNotEmpty
+              ? nameFromProduct
+              : (catalog?.name ?? ''));
+    final quantity =
+        _int(line, const [
+          'cantidad',
+          'unidades',
+          'quantity',
+          'cantidad_pedida',
+        ]) ??
+        0;
+    final price =
+        _number(line, const [
+          'precio_unitario',
+          'precio',
+          'unit_price',
+          'valor_unitario',
+        ]) ??
+        0;
+    if (quantity <= 0) return null;
+
+    final categoryRaw =
+        line['categoria'] ?? line['categoria_id'] ?? productMap?['categoria'];
+    final category = categoryRaw is Map
+        ? _text(Map<String, dynamic>.from(categoryRaw), const [
+            'nombre',
+            'nombre_categoria',
+            'descripcion',
+            'id',
+          ])
+        : (categoryRaw is String && categoryRaw.trim().isNotEmpty
+              ? categoryRaw
+              : (catalog?.category ?? 'Sin categoría'));
+
+    return DashboardOrderLine(
+      productId: productId.isEmpty ? name : productId,
+      name: name.isEmpty ? 'Producto sin identificar' : name,
+      quantity: quantity,
+      unitPrice: price,
+      category: category.isEmpty ? 'Sin categoría' : category,
+      brand: _text(line, const ['marca', 'brand']),
+      presentation: _text(line, const ['presentacion', 'presentation']),
+    );
   }
 
   _DeliveryInfo _deliveryFromFirestore(String id, Map<String, dynamic> data) {
@@ -441,7 +658,14 @@ class DashboardRepository {
         'driver_name',
         'nombre_empleado',
       ]),
+      pharmacyName: _text(data, const [
+        'farmacia',
+        'farmacia_nombre',
+        'nombre_farmacia',
+      ]),
       deliveredAt: _date(data, const [
+        'fecha_estado',
+        'fecha_logistica',
         'fecha_entrega',
         'entregado_en',
         'delivered_at',
@@ -457,7 +681,11 @@ class DashboardRepository {
     );
   }
 
-  DashboardOrder _mergeDelivery(DashboardOrder order, _DeliveryInfo? delivery) {
+  DashboardOrder _mergeDelivery(
+    DashboardOrder order,
+    _DeliveryInfo? delivery,
+    Map<String, String> employeeNames,
+  ) {
     if (delivery == null) return order;
     var status = order.status;
     var cancelled = order.cancelled;
@@ -472,13 +700,27 @@ class DashboardRepository {
         status = delivery.status!;
       }
     }
+    final driverId = delivery.driverId.isEmpty
+        ? order.driverId
+        : delivery.driverId;
+    final driverName = delivery.driverName.isNotEmpty
+        ? delivery.driverName
+        : (order.driverName?.isNotEmpty == true
+              ? order.driverName
+              : employeeNames[driverId]);
+    final pharmacyName =
+        order.pharmacyName == 'Farmacia sin nombre' &&
+            delivery.pharmacyName.isNotEmpty
+        ? delivery.pharmacyName
+        : order.pharmacyName;
     return order.copyWith(
       status: status,
       cancelled: cancelled,
-      deliveredAt: delivery.deliveredAt,
-      driverId: delivery.driverId,
-      driverName: delivery.driverName,
+      deliveredAt: order.deliveredAt ?? delivery.deliveredAt,
+      driverId: driverId,
+      driverName: driverName,
       failureReason: delivery.failureReason,
+      pharmacyName: pharmacyName,
     );
   }
 
@@ -681,8 +923,8 @@ class DashboardRepository {
   >
   _readCollection(String name, int limit) async {
     try {
-      final snapshot = await _db.collection(name).limit(limit).get();
-      return (docs: snapshot.docs, error: null);
+      final docs = await _readAll(name, limit);
+      return (docs: docs, error: null);
     } catch (error) {
       debugPrint('No se pudo leer $name: ${error.runtimeType}');
       return (
@@ -971,20 +1213,29 @@ class DashboardRepository {
 
   DateTime? _dateValue(dynamic value) {
     if (value == null) return null;
-    if (value is Timestamp) return value.toDate();
-    if (value is DateTime) return value;
+    // Las fechas de Firestore se normalizan a la hora de pared de Bolivia
+    // (UTC-4) para que los períodos día/mes/trimestre coincidan con el negocio.
+    if (value is Timestamp) return BoliviaTime.fromInstant(value.toDate());
+    if (value is DateTime) return BoliviaTime.fromInstant(value);
     if (value is String && value.trim().isNotEmpty) {
-      return DateTime.tryParse(value.trim());
+      final parsed = DateTime.tryParse(value.trim());
+      return parsed == null ? null : BoliviaTime.fromInstant(parsed);
     }
     if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(
-        value < 100000000000 ? value * 1000 : value,
+      return BoliviaTime.fromInstant(
+        DateTime.fromMillisecondsSinceEpoch(
+          value < 100000000000 ? value * 1000 : value,
+          isUtc: true,
+        ),
       );
     }
     if (value is num) {
       final millis = value.toInt();
-      return DateTime.fromMillisecondsSinceEpoch(
-        millis < 100000000000 ? millis * 1000 : millis,
+      return BoliviaTime.fromInstant(
+        DateTime.fromMillisecondsSinceEpoch(
+          millis < 100000000000 ? millis * 1000 : millis,
+          isUtc: true,
+        ),
       );
     }
     return null;
@@ -995,6 +1246,8 @@ class DashboardRepository {
       final value = data[key];
       if (value is num) return value.toDouble();
       if (value is String) {
+        final direct = double.tryParse(value.trim());
+        if (direct != null) return direct;
         final cleaned = value
             .replaceAll(RegExp(r'[^0-9,.\-]'), '')
             .replaceAll('.', '')
@@ -1069,6 +1322,7 @@ class _DeliveryInfo {
     required this.cancelled,
     required this.driverId,
     required this.driverName,
+    required this.pharmacyName,
     required this.deliveredAt,
     required this.failureReason,
   });
@@ -1080,6 +1334,14 @@ class _DeliveryInfo {
   final bool cancelled;
   final String driverId;
   final String driverName;
+  final String pharmacyName;
   final DateTime? deliveredAt;
   final String failureReason;
+}
+
+class _ProductInfo {
+  const _ProductInfo({required this.name, required this.category});
+
+  final String name;
+  final String category;
 }

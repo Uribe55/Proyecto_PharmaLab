@@ -1,0 +1,37 @@
+{
+  "fecha": "2026-11-26",
+  "rama": "main",
+  "pubGet": "Correcto, sin actualización de versiones solicitada",
+  "flutterAnalyze": "No issues found! (verificación final)",
+  "flutterTests": {
+    "aprobadas": 170,
+    "fallos": 0,
+    "ultimaEjecucion": "170 aprobadas, All tests passed, salida 0"
+  },
+  "firestoreRules": {
+    "aprobadas": 95,
+    "fallos": 0,
+    "host": "127.0.0.1:8085",
+    "proyecto": "demo-pharmalab-employees",
+    "suites": [
+      "employees.rules.cjs",
+      "logistics.rules.cjs",
+      "spark_checkout.rules.cjs"
+    ],
+    "concurrencia": "EMP004 y EMP005 asignados con reintento acotado solo si avanzó el contador",
+    "sha256": "d304a3d1778ff31387031f64b9427e8c1ae7727a0075b8e83b258806e5dba63c"
+  },
+  "produccion": {
+    "lecturasVerificadas": false,
+    "escrituras": false,
+    "reglasPublicadas": false,
+    "contadorInicializado": false
+  },
+  "pendienteIntegracion": [
+    "Firebase Auth secundaria en dispositivo Android con sesión administrador",
+    "Errores del plugin Firebase móvil y recuperación tras reinicio",
+    "Comprobar máximo EMP real antes de inicializar contador",
+    "Revisión visual en Android real"
+  ],
+  "diffCheck": "Correcto"
+}

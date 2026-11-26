@@ -68,6 +68,19 @@ service cloud.firestore {
         : 'FARM' + string(n);
     }
 
+    // Identificador de empleado EMP### con el mismo relleno que farmCode.
+    function employeeCode(n) {
+      return n < 10 ? 'EMP00' + string(n)
+        : n < 100 ? 'EMP0' + string(n)
+        : 'EMP' + string(n);
+    }
+
+    function nextEmployeeCounter() {
+      return getAfter(
+        /databases/$(database)/documents/configuracion/contadores_empleados
+      ).data;
+    }
+
     function nextFarmCounter() {
       return getAfter(
         /databases/$(database)/documents/configuracion/contadores_farmacia
@@ -105,13 +118,58 @@ service cloud.firestore {
       allow list: if activeRole('administrador');
 
       // RF-01: cada usuario actualiza únicamente sus datos de contacto.
+      // `tiene_deuda_vencida` es de solo lectura: lo administra el servidor y
+      // el cliente no puede modificarlo.
       allow update: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['nombre', 'telefono', 'direccion', 'tiene_deuda_vencida'])
+          .hasOnly(['nombre', 'telefono', 'direccion'])
         && request.resource.data.nombre is string
         && request.resource.data.telefono is string
         && request.resource.data.direccion is string;
+
+      // El administrador activo gestiona perfiles de empleados: estado,
+      // rol vendedor/repartidor y el vínculo empleado_id. No puede crear ni
+      // reasignar administradores, ni convertir clientes en personal.
+      allow update: if activeAdmin()
+        && employeeProfileConsistent(uid)
+        && request.auth.uid != uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly([
+            'nombre', 'telefono', 'direccion', 'correo',
+            'rol', 'estado', 'empleado_id'
+          ])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.get('telefono', '') is string
+        && request.resource.data.get('direccion', '') is string
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['correo'])
+          || request.resource.data.correo is string
+        )
+        && request.resource.data.estado is bool
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['rol'])
+          || (
+            resource.data.get('rol', '') == 'cliente'
+              ? request.resource.data.rol == 'cliente'
+              : (
+                resource.data.get('rol', '') == 'administrador'
+                  ? request.resource.data.rol == 'administrador'
+                  : request.resource.data.rol in ['vendedor', 'repartidor']
+              )
+          )
+        )
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['empleado_id'])
+          || (
+            request.resource.data.empleado_id is string
+            && request.resource.data.empleado_id.matches('^EMP[0-9]{3,}$')
+          )
+        );
 
       // Un cliente nuevo solo puede crear su propio perfil mínimo.
       allow create: if signedIn()
@@ -139,6 +197,34 @@ service cloud.firestore {
           /databases/$(database)/documents/nits_farmacia/$(getAfter(
             /databases/$(database)/documents/farmacia_cliente/$(nextFarmCounter().ultimo_id)
           ).data.nit)
+        ).data.usuario_id == uid;
+
+      // Alta de empleado: el administrador crea el perfil del UID recién
+      // creado en Authentication, en la misma transacción que empleado/EMP###
+      // y el incremento de configuracion/contadores_empleados.
+      allow create: if activeAdmin()
+        && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly([
+          'nombre', 'correo', 'telefono', 'rol', 'estado',
+          'fecha_registro', 'empleado_id'
+        ])
+        && request.resource.data.keys().hasAll([
+          'nombre', 'correo', 'telefono', 'rol', 'estado',
+          'fecha_registro', 'empleado_id'
+        ])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.correo is string
+        && request.resource.data.correo.size() > 0
+        && request.resource.data.telefono is string
+        && request.resource.data.rol in ['vendedor', 'repartidor']
+        && request.resource.data.estado is bool
+        && request.resource.data.fecha_registro == request.time
+        && request.resource.data.empleado_id is string
+        && request.resource.data.empleado_id.matches('^EMP[0-9]{3,}$')
+        && nextEmployeeCounter().ultimo_id == request.resource.data.empleado_id
+        && getAfter(
+          /databases/$(database)/documents/empleado/$(request.resource.data.empleado_id)
         ).data.usuario_id == uid;
 
       allow update, delete: if false;
@@ -318,9 +404,97 @@ service cloud.firestore {
         );
     }
 
+    function employeeProfileConsistent(uid) {
+      let data = request.resource.data;
+      let id = data.get('empleado_id', '');
+      return id == '' ? (!resource.data.keys().hasAny(['empleado_id'])
+          && (!(resource.data.get('rol', '') in ['vendedor', 'repartidor'])
+            || !data.diff(resource.data).affectedKeys().hasAny(['rol', 'estado'])))
+        : (id == resource.data.get('empleado_id', id)
+          && getAfter(/databases/$(database)/documents/empleado/$(id)).data.usuario_id == uid
+          && getAfter(/databases/$(database)/documents/empleado/$(id)).data.estado == data.estado
+          && data.rol == (getAfter(/databases/$(database)/documents/empleado/$(id)).data.cargo == 'Vendedor' ? 'vendedor' : 'repartidor'));
+    }
+
     match /empleado/{empleadoId} {
-      allow get, list: if canReadEmployee(resource.data);
-      allow create, update, delete: if false;
+      allow get: if activeAdmin() || canReadEmployee(resource.data);
+      allow list: if canReadEmployee(resource.data);
+
+      // El alta exige el contador actualizado, el ID consecutivo y el perfil
+      // usuarios/{uid} creado en la misma transacción.
+      allow create: if validEmployeeCreate(empleadoId);
+
+      // Edición: solo datos descriptivos y estado. El ID EMP###, el usuario_id
+      // y la fecha de ingreso son inmutables.
+      allow update: if validEmployeeUpdate(empleadoId);
+
+      allow delete: if false;
+    }
+
+    function validEmployeeCreate(empleadoId) {
+      let before = get(
+        /databases/$(database)/documents/configuracion/contadores_empleados
+      ).data;
+      let counter = nextEmployeeCounter();
+      let data = request.resource.data;
+      return activeAdmin()
+        && empleadoId.matches('^EMP[0-9]{3,}$')
+        && before.ultimo_numero is int
+        && before.ultimo_numero >= 3
+        && before.ultimo_id == employeeCode(before.ultimo_numero)
+        && counter.ultimo_numero is int
+        && counter.ultimo_numero == before.ultimo_numero + 1
+        && counter.ultimo_id == empleadoId
+        && counter.ultimo_id == employeeCode(counter.ultimo_numero)
+        && data.keys().hasOnly([
+          'nombre', 'apellido', 'cargo', 'telefono', 'estado',
+          'fecha_ingreso', 'usuario_id'
+        ])
+        && data.keys().hasAll([
+          'nombre', 'apellido', 'cargo', 'telefono', 'estado',
+          'fecha_ingreso', 'usuario_id'
+        ])
+        && data.nombre is string && data.nombre.size() > 0
+        && data.apellido is string && data.apellido.size() > 0
+        && data.cargo in ['Vendedor', 'Repartidor']
+        && data.telefono is string
+        && data.estado is bool
+        && data.fecha_ingreso == request.time
+        && data.usuario_id is string
+        && data.usuario_id.size() > 0
+        && !exists(/databases/$(database)/documents/usuarios/$(data.usuario_id))
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.empleado_id == empleadoId
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.rol == (data.cargo == 'Vendedor' ? 'vendedor' : 'repartidor')
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.estado == data.estado;
+    }
+
+    function validEmployeeUpdate(empleadoId) {
+      let data = request.resource.data;
+      return activeAdmin()
+        && data.diff(resource.data).affectedKeys()
+          .hasOnly(['nombre', 'apellido', 'cargo', 'telefono', 'estado'])
+        && data.nombre is string && data.nombre.size() > 0
+        && data.apellido is string && data.apellido.size() > 0
+        && data.cargo in ['Vendedor', 'Repartidor']
+        && data.telefono is string
+        && data.estado is bool
+        && data.usuario_id == resource.data.usuario_id
+        && data.fecha_ingreso == resource.data.fecha_ingreso
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.empleado_id == empleadoId
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.rol == (data.cargo == 'Vendedor' ? 'vendedor' : 'repartidor')
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.estado == data.estado;
     }
 
     // ============================================
@@ -649,6 +823,39 @@ service cloud.firestore {
           getAfter(/databases/$(database)/documents/direcciones/$(request.resource.data.ultimo_documento_id)).data,
           request.resource.data.ultimo_documento_id);
       allow create, list, delete: if false;
+    }
+
+    // El documento configuracion/contadores_empleados se crea manualmente en
+    // la consola con { ultimo_numero: 3, ultimo_id: "EMP003" }. La app solo
+    // puede incrementarlo dentro de la transacción de alta de un empleado.
+    match /configuracion/contadores_empleados {
+      allow get: if activeAdmin();
+      allow update: if validEmployeeCounter();
+      allow create, list, delete: if false;
+    }
+
+    function validEmployeeCounter() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return activeAdmin()
+        && before.keys().hasAll(['ultimo_numero', 'ultimo_id'])
+        && before.ultimo_numero is int
+        && before.ultimo_numero >= 3
+        && before.ultimo_id == employeeCode(before.ultimo_numero)
+        && after.keys().hasOnly(['ultimo_numero', 'ultimo_id'])
+        && after.keys().hasAll(['ultimo_numero', 'ultimo_id'])
+        && after.ultimo_numero is int
+        && after.ultimo_numero == before.ultimo_numero + 1
+        && after.ultimo_id == employeeCode(after.ultimo_numero)
+        && !exists(/databases/$(database)/documents/empleado/$(after.ultimo_id))
+        && getAfter(
+          /databases/$(database)/documents/empleado/$(after.ultimo_id)
+        ).data.usuario_id is string
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(getAfter(
+            /databases/$(database)/documents/empleado/$(after.ultimo_id)
+          ).data.usuario_id)
+        ).data.empleado_id == after.ultimo_id;
     }
 
     // ============================================

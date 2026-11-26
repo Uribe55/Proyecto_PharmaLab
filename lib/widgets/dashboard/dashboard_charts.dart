@@ -613,6 +613,47 @@ class ProductUnitsBars extends StatelessWidget {
   }
 }
 
+/// Productos entregados ordenados por importe histórico.
+class ProductAmountBars extends StatelessWidget {
+  const ProductAmountBars({super.key, required this.products});
+
+  final List<ProductSales> products;
+
+  @override
+  Widget build(BuildContext context) {
+    if (products.isEmpty) {
+      return const DashboardEmptyText(
+        icon: Icons.payments_outlined,
+        text: 'Aún no hay importes de productos entregados en el período.',
+      );
+    }
+    final maxAmount = products.fold(
+      0.0,
+      (max, item) => math.max(max, item.amount),
+    );
+    if (maxAmount <= 0) {
+      return const DashboardEmptyText(
+        icon: Icons.payments_outlined,
+        text: 'Los pedidos entregados no registran importes por producto.',
+      );
+    }
+    return Column(
+      children: [
+        for (var i = 0; i < products.length; i++) ...[
+          _HorizontalBarRow(
+            label: products[i].name,
+            detail: '${formatBs(products[i].amount)} · ${products[i].units} u.',
+            ratio: products[i].amount / maxAmount,
+            color: i == 0 ? AppColors.primary : AppColors.successText,
+            caption: products[i].category,
+          ),
+          if (i < products.length - 1) const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+}
+
 /// Productos con menor disponibilidad respecto a su umbral.
 class CriticalStockBars extends StatelessWidget {
   const CriticalStockBars({super.key, required this.products});

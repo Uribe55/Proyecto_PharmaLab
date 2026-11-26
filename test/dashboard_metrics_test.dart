@@ -231,6 +231,33 @@ void main() {
       );
       expect(sinPrecio.total, 25);
     });
+
+    test('calcula ventas entregadas de hoy, mes y trimestre', () {
+      // El trimestre (abril–junio) incluye la entrega de mayo de Bs 5.
+      expect(metrics.salesToday, 10);
+      expect(metrics.salesMonth, 130);
+      expect(metrics.salesQuarter, 135);
+    });
+
+    test('suma el valor registrado del período sin anuladas', () {
+      // a=20, b=30, hoy=10, sin-detalle=70, pendiente=50, fallida=40.
+      // La anulada no se cuenta; la de mayo queda fuera del período.
+      expect(metrics.registeredValueInPeriod, 220);
+    });
+
+    test('separa importes históricos por estado sin inventar cobros', () {
+      expect(metrics.pendingValue, 50);
+      expect(metrics.approvedValue, 0);
+      expect(metrics.inTransitValue, 0);
+      expect(metrics.failedValue, 40);
+    });
+
+    test('ordena productos por unidades y por importe', () {
+      expect(metrics.topProducts.first.name, 'Paracetamol');
+      expect(metrics.topProducts.first.units, 2);
+      expect(metrics.topProductsByAmount.first.name, 'Vitamina C');
+      expect(metrics.topProductsByAmount.first.amount, 30);
+    });
   });
 
   group('DashboardMetrics logísticas', () {

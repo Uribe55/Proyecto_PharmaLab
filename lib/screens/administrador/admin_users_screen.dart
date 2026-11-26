@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/user_avatar.dart';
+import 'admin_employees_screen.dart';
 import 'admin_user_form_screen.dart';
 
 /// Gestión de usuarios y roles (RF-19).
@@ -36,6 +37,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   void _openForm([AppUser? user]) {
+    if (PharmaService.instance.usesFirebase &&
+        (user == null ||
+            user.role == UserRole.vendedor ||
+            user.role == UserRole.repartidor)) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const AdminEmployeesScreen()));
+      return;
+    }
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => AdminUserFormScreen(user: user)));
@@ -87,6 +97,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         style: AppText.muted,
                       ),
                       const SizedBox(height: 18),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AdminEmployeesScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.badge_outlined, size: 18),
+                        label: const Text('Gestionar empleados EMP###'),
+                      ),
+                      const SizedBox(height: 12),
                       if (PharmaService.instance.loadingUsers)
                         const LinearProgressIndicator(),
                       if (PharmaService.instance.usersError != null)

@@ -204,13 +204,15 @@ class DashboardOrder {
     String? driverName,
     String? failureReason,
     bool? cancelled,
+    String? pharmacyName,
+    List<DashboardOrderLine>? items,
   }) {
     return DashboardOrder(
       id: id,
       number: number,
       status: status ?? this.status,
-      items: items,
-      pharmacyName: pharmacyName,
+      items: items ?? this.items,
+      pharmacyName: pharmacyName ?? this.pharmacyName,
       createdAt: createdAt,
       deliveredAt: deliveredAt ?? this.deliveredAt,
       driverId: driverId ?? this.driverId,

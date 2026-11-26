@@ -153,6 +153,8 @@ class DashboardMetrics {
     required this.period,
     required this.previousPeriod,
     required this.receivedToday,
+    required this.receivedMonth,
+    required this.registeredValueAll,
     required this.pending,
     required this.approved,
     required this.inTransit,
@@ -164,11 +166,20 @@ class DashboardMetrics {
     required this.previousDeliveredValue,
     required this.variationPercent,
     required this.averageTicket,
+    required this.registeredValueInPeriod,
+    required this.pendingValue,
+    required this.approvedValue,
+    required this.inTransitValue,
+    required this.failedValue,
+    required this.salesToday,
+    required this.salesMonth,
+    required this.salesQuarter,
     required this.statusCounts,
     required this.evolution,
     required this.comparison,
     required this.deliveryTimeEvolution,
     required this.topProducts,
+    required this.topProductsByAmount,
     required this.categories,
     required this.delivery,
     required this.drivers,
@@ -182,6 +193,8 @@ class DashboardMetrics {
   final DateRange period;
   final DateRange previousPeriod;
   final int receivedToday;
+  final int receivedMonth;
+  final double registeredValueAll;
   final int pending;
   final int approved;
   final int inTransit;
@@ -197,6 +210,20 @@ class DashboardMetrics {
   final double? variationPercent;
   final double averageTicket;
 
+  /// Valor de los pedidos registrados (por `fecha_pedido`) en el período.
+  final double registeredValueInPeriod;
+
+  /// Importes históricos por estado. No son cobros ni utilidades.
+  final double pendingValue;
+  final double approvedValue;
+  final double inTransitValue;
+  final double failedValue;
+
+  /// Ventas entregadas por fecha real de entrega, en hora de Bolivia.
+  final double salesToday;
+  final double salesMonth;
+  final double salesQuarter;
+
   final Map<OrderStatus, int> statusCounts;
   final List<EvolutionPoint> evolution;
 
@@ -204,6 +231,9 @@ class DashboardMetrics {
   final List<EvolutionPoint> comparison;
   final List<DeliveryTimePoint> deliveryTimeEvolution;
   final List<ProductSales> topProducts;
+
+  /// Productos entregados ordenados por importe histórico.
+  final List<ProductSales> topProductsByAmount;
   final List<CategorySales> categories;
   final DeliveryMetrics delivery;
   final List<DriverActivity> drivers;
@@ -280,6 +310,26 @@ class DashboardMetrics {
         ? 0.0
         : deliveredValue / deliveredOrders.length;
 
+    final registeredValueInPeriod = periodOrders.fold(
+      0.0,
+      (sum, order) => sum + order.total,
+    );
+    double totalFor(bool Function(DashboardOrder) test) =>
+        valid.where(test).fold(0.0, (sum, order) => sum + order.total);
+    final pendingValue = totalFor((order) => order.isPending);
+    final approvedValue = totalFor((order) => order.isApproved);
+    final inTransitValue = totalFor((order) => order.isInTransit);
+    final failedValue = totalFor((order) => order.isFailure);
+
+    final monthRange = DateRange.ofMonth(now);
+    final quarterRange = DateRange.ofQuarter(now);
+    double deliveredIn(DateRange range) => allDelivered
+        .where((order) => _inRange(order.deliveredAt, range))
+        .fold(0.0, (sum, order) => sum + order.total);
+    final salesToday = deliveredIn(today);
+    final salesMonth = deliveredIn(monthRange);
+    final salesQuarter = deliveredIn(quarterRange);
+
     final statusCounts = <OrderStatus, int>{
       for (final status in OrderStatus.values) status: 0,
     };
@@ -294,6 +344,10 @@ class DashboardMetrics {
       period,
     );
     final topProducts = _buildTopProducts(deliveredOrders);
+    final topProductsByAmount = _buildTopProducts(
+      deliveredOrders,
+      sortByAmount: true,
+    );
     final categories = _buildCategories(deliveredOrders);
     final delivery = _buildDelivery(deliveredOrders, failedOrders);
     final driverActivity = _buildDrivers(valid, period, driverNames);
@@ -334,6 +388,10 @@ class DashboardMetrics {
       period: period,
       previousPeriod: previous,
       receivedToday: receivedToday,
+      receivedMonth: valid
+          .where((order) => _inRange(order.createdAt, DateRange.ofMonth(now)))
+          .length,
+      registeredValueAll: valid.fold(0.0, (sum, order) => sum + order.total),
       pending: pending,
       approved: approved,
       inTransit: inTransit,
@@ -345,11 +403,20 @@ class DashboardMetrics {
       previousDeliveredValue: previousValue,
       variationPercent: variation,
       averageTicket: averageTicket,
+      registeredValueInPeriod: registeredValueInPeriod,
+      pendingValue: pendingValue,
+      approvedValue: approvedValue,
+      inTransitValue: inTransitValue,
+      failedValue: failedValue,
+      salesToday: salesToday,
+      salesMonth: salesMonth,
+      salesQuarter: salesQuarter,
       statusCounts: statusCounts,
       evolution: evolution,
       comparison: comparison,
       deliveryTimeEvolution: deliveryTimeEvolution,
       topProducts: topProducts,
+      topProductsByAmount: topProductsByAmount,
       categories: categories,
       delivery: delivery,
       drivers: driverActivity,
@@ -517,8 +584,9 @@ class DashboardMetrics {
   }
 
   static List<ProductSales> _buildTopProducts(
-    List<DashboardOrder> deliveredOrders,
-  ) {
+    List<DashboardOrder> deliveredOrders, {
+    bool sortByAmount = false,
+  }) {
     final byProduct = <String, ProductSales>{};
     final units = <String, int>{};
     final amount = <String, double>{};
@@ -538,6 +606,11 @@ class DashboardMetrics {
     }
     final result = byProduct.values.toList()
       ..sort((a, b) {
+        if (sortByAmount) {
+          final byAmount = b.amount.compareTo(a.amount);
+          if (byAmount != 0) return byAmount;
+          return b.units.compareTo(a.units);
+        }
         final byUnits = b.units.compareTo(a.units);
         if (byUnits != 0) return byUnits;
         return b.amount.compareTo(a.amount);
