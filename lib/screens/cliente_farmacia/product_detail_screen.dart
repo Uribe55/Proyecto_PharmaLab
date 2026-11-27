@@ -80,7 +80,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 120),
         children: [
-          ProductImage(product: _product, height: 220, iconSize: 62),
+          ProductImage(product: _product, height: 220),
           const SizedBox(height: 18),
           Row(
             children: [

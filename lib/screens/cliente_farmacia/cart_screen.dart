@@ -176,12 +176,7 @@ class _CartItemCard extends StatelessWidget {
         children: [
           SizedBox(
             width: 82,
-            child: ProductImage(
-              product: product,
-              height: 84,
-              iconSize: 23,
-              showBrand: false,
-            ),
+            child: ProductImage(product: product, height: 84),
           ),
           const SizedBox(width: 12),
           Expanded(
