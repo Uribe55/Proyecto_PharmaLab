@@ -18,14 +18,14 @@ async function call(path, role = "cliente", body, extra = {}) {
   const response = await fetch(base + path, {method: body === undefined ? "GET" : "POST",
     headers: {Authorization: `Bearer ${identities[role]?.token || role}`, "Content-Type": "application/json", ...extra},
     ...(body === undefined ? {} : {body: JSON.stringify(body)})});
-  return {status: response.status, body: await response.json()};
+  return {status: response.status, timing: response.headers.get('server-timing'), body: await response.json()};
 }
 const order = (operationId = "operation-http", quantity = 7) => ({operationId, addressId: "DIR001", notes: "",
   items: [{productId: "P1", quantity, expectedPriceCents: 1000}, {productId: "P2", quantity: 1, expectedPriceCents: 2000}]});
 before(async () => {
   env = await initializeTestEnvironment({projectId, firestore: {host: "127.0.0.1", port: 8080,
     rules: fs.readFileSync("../firestore.render.rules", "utf8")}});
-  for (const role of ["cliente", "vendedor", "repartidor", "administrador", "otro"]) {
+  for (const role of ["cliente", "vendedor", "repartidor", "administrador", "otro", "otro_repartidor"]) {
     const response = await fetch("http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-key", {
       method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({returnSecureToken: true})});
     const data = await response.json();
@@ -39,8 +39,8 @@ before(async () => {
 beforeEach(async () => {
   await env.clearFirestore();
   const batch = db.batch();
-  for (const [role, identity] of Object.entries(identities)) batch.set(db.doc(`usuarios/${identity.uid}`), {rol: role === "otro" ? "cliente" : role, estado: true});
-  for (const role of ["vendedor", "repartidor"]) batch.set(db.doc(`empleado/${role}`), {usuario_id: identities[role].uid, cargo: role === "vendedor" ? "Vendedor" : "Repartidor", estado: true});
+  for (const [role, identity] of Object.entries(identities)) batch.set(db.doc(`usuarios/${identity.uid}`), {rol: role === "otro" ? "cliente" : role === "otro_repartidor" ? "repartidor" : role, estado: true});
+  for (const role of ["vendedor", "repartidor", "otro_repartidor"]) batch.set(db.doc(`empleado/${role}`), {usuario_id: identities[role].uid, cargo: role === "vendedor" ? "Vendedor" : "Repartidor", estado: true});
   for (const [path, data] of Object.entries({
     "farmacia_cliente/FARM001": {usuario_id: identities.cliente.uid, estado: true, nombre_farmacia: "Prueba", responsable: "Cliente", telefono: "123"},
     "direcciones/DIR001": {id_cliente: "FARM001", direccion: "Calle", referencia: "", estado: true},
@@ -74,6 +74,10 @@ test("health no consulta Firebase; errores no exponen detalles internos", async 
 });
 test("HTTP real: dos productos, FEFO, lotes múltiples, idempotencia y recuperación", async () => {
   const response = await call("/api/orders", "cliente", order()); assert.equal(response.status, 200);
+  assert.equal(response.body.order.lineas.length, 2);
+  assert.equal(response.body.order.estado, 'pendiente');
+  assert.ok(typeof response.body.order.fecha_pedido === 'string');
+  assert.match(response.timing, /processing;dur=[0-9.]+/);
   const result = response.body.data;
   assert.equal((await db.doc("lotes_productos/L1").get()).get("cantidad_disponible"), 0);
   assert.equal((await db.doc("lotes_productos/L2").get()).get("cantidad_disponible"), 3);
@@ -110,7 +114,14 @@ test("cuatro roles: aprobación, asignación y entrega; empleado bloqueado recha
   await assertFails(getDoc(doc(driverDb, `pedidos/${id}`))); // El repartidor no recibe precios.
   const path = `/api/deliveries/${assigned.body.data.deliveryId}/transition`;
   assert.equal((await call(path, "cliente", {state: "en_ruta"})).status, 403);
+  assert.equal((await call(path, "otro_repartidor", {state: "en_ruta"})).status, 403);
+  assert.equal((await call(path, "repartidor", {state: "entregado"})).status, 412);
   assert.equal((await call(path, "repartidor", {state: "en_ruta"})).status, 200);
+  assert.equal((await call(path, "repartidor", {state: "en_ruta"})).status, 200);
+  const enRoute = await db.doc(`pedidos/${id}`).get();
+  assert.equal(enRoute.get('estado'), 'en_ruta');
+  assert.ok(enRoute.get('fecha_despacho'));
+  assert.equal((await db.doc('lotes_productos/L2').get()).get('cantidad_disponible'), 3);
   assert.equal((await call(path, "repartidor", {state: "entregado"})).status, 200);
 });
 test("reglas Render bloquean bypass de clientes y conservan lectura de roles", async () => {

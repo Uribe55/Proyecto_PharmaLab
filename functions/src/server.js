@@ -35,7 +35,7 @@ function start(env = process.env) {
   }
   const app = initializeApp({projectId: config.projectId, ...(config.production ? {credential: applicationDefault()} : {})});
   const server = createServer({...config, db: getFirestore(app), auth: getAuth(app)});
-  server.listen(config.port, "0.0.0.0", () => console.log("PharmaLab API listening", {port: config.port, mode: env.PHARMALAB_ENV}));
+  server.listen(config.port, "0.0.0.0", () => console.log(JSON.stringify({event: "server_started", port: config.port, mode: env.PHARMALAB_ENV, node: process.version})));
   if (smoke) server.once("listening", async () => {
     try {
       const response = await fetch(`http://127.0.0.1:${config.port}/health`);

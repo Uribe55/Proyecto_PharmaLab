@@ -211,6 +211,7 @@ class CheckoutViewModel extends ChangeNotifier {
       }
       // Conserva el mismo payload ante reapertura, cambios de carrito y reintentos.
       order ??= await repository.confirm(_pending!);
+      final localProcessing = Stopwatch()..start();
       if (sessionUid() != uid) return null;
       if (order.fromCache || order.operationId != operationId) {
         throw StateError('Se requiere confirmación efectiva del servidor.');
@@ -220,6 +221,12 @@ class CheckoutViewModel extends ChangeNotifier {
       if (jsonEncode(_pending!['items']) == jsonEncode(_items())) cart.clear();
       _pending = null;
       uncertain = false;
+      debugPrint(
+        jsonEncode({
+          'event': 'order_confirmation_local_metrics',
+          'postRepositoryMs': localProcessing.elapsedMilliseconds,
+        }),
+      );
       return order;
     } on RemoteOrderException catch (e) {
       error = e.message;

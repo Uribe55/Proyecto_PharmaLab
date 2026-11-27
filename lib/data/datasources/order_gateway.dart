@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:http/http.dart' as http;
 
 import '../../services/firebase_environment.dart';
@@ -50,17 +52,43 @@ class OrderGateway {
     };
     final client = http.Client();
     try {
+      final tokenClock = Stopwatch()..start();
       final token = await user.getIdToken();
+      tokenClock.stop();
       final headers = {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       };
       final uri = base.replace(path: path);
+      final httpClock = Stopwatch()..start();
       final response =
           await (name == 'orderOperationResult'
                   ? client.get(uri, headers: headers)
                   : client.post(uri, headers: headers, body: jsonEncode(data)))
               .timeout(const Duration(seconds: 120));
+      httpClock.stop();
+      final serverTiming = response.headers['server-timing'];
+      final processing = double.tryParse(
+        RegExp(r'processing;dur=([0-9.]+)')
+                .firstMatch(serverTiming ?? '')
+                ?.group(1) ??
+            '',
+      );
+      debugPrint(
+        jsonEncode({
+          'event': 'order_http_metrics',
+          'operation': name,
+          'tokenMs': tokenClock.elapsedMilliseconds,
+          'httpMs': httpClock.elapsedMilliseconds,
+          'serverProcessingMs': ?processing,
+          if (processing != null)
+            'networkQueueAndWakeEstimateMs':
+                (httpClock.elapsedMilliseconds - processing).clamp(
+                  0,
+                  double.infinity,
+                ),
+        }),
+      );
       final payload = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode != 200) {
         final error = payload['error'] as Map?;
@@ -81,7 +109,10 @@ class OrderGateway {
       }
       return payload['data'] == null
           ? null
-          : Map<String, dynamic>.from(payload['data'] as Map);
+          : {
+              ...Map<String, dynamic>.from(payload['data'] as Map),
+              if (payload['order'] is Map) '_confirmedOrder': payload['order'],
+            };
     } on RemoteOrderException {
       rethrow;
     } catch (_) {

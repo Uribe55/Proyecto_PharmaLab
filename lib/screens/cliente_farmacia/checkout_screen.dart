@@ -227,12 +227,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       consultOnly: consultOnly,
     );
     if (order == null || !mounted) return;
+    final uiClock = Stopwatch()..start();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) =>
             OrderTrackingScreen(order: order, showConfirmation: true),
       ),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint(
+        'order_confirmation_ui_metrics: firstFrameAfterConfirmationMs=${uiClock.elapsedMilliseconds}',
+      );
+    });
   }
 
   @override

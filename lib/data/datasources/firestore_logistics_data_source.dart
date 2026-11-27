@@ -58,13 +58,17 @@ class FirestoreLogisticsDataSource implements LogisticsRepository {
       employeeId = active.single.id;
       query = query.where('id_repartidor', isEqualTo: employeeId);
     }
-    await for (final snapshot in query.snapshots()) {
+    await for (final snapshot in query.snapshots(
+      includeMetadataChanges: true,
+    )) {
       if (uid != actor) throw StateError('La sesión cambió.');
       final names = <String, Future<String>>{};
       final records = await Future.wait(
         snapshot.docs.map((d) async {
           final data = d.data();
-          data['from_cache'] = snapshot.metadata.isFromCache;
+          data['from_cache'] =
+              snapshot.metadata.isFromCache ||
+              snapshot.metadata.hasPendingWrites;
           if (employeeId == null && data['id_repartidor'] is String) {
             final id = data['id_repartidor'] as String;
             data['repartidor_nombre'] = await names.putIfAbsent(id, () async {

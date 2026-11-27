@@ -10,7 +10,8 @@
     "test:spark-rules": "node --test --test-concurrency=1 test/spark_checkout.rules.cjs",
     "test:employees-rules": "node --test --test-concurrency=1 test/employees.rules.cjs",
     "start": "node src/server.js",
-    "test:http": "node --test --test-concurrency=1 test/http.test.js"
+    "test:http": "node --test --test-concurrency=1 test/http.test.js",
+    "test:performance": "node test/performance.bench.cjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

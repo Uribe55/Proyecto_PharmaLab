@@ -1,6 +1,7 @@
 "use strict";
 // Transporte HTTP independiente. La lógica comercial permanece en las transacciones existentes.
 const http = require("node:http");
+const {Metrics} = require("./performance");
 const {confirmOrder, operationResult} = require("./orders");
 const {cancelOrder, assignOrder, transitionDelivery, approveOrder} = require("./order_actions");
 const statuses = {"invalid-argument": 400, unauthenticated: 401, "permission-denied": 403,
@@ -22,8 +23,12 @@ function createServer({db, auth, production = false, origins = [], limit = 60}) 
     if (++bucket.count > maximum) throw problem("resource-exhausted", "Demasiadas solicitudes. Reintenta con el mismo ID.");
   }
   const server = http.createServer(async (req, res) => {
+    const metrics = new Metrics();
     const send = (status, body) => {
+      const timings = metrics.snapshot();
       res.writeHead(status, {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store",
+        "Server-Timing": `processing;dur=${timings.totalMs}`,
+        "Access-Control-Expose-Headers": "Server-Timing",
         "X-Content-Type-Options": "nosniff", ...(status === 429 ? {"Retry-After": "60"} : {})});
       res.end(JSON.stringify(body));
     };
@@ -43,13 +48,13 @@ function createServer({db, auth, production = false, origins = [], limit = 60}) 
       const match = /^Bearer ([^\s]+)$/.exec(req.headers.authorization || "");
       if (!match || match[1].length > 8192) throw problem("unauthenticated", "Inicia sesión.");
       let token;
-      try { token = await auth.verifyIdToken(match[1], production); }
+      try { token = await metrics.measure("authenticationMs", () => auth.verifyIdToken(match[1], production)); }
       catch { throw problem("unauthenticated", "Sesión inválida o vencida. Inicia sesión nuevamente."); }
       throttle(`uid:${token.uid}`, limit);
-      const user = await db.doc(`usuarios/${token.uid}`).get();
-      if (!user.exists || user.get("estado") !== true) throw problem("permission-denied", "Cuenta inactiva.");
+      // Cada operación valida usuario/rol/estado DENTRO de su transacción.
       let body = {};
       if (req.method === "POST") {
+        const bodyClock = new Metrics();
         if (!(req.headers["content-type"] || "").startsWith("application/json")) throw problem("invalid-argument", "Se requiere JSON.");
         const chunks = []; let size = 0;
         for await (const chunk of req) {
@@ -60,10 +65,11 @@ function createServer({db, auth, production = false, origins = [], limit = 60}) 
         try { body = JSON.parse(Buffer.concat(chunks).toString("utf8")); }
         catch { throw problem("invalid-argument", "JSON inválido."); }
         if (!body || typeof body !== "object" || Array.isArray(body)) throw problem("invalid-argument", "Solicitud inválida.");
+        metrics.values.requestBodyMs = bodyClock.snapshot().totalMs;
       }
       const path = new URL(req.url, "http://localhost").pathname;
       let route, result;
-      if (req.method === "POST" && path === "/api/orders") result = await confirmOrder(db, token.uid, body);
+      if (req.method === "POST" && path === "/api/orders") result = await confirmOrder(db, token.uid, body, {metrics, includeOrderSnapshot: true});
       else if (req.method === "GET" && (route = /^\/api\/operations\/([\w-]{1,128})$/.exec(path))) result = await operationResult(db, token.uid, route[1]);
       else if (req.method === "POST" && (route = /^\/api\/orders\/([\w-]{1,128})\/(cancel|assign|approve)$/.exec(path))) {
         const action = {cancel: cancelOrder, assign: assignOrder, approve: approveOrder}[route[2]];
@@ -71,7 +77,7 @@ function createServer({db, auth, production = false, origins = [], limit = 60}) 
       } else if (req.method === "POST" && (route = /^\/api\/deliveries\/([\w-]{1,128})\/transition$/.exec(path))) {
         result = await transitionDelivery(db, token.uid, {...body, deliveryId: route[1]});
       } else throw problem("not-found", "Ruta no encontrada.");
-      send(200, {data: result});
+      send(200, {data: result, ...(metrics.orderSnapshot ? {order: metrics.orderSnapshot} : {})});
     } catch (error) {
       const status = statuses[error.code] || 500;
       // Nunca registrar tokens, cuerpos, credenciales ni mensajes internos del SDK.
@@ -79,6 +85,11 @@ function createServer({db, auth, production = false, origins = [], limit = 60}) 
       send(status, {error: {code: status === 500 ? "internal" : error.code,
         message: status === 500 ? "No se pudo confirmar el resultado. Consulta la operación antes de reintentar." : error.message,
         ...(error.code === "failed-precondition" && error.details?.prices ? {details: {prices: error.details.prices}} : {})}});
+    } finally {
+      if (req.method === "POST" && req.url === "/api/orders") {
+        console.log(JSON.stringify({event: "order_confirmation_metrics", status: res.statusCode,
+          processUptimeSeconds: Math.round(process.uptime()), ...metrics.snapshot()}));
+      }
     }
   });
   server.headersTimeout = 15000;

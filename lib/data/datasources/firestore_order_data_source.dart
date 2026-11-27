@@ -11,6 +11,7 @@ import 'firestore_spark_checkout.dart';
 import 'checkout_diagnostics.dart';
 import 'numbered_transaction.dart';
 import 'order_gateway.dart';
+import '../mappers/firestore_order_mapper.dart';
 import '../repositories/remote_order_repository.dart';
 
 class FirestoreOrderDataSource
@@ -40,6 +41,22 @@ class FirestoreOrderDataSource
       final response = await OrderGateway().call('confirmOrder', request);
       if (_session.uid != uid || _session.pharmacyId != farm) {
         throw StateError('La sesión cambió.');
+      }
+      final snapshot = response?['_confirmedOrder'];
+      if (snapshot is Map &&
+          snapshot['usuario_id'] == uid &&
+          snapshot['id_cliente'] == farm &&
+          snapshot['id_operacion'] == request['operationId']) {
+        return FirestoreOrderMapper.fromMaps(
+          documentId: response!['orderId'] as String,
+          ownerUid: uid,
+          data: Map<String, dynamic>.from(snapshot),
+          details: (snapshot['lineas'] as List)
+              .map((line) => Map<String, dynamic>.from(line as Map))
+              .toList(),
+          history: const {},
+          fromCache: false,
+        );
       }
       return _load(response!['orderId'] as String, server: true);
     }

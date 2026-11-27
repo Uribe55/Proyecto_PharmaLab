@@ -121,6 +121,32 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
     }
   }
 
+  Future<void> startDelivery(DeliveryRecord delivery) async {
+    if (vm.busy || delivery.data['from_cache'] == true) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Iniciar reparto'),
+        content: const Text(
+          '¿Confirmas que iniciarás el recorrido de esta entrega?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Iniciar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted && !vm.busy) {
+      await result(vm.transition(delivery, 'en_ruta'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: vm,
@@ -265,27 +291,41 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
                                 [
                                   'spark_logistics_v1',
                                   'transactional_logistics_v1',
-                                ].contains(d.data['schema_version']) &&
-                                d.data['from_cache'] != true) ...[
+                                ].contains(d.data['schema_version'])) ...[
+                              if (d.data['from_cache'] == true)
+                                const Padding(
+                                  padding: EdgeInsets.only(bottom: 8),
+                                  child: Text(
+                                    'Esperando sincronización con el servidor. Las acciones estarán disponibles al confirmar los datos.',
+                                  ),
+                                ),
+                              if (vm.busy) const LinearProgressIndicator(),
                               if (d.state == 'asignada')
-                                FilledButton(
-                                  onPressed: vm.busy
+                                FilledButton.icon(
+                                  icon: const Icon(
+                                    Icons.local_shipping_outlined,
+                                  ),
+                                  onPressed:
+                                      vm.busy || d.data['from_cache'] == true
                                       ? null
-                                      : () =>
-                                            result(vm.transition(d, 'en_ruta')),
-                                  child: const Text('INICIAR REPARTO'),
+                                      : () => startDelivery(d),
+                                  label: const Text('Iniciar reparto'),
                                 ),
                               if (d.state == 'en_ruta') ...[
                                 FilledButton(
-                                  onPressed: vm.busy
+                                  onPressed:
+                                      vm.busy || d.data['from_cache'] == true
                                       ? null
                                       : () => result(
                                           vm.transition(d, 'entregado'),
                                         ),
-                                  child: const Text('MARCAR COMO ENTREGADO'),
+                                  child: const Text('Confirmar entrega'),
                                 ),
                                 OutlinedButton(
-                                  onPressed: vm.busy ? null : () => fail(d),
+                                  onPressed:
+                                      vm.busy || d.data['from_cache'] == true
+                                      ? null
+                                      : () => fail(d),
                                   child: const Text(
                                     'REGISTRAR ENTREGA FALLIDA',
                                   ),

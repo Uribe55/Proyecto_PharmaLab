@@ -73,8 +73,10 @@ async function cancelOrder(db, uid, input, {now = () => new Date(), beforeCommit
     }
     if (totals.size > LIMITS.usedLots || !totals.size) fail("failed-precondition", "Trazabilidad fuera de límites.");
     const lots = [];
-    for (const [lotId, allocation] of totals) {
-      const lot = await tx.get(db.doc(`lotes_productos/${lotId}`));
+    const entries = [...totals];
+    const historicalLots = await tx.getAll(...entries.map(([lotId]) => db.doc(`lotes_productos/${lotId}`)));
+    for (let index = 0; index < entries.length; index++) {
+      const allocation = entries[index][1], lot = historicalLots[index];
       const quantity = lot.get("cantidad_disponible");
       if (!lot.exists || lot.get("producto_id") !== allocation.productId || !Number.isSafeInteger(quantity) || quantity < 0 || !Number.isSafeInteger(quantity + allocation.quantity)) fail("failed-precondition", "Lote histórico no disponible; no se restituye a otro lote.");
       lots.push({lot, allocation, quantity});

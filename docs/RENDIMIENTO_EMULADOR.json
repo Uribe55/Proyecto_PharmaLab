@@ -1,0 +1,244 @@
+{
+  "environment": "Firebase Emulator Suite local; no representa Ohio-Sao Paulo",
+  "node": "v22.23.5",
+  "baselineRevision": "48c9ea37ec2c8600d673ac05cf021694a6e79e71",
+  "baselineSha256": "360e319a8125f154691b3aacab4268791ee49f480a0550ab8d2d70daef07c1eb",
+  "results": [
+    {
+      "scenario": "1 producto / 1 lote",
+      "runs": [
+        {
+          "version": "before",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 9,
+          "documentReads": 9,
+          "writes": 7,
+          "backendMs": 192.88
+        },
+        {
+          "version": "after",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 5,
+          "documentReads": 9,
+          "writes": 7,
+          "backendMs": 81.55
+        },
+        {
+          "version": "before",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 9,
+          "documentReads": 9,
+          "writes": 7,
+          "backendMs": 151.62
+        },
+        {
+          "version": "after",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 5,
+          "documentReads": 9,
+          "writes": 7,
+          "backendMs": 74.64
+        },
+        {
+          "version": "before",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 9,
+          "documentReads": 9,
+          "writes": 7,
+          "backendMs": 129.48
+        },
+        {
+          "version": "after",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 5,
+          "documentReads": 9,
+          "writes": 7,
+          "backendMs": 78.76
+        }
+      ]
+    },
+    {
+      "scenario": "3 productos / 4 lotes",
+      "runs": [
+        {
+          "version": "before",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 13,
+          "documentReads": 16,
+          "writes": 15,
+          "backendMs": 211.15
+        },
+        {
+          "version": "after",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 7,
+          "documentReads": 16,
+          "writes": 15,
+          "backendMs": 80.77
+        },
+        {
+          "version": "before",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 13,
+          "documentReads": 16,
+          "writes": 15,
+          "backendMs": 198.06
+        },
+        {
+          "version": "after",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 7,
+          "documentReads": 16,
+          "writes": 15,
+          "backendMs": 90.78
+        },
+        {
+          "version": "before",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 13,
+          "documentReads": 16,
+          "writes": 15,
+          "backendMs": 166.9
+        },
+        {
+          "version": "after",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 7,
+          "documentReads": 16,
+          "writes": 15,
+          "backendMs": 84.22
+        }
+      ]
+    },
+    {
+      "scenario": "5 productos / 10 lotes",
+      "runs": [
+        {
+          "version": "before",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 17,
+          "documentReads": 22,
+          "writes": 29,
+          "backendMs": 284.22
+        },
+        {
+          "version": "after",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 9,
+          "documentReads": 22,
+          "writes": 29,
+          "backendMs": 101.65
+        },
+        {
+          "version": "before",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 17,
+          "documentReads": 22,
+          "writes": 29,
+          "backendMs": 205.22
+        },
+        {
+          "version": "after",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 9,
+          "documentReads": 22,
+          "writes": 29,
+          "backendMs": 94.07
+        },
+        {
+          "version": "before",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 17,
+          "documentReads": 22,
+          "writes": 29,
+          "backendMs": 234.38
+        },
+        {
+          "version": "after",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 9,
+          "documentReads": 22,
+          "writes": 29,
+          "backendMs": 100.3
+        }
+      ]
+    },
+    {
+      "scenario": "20 productos / 100 lotes",
+      "runs": [
+        {
+          "version": "before",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 47,
+          "documentReads": 127,
+          "writes": 224,
+          "backendMs": 622.65
+        },
+        {
+          "version": "after",
+          "sample": 0,
+          "attempts": 1,
+          "readRpcCalls": 24,
+          "documentReads": 127,
+          "writes": 224,
+          "backendMs": 186.01
+        },
+        {
+          "version": "before",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 47,
+          "documentReads": 127,
+          "writes": 224,
+          "backendMs": 638.32
+        },
+        {
+          "version": "after",
+          "sample": 1,
+          "attempts": 1,
+          "readRpcCalls": 24,
+          "documentReads": 127,
+          "writes": 224,
+          "backendMs": 192.15
+        },
+        {
+          "version": "before",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 47,
+          "documentReads": 127,
+          "writes": 224,
+          "backendMs": 533.57
+        },
+        {
+          "version": "after",
+          "sample": 2,
+          "attempts": 1,
+          "readRpcCalls": 24,
+          "documentReads": 127,
+          "writes": 224,
+          "backendMs": 142.62
+        }
+      ]
+    }
+  ]
+}
