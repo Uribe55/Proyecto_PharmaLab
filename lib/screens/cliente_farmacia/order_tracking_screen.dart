@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../widgets/remote_cancellation_panel.dart';
+
 import '../../models/order.dart';
 import '../../data/datasources/firestore_order_data_source.dart';
 import '../../data/repositories/remote_order_repository.dart';
@@ -94,7 +96,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               'Información guardada; pendiente de actualizar con el servidor.',
               style: AppText.muted,
             ),
-          if (order.remote)
+          if (order.remote && order.schemaVersion != 'transactional_multi_v1')
             const Text(
               'Las cancelaciones y otras operaciones remotas aún no están disponibles.',
               style: AppText.muted,
@@ -104,6 +106,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             const SizedBox(height: 14),
           ],
           _OrderSummaryCard(order: order),
+          RemoteCancellationPanel(order: order),
           const SizedBox(height: 14),
           OrderLifecyclePanel(order: order),
           const SizedBox(height: 22),

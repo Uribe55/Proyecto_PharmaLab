@@ -33,6 +33,9 @@ class Product {
     this.requiresExpiry = false,
     this.unitOfMeasure = '',
     this.unitsPerPackage = 0,
+    this.presentationId,
+    this.inventoryFactor = 1,
+    this.inventoryStock,
   });
 
   final String id;
@@ -50,12 +53,19 @@ class Product {
   final String material;
   final String size;
   final bool requiresExpiry;
+
   /// Unidad comercial: Caja, Frasco, Paquete...
   final String unitOfMeasure;
+
   /// Contenido de la presentacion, NO unidades de stock.
   final int unitsPerPackage;
+  final String? presentationId;
+  final int inventoryFactor;
+  final int? inventoryStock;
+  String get cartKey => presentationId == null ? id : '$id:$presentationId';
 
-  String get displayCategory => categoryName.isEmpty ? category.label : categoryName;
+  String get displayCategory =>
+      categoryName.isEmpty ? category.label : categoryName;
 
   /// El stock es mutable: se descuenta al confirmar un pedido (RF-08).
   int stock;
@@ -100,6 +110,9 @@ class Product {
       requiresExpiry: requiresExpiry ?? this.requiresExpiry,
       unitOfMeasure: unitOfMeasure ?? this.unitOfMeasure,
       unitsPerPackage: unitsPerPackage ?? this.unitsPerPackage,
+      presentationId: presentationId,
+      inventoryFactor: inventoryFactor,
+      inventoryStock: inventoryStock,
     );
   }
 
@@ -132,7 +145,8 @@ class Product {
     return '${singular}s';
   }
 
-  String quantityLabel(int quantity) => '$quantity ${unitForQuantity(quantity)}';
+  String quantityLabel(int quantity) =>
+      '$quantity ${unitForQuantity(quantity)}';
 
   /// Solo una simulacion informativa; no realiza ninguna escritura.
   double estimatedTotal(int quantity) => price * quantity;

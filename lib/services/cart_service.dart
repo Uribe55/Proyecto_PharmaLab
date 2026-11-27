@@ -20,9 +20,9 @@ class CartService extends ChangeNotifier {
 
   /// Actualiza datos sin cambiar silenciosamente las cantidades seleccionadas.
   void reconcile(List<Product> products) {
-    final byId = {for (final product in products) product.id: product};
+    final byId = {for (final product in products) product.cartKey: product};
     for (final item in _items) {
-      final latest = byId[item.product.id];
+      final latest = byId[item.product.cartKey];
       item.availableInCatalog = latest != null;
       if (latest != null) {
         item.priceChanged =
@@ -47,25 +47,46 @@ class CartService extends ChangeNotifier {
 
   int quantityFor(Product product) {
     for (final item in _items) {
-      if (item.product.id == product.id) return item.quantity;
+      if (item.product.cartKey == product.cartKey) return item.quantity;
     }
     return 0;
   }
 
   /// Unidades que todavía pueden agregarse sin superar el stock (RF-09).
   int remainingFor(Product product) {
-    final remaining = product.stock - quantityFor(product);
+    final remaining = maximumFor(product) - quantityFor(product);
     return remaining < 0 ? 0 : remaining;
   }
+
+  int maximumFor(Product product) {
+    if (product.inventoryStock == null) return product.stock;
+    final other = _items
+        .where(
+          (item) =>
+              item.product.id == product.id &&
+              item.product.cartKey != product.cartKey,
+        )
+        .fold(
+          0,
+          (sum, item) => sum + item.quantity * item.product.inventoryFactor,
+        );
+    final available = product.inventoryStock! - other;
+    return available <= 0 ? 0 : available ~/ product.inventoryFactor;
+  }
+
+  bool get hasInventoryConflict =>
+      _items.any((item) => item.quantity > maximumFor(item.product));
 
   /// Devuelve `false` si la cantidad solicitada supera el stock.
   bool add(Product product, {int quantity = 1}) {
     if (quantity <= 0 || product.stock <= 0) return false;
 
-    final index = _items.indexWhere((item) => item.product.id == product.id);
+    final index = _items.indexWhere(
+      (item) => item.product.cartKey == product.cartKey,
+    );
     final current = index == -1 ? 0 : _items[index].quantity;
 
-    if (current + quantity > product.stock) return false;
+    if (current + quantity > maximumFor(product)) return false;
 
     if (index == -1) {
       _items.add(CartItem(product: product, quantity: quantity));
@@ -81,7 +102,9 @@ class CartService extends ChangeNotifier {
   bool increment(Product product) => add(product);
 
   void decrement(Product product) {
-    final index = _items.indexWhere((item) => item.product.id == product.id);
+    final index = _items.indexWhere(
+      (item) => item.product.cartKey == product.cartKey,
+    );
     if (index == -1) return;
 
     if (_items[index].quantity > 1) {
@@ -94,7 +117,9 @@ class CartService extends ChangeNotifier {
 
   /// Ajusta la cantidad de una línea respetando el stock disponible.
   void setQuantity(Product product, int quantity) {
-    final index = _items.indexWhere((item) => item.product.id == product.id);
+    final index = _items.indexWhere(
+      (item) => item.product.cartKey == product.cartKey,
+    );
     if (index == -1) return;
 
     if (quantity <= 0 || product.stock <= 0) {
@@ -103,7 +128,9 @@ class CartService extends ChangeNotifier {
       return;
     }
 
-    final capped = quantity > product.stock ? product.stock : quantity;
+    final maximum = maximumFor(product);
+    if (maximum < 1) return;
+    final capped = quantity > maximum ? maximum : quantity;
     if (_items[index].quantity == capped) return;
 
     _items[index].quantity = capped;
@@ -112,7 +139,7 @@ class CartService extends ChangeNotifier {
 
   void remove(Product product) {
     final before = _items.length;
-    _items.removeWhere((item) => item.product.id == product.id);
+    _items.removeWhere((item) => item.product.cartKey == product.cartKey);
     if (_items.length != before) notifyListeners();
   }
 

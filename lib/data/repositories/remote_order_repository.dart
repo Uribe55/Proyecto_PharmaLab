@@ -13,6 +13,10 @@ abstract interface class RemoteOrderRepository {
   Future<void> addAddress(String name, String address, String reference);
 }
 
+abstract interface class MultiOrderCapability {
+  bool get supportsMultipleProducts;
+}
+
 class RemoteOrderException implements Exception {
   const RemoteOrderException(
     this.message, {

@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-27",
+  "status": "implemented_and_verified_in_emulators_production_multi_blocked",
+  "production": {
+    "sparkSinglePreserved": true,
+    "multiEnabled": false,
+    "deployedRules": false,
+    "deployedFunctions": false,
+    "billingChanged": false,
+    "dataMigrated": false
+  },
+  "limits": {
+    "commercialLines": 20,
+    "commercialQuantityPerLine": 10000,
+    "registeredLotsPerProduct": 100,
+    "usedLotsPerOrder": 100,
+    "lineSnapshotBytes": 500000,
+    "totalCents": 1000000000
+  },
+  "validation": {
+    "dartFormat": "dart format lib test; unrelated formatting restored byte-for-byte; final task files formatted",
+    "flutterAnalyze": "No issues found!",
+    "flutterTests": 192,
+    "finalTargetedFlutterTests": 28,
+    "backendUnitIntegrationCallableAndRulesTests": 41,
+    "securityRegressionTests": 103,
+    "androidBuild": "flutter build apk --debug --target-platform android-arm64: Built build/app/outputs/flutter-apk/app-debug.apk",
+    "gitDiffCheck": "passed",
+    "protectedGradleEditorAndBackupFiles": {
+      "checked": 21,
+      "differences": 0
+    }
+  },
+  "environment": {
+    "backendProject": "demo-pharmalab",
+    "firestore": "127.0.0.1:8080",
+    "auth": "127.0.0.1:9099",
+    "functions": "127.0.0.1:5001",
+    "securityFirestore": "127.0.0.1:8085",
+    "nodeTestRuntime": "26.9.0",
+    "functionsDeclaredNodeRuntime": "22",
+    "runtimeNote": "Node 26 host used by Emulator Suite; Node 22 production deployment not attempted.",
+    "androidWarning": "Existing Kotlin Gradle Plugin migration warning; APK build successful."
+  },
+  "remaining": [
+    "Production infrastructure/billing decision and explicit activation authorization",
+    "Review and publish rules manually after authorization",
+    "Physical-device manual validation of the multi callable flow",
+    "Authorized physical stock review before enabling optional base presentations"
+  ],
+  "evidence": {
+    "multi-backend-test-output.log": {
+      "sha256": "37d1976e60a8147a6a563a126464842c15bbcdcfee03e5fea41e9693ddb1b67b"
+    },
+    "multi-security-test-output.log": {
+      "sha256": "b27c6aed4695735fd70c5456567ac90f08f941025b2b914d5997ef0466cbb4fc"
+    },
+    "multi-flutter-test-output.log": {
+      "sha256": "7a2fd8b411f84c330dd3733dc2675a23cfd75dac9e8ccdc35761faceb19fb737"
+    },
+    "multi-final-targeted-output.log": {
+      "sha256": "6afaaae332de1b771f39e437f6eb61665eaf71c562e8fbc316d8c1430b413148"
+    },
+    "multi-analyze-output.log": {
+      "sha256": "a67e805ead7703c6cf7952604a11eda974a6ad4d5751f3f25b80dc20b1817653"
+    },
+    "multi-android-build-output.log": {
+      "sha256": "5944e0d45d8b0582488a8d8f93bf248bb654029b571ece27b930442f580f3a14"
+    }
+  }
+}

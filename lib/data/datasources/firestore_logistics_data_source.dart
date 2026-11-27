@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'order_gateway.dart';
+
 import '../../models/order.dart';
 import '../../services/firebase_environment.dart';
 import '../../services/pharma_service.dart';
@@ -103,6 +105,13 @@ class FirestoreLogisticsDataSource implements LogisticsRepository {
 
   @override
   Future<void> assign(PharmacyOrder order, String employeeId) async {
+    if (order.schemaVersion == 'transactional_multi_v1') {
+      await OrderGateway().call('assignMultiOrder', {
+        'orderId': order.documentId,
+        'employeeId': employeeId,
+      });
+      return;
+    }
     final actor = uid;
     final orderRef = db.collection('pedidos').doc(order.documentId!);
     final delivery = db.collection('entregas').doc();
@@ -167,6 +176,16 @@ class FirestoreLogisticsDataSource implements LogisticsRepository {
     String note = '',
   }) async {
     final actor = uid;
+    if (delivery.data['schema_version'] == 'transactional_logistics_v1') {
+      await OrderGateway().call('transitionMultiDelivery', {
+        'deliveryId': delivery.id,
+        'state': state,
+        'reason': reason,
+        'note': note,
+      });
+      if (uid != actor) throw StateError('La sesión cambió.');
+      return;
+    }
     await db.runTransaction((tx) async {
       final ref = db.doc('entregas/${delivery.id}');
       final d = (await tx.get(ref)).data()!;

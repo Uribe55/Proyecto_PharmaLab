@@ -1,3 +1,6 @@
+import '../../widgets/admin_scroll_layout.dart';
+import '../../widgets/staff_filter_chip.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
@@ -57,114 +60,110 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         return Scaffold(
           body: SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                const AppTabHeader(title: 'Panel de pedidos', showLogo: true),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            child: AdminScrollLayout(
+              header: AppTabHeader(title: 'Panel de pedidos', showLogo: true),
+              body: AdminScrollList(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                children: [
+                  const Text('GESTIÓN DE PEDIDOS', style: AppText.eyebrow),
+                  const SizedBox(height: 7),
+                  const Text('Pedidos de farmacias.', style: AppText.h1),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Revisa, aprueba y asigna cada pedido al repartidor '
+                    'adecuado.',
+                    style: AppText.muted,
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
                     children: [
-                      const Text('GESTIÓN DE PEDIDOS', style: AppText.eyebrow),
-                      const SizedBox(height: 7),
-                      const Text('Pedidos de farmacias.', style: AppText.h1),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Revisa, aprueba y asigna cada pedido al repartidor '
-                        'adecuado.',
-                        style: AppText.muted,
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: StatCard(
-                              label: 'Pendientes de revisión',
-                              value: '${service.pendingOrdersCount}',
-                              icon: Icons.hourglass_top_rounded,
-                              accent: AppColors.pendingText,
-                              background: AppColors.pendingBackground,
-                            ),
-                          ),
-                          const SizedBox(width: 9),
-                          Expanded(
-                            child: StatCard(
-                              label: 'Por asignar',
-                              value: '${service.approvedOrders.length}',
-                              icon: Icons.assignment_outlined,
-                              accent: AppColors.approvedText,
-                              background: AppColors.approvedBackground,
-                            ),
-                          ),
-                          const SizedBox(width: 9),
-                          Expanded(
-                            child: StatCard(
-                              label: 'En ruta',
-                              value: '${service.inTransitOrders}',
-                              icon: Icons.local_shipping_outlined,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final filter in <OrderStatus?>[
-                              null,
-                              ...OrderStatus.values,
-                            ]) ...[
-                              _FilterChip(
-                                label: orderFilterLabel(filter),
-                                selected: _filter == filter,
-                                onTap: () => setState(() => _filter = filter),
-                              ),
-                              if (filter != OrderStatus.values.last)
-                                const SizedBox(width: 8),
-                            ],
-                          ],
+                      Expanded(
+                        child: StatCard(
+                          label: 'Pendientes de revisión',
+                          value: '${service.pendingOrdersCount}',
+                          icon: Icons.hourglass_top_rounded,
+                          accent: AppColors.pendingText,
+                          background: AppColors.pendingBackground,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(child: Text('Pedidos', style: AppText.h3)),
-                          Text(
-                            '${orders.length} '
-                            '${orders.length == 1 ? 'resultado' : 'resultados'}',
-                            style: AppText.meta,
-                          ),
-                        ],
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: StatCard(
+                          label: 'Por asignar',
+                          value: '${service.approvedOrders.length}',
+                          icon: Icons.assignment_outlined,
+                          accent: AppColors.approvedText,
+                          background: AppColors.approvedBackground,
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      if (orders.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 26),
-                          child: EmptyState(
-                            icon: Icons.inbox_outlined,
-                            title: 'Sin pedidos en esta vista',
-                            description:
-                                'No hay pedidos con el filtro seleccionado. '
-                                'Prueba con “Todos” para ver el resto.',
-                            action: OutlinedButton(
-                              onPressed: () => setState(() => _filter = null),
-                              child: const Text('Ver todos los pedidos'),
-                            ),
-                          ),
-                        )
-                      else
-                        for (final order in orders) ...[
-                          OrderListTile(
-                            order: order,
-                            onTap: () => _openOrder(order),
-                            caption: _captionFor(order),
-                          ),
-                          if (order != orders.last) const SizedBox(height: 11),
-                        ],
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: StatCard(
+                          label: 'En ruta',
+                          value: '${service.inTransitOrders}',
+                          icon: Icons.local_shipping_outlined,
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final filter in <OrderStatus?>[
+                          null,
+                          ...OrderStatus.values,
+                        ]) ...[
+                          StaffFilterChip(
+                            label: orderFilterLabel(filter),
+                            selected: _filter == filter,
+                            onTap: () => setState(() => _filter = filter),
+                          ),
+                          if (filter != OrderStatus.values.last)
+                            const SizedBox(width: 8),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(child: Text('Pedidos', style: AppText.h3)),
+                      Text(
+                        '${orders.length} '
+                        '${orders.length == 1 ? 'resultado' : 'resultados'}',
+                        style: AppText.meta,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (orders.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 26),
+                      child: EmptyState(
+                        icon: Icons.inbox_outlined,
+                        title: 'Sin pedidos en esta vista',
+                        description:
+                            'No hay pedidos con el filtro seleccionado. '
+                            'Prueba con “Todos” para ver el resto.',
+                        action: OutlinedButton(
+                          onPressed: () => setState(() => _filter = null),
+                          child: const Text('Ver todos los pedidos'),
+                        ),
+                      ),
+                    )
+                  else
+                    for (final order in orders) ...[
+                      OrderListTile(
+                        order: order,
+                        onTap: () => _openOrder(order),
+                        caption: _captionFor(order),
+                      ),
+                      if (order != orders.last) const SizedBox(height: 11),
+                    ],
+                ],
+              ),
             ),
           ),
         );
@@ -200,46 +199,5 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '$day/$month · $hour:$minute';
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.primary : AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppColors.muted,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

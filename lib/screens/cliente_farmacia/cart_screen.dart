@@ -25,7 +25,9 @@ class CartScreen extends StatelessWidget {
         return Scaffold(
           body: SafeArea(
             bottom: false,
-            child: Column(
+            child: ListView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.only(bottom: 24),
               children: [
                 const ClientTabHeader(title: 'Mi carrito'),
                 if (cart.isRemote)
@@ -62,67 +64,35 @@ class CartScreen extends StatelessWidget {
                     },
                     child: const Text('Vaciar carrito'),
                   ),
-                Expanded(
-                  child: cart.isEmpty
-                      ? Center(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(bottom: 8),
-                                  child: _CartIntro(
-                                    subtitle: '0 unidades para tu laboratorio',
-                                  ),
-                                ),
-                                EmptyState(
-                                  icon: Icons.inventory_2_outlined,
-                                  title: 'Tu carrito está vacío',
-                                  description:
-                                      'Encuentra los productos que tu '
-                                      'laboratorio necesita y añádelos aquí.',
-                                  action: OutlinedButton(
-                                    onPressed: onBrowse,
-                                    child: const Text('Ver todos'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                              child: _CartIntro(
-                                subtitle:
-                                    '${cart.lineCount} '
-                                    '${cart.lineCount == 1 ? 'producto seleccionado' : 'productos seleccionados'}',
-                              ),
-                            ),
-                            Expanded(
-                              child: ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(
-                                  20,
-                                  16,
-                                  20,
-                                  24,
-                                ),
-                                itemCount: cart.items.length,
-                                separatorBuilder: (_, _) =>
-                                    const SizedBox(height: 12),
-                                itemBuilder: (context, index) {
-                                  return _CartItemCard(
-                                    key: ValueKey(cart.items[index].product.id),
-                                    item: cart.items[index],
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
+                if (cart.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: EmptyState(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'Tu carrito está vacío',
+                      description: 'Encuentra los productos que necesitas en el catálogo.',
+                      action: OutlinedButton(
+                        onPressed: onBrowse,
+                        child: const Text('Ver todos'),
+                      ),
+                    ),
+                  )
+                else ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: _CartIntro(
+                      subtitle: '${cart.lineCount} productos seleccionados',
+                    ),
+                  ),
+                  for (final item in cart.items)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      child: _CartItemCard(
+                        key: ValueKey(item.product.cartKey),
+                        item: item,
+                      ),
+                    ),
+                ],
                 if (cart.isNotEmpty) _CartSummary(onBrowse: onBrowse),
               ],
             ),
@@ -166,6 +136,7 @@ class _CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final product = item.product;
+    final maximum = CartViewModel.instance.maximumFor(product);
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -217,7 +188,9 @@ class _CartItemCard extends StatelessWidget {
                   style: AppText.label,
                 ),
                 Text(
-                  item.issue ??
+                  (item.quantity > maximum && product.presentationId != null
+                          ? 'El stock compartido cambió. Solicitaste ${item.quantity}; hay $maximum disponibles para esta presentación.'
+                          : item.issue) ??
                       'Disponible: ${product.quantityLabel(product.stock)}',
                   style: AppText.meta,
                 ),
@@ -226,7 +199,7 @@ class _CartItemCard extends StatelessWidget {
                     'Precio actualizado desde el catálogo.',
                     style: AppText.meta,
                   ),
-                if (item.needsAdjustment &&
+                if ((item.needsAdjustment || item.quantity > maximum) &&
                     item.availableInCatalog &&
                     product.stock > 0)
                   TextButton(
@@ -250,7 +223,7 @@ class _CartItemCard extends StatelessWidget {
                             ),
                           ),
                       value: item.quantity,
-                      max: product.stock,
+                      max: maximum,
                       onChanged: (value) =>
                           CartViewModel.instance.setQuantity(product, value),
                     ),

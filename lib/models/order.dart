@@ -44,6 +44,9 @@ class OrderLine {
     required this.unitPrice,
     required this.quantity,
     this.saleUnit = '',
+    this.presentationId,
+    this.inventoryFactor = 1,
+    this.inventoryQuantity,
   });
 
   final String productId;
@@ -53,6 +56,9 @@ class OrderLine {
   final double unitPrice;
   final int quantity;
   final String saleUnit;
+  final String? presentationId;
+  final int inventoryFactor;
+  final int? inventoryQuantity;
 
   double get subtotal => unitPrice * quantity;
 }
@@ -83,6 +89,7 @@ class PharmacyOrder {
     this.recordedTotal,
     this.fromCache = false,
     this.createdAtKnown = true,
+    this.schemaVersion = '',
   }) {
     // Migración lógica: conserva el fallo histórico sin atribuirle una entrega.
     if (status == OrderStatus.enRuta ||
@@ -111,6 +118,7 @@ class PharmacyOrder {
   }
 
   final String number;
+  final String schemaVersion;
   final String? documentId, operationId, addressId;
   final double? recordedTotal;
   final bool fromCache;

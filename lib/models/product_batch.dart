@@ -6,16 +6,18 @@ class ProductBatch {
     required this.available,
     this.expiresAt,
     this.active = true,
+    this.invalidExpiry = false,
   });
 
   final String id;
   final String productId;
   final int available;
   final bool active;
+  final bool invalidExpiry;
   final DateTime? expiresAt;
 
   bool eligible({required bool requiresExpiry, required DateTime today}) {
-    if (!active || available <= 0) return false;
+    if (!active || invalidExpiry || available <= 0) return false;
     if (expiresAt == null) return !requiresExpiry;
     final expiryDate = DateTime(
       expiresAt!.year,

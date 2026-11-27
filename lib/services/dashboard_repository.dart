@@ -851,6 +851,13 @@ class DashboardRepository {
         lots.add(
           DashboardLot(
             id: doc.id,
+            active:
+                data['estado'] != false &&
+                data['bloqueado'] != true &&
+                data['comercializable'] != false,
+            invalidExpiry:
+                data['fecha_vencimiento'] != null &&
+                _date(data, const ['fecha_vencimiento']) == null,
             productId: productId,
             productName: product?.name.isNotEmpty == true
                 ? product!.name
@@ -940,7 +947,7 @@ class DashboardRepository {
     required InventoryOrigin origin,
     String? additionalNote,
   }) {
-    final now = DateTime.now();
+    final now = BoliviaTime.now();
     final lotsByProduct = <String, List<DashboardLot>>{};
     for (final lot in lots) {
       final key = lot.productId.isNotEmpty
@@ -1018,6 +1025,11 @@ class DashboardRepository {
     var expired = 0;
     DateTime? nextExpiration;
     for (final lot in lots) {
+      if (!lot.active ||
+          lot.invalidExpiry ||
+          (lot.requiresExpiration && lot.expiresAt == null)) {
+        continue;
+      }
       if (lot.isExpiredAt(now)) {
         expired += lot.quantity;
         continue;

@@ -108,6 +108,11 @@ class _QuantityStepperState extends State<QuantityStepper> {
                   enabled: widget.max >= widget.min,
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.done,
+                  scrollPadding: const EdgeInsets.all(32),
+                  onTap: () => controller.selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: controller.text.length,
+                  ),
                   textAlign: TextAlign.center,
                   inputFormatters: [
                     TextInputFormatter.withFunction(
@@ -119,6 +124,8 @@ class _QuantityStepperState extends State<QuantityStepper> {
                   ],
                   decoration: const InputDecoration(
                     isDense: true,
+                    filled: true,
+                    fillColor: AppColors.surface,
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 6),
                   ),

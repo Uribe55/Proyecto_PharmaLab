@@ -8,6 +8,10 @@ class FirebaseEnvironment {
   static FirebaseApp? _emulatorApp;
   static String? emulatorHost;
   static bool get emulatorOrdersEnabled => _emulatorsConfigured;
+  static const apiUrl = String.fromEnvironment('PHARMALAB_API_URL');
+  static bool get externalOrdersEnabled => apiUrl.isNotEmpty;
+  static bool get multiOrdersEnabled =>
+      emulatorOrdersEnabled || externalOrdersEnabled;
   static FirebaseFirestore get firestore => _emulatorApp == null
       ? FirebaseFirestore.instance
       : FirebaseFirestore.instanceFor(app: _emulatorApp!);
@@ -16,6 +20,9 @@ class FirebaseEnvironment {
       : FirebaseAuth.instanceFor(app: _emulatorApp!);
 
   static Future<void> initializeEmulators(String host) async {
+    if (externalOrdersEnabled) {
+      throw StateError('No combines PHARMALAB_API_URL con emuladores.');
+    }
     if (Firebase.apps.isNotEmpty) {
       throw StateError('Firebase ya fue inicializado.');
     }

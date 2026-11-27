@@ -1,0 +1,238 @@
+{
+  "nota": "Ejemplo ilustrativo del contrato definitivo; las fechas ISO representan Timestamp de Firestore. No se escribió en producción.",
+  "documento": "pedidos/ORD_f8b10553fa781f05b25101ab97ff512157b49c8f63a5db0d780af2dc0c3e16d6",
+  "datos": {
+    "schema_version": "transactional_multi_v1",
+    "numero_comercial": "PED002",
+    "usuario_id": "cliente-demo-a",
+    "id_cliente": "FARM001",
+    "id_direccion": "DIR001",
+    "id_operacion": "AbCdEfGhIjKlMnOpQrSt",
+    "estado": "pendiente",
+    "fecha_pedido": "2026-11-27T15:00:00Z",
+    "nombre_farmacia": "Farmacia 1",
+    "responsable": "Cliente 1",
+    "telefono": "70000000",
+    "entrega": {
+      "nombre": "Principal",
+      "direccion": "Av. Demo 1",
+      "referencia": ""
+    },
+    "observaciones": "Llamar antes de entregar",
+    "stock_restituido": false,
+    "total": 9500,
+    "lineas": [
+      {
+        "id_producto": "PROD001",
+        "nombre": "Paracetamol 500 mg",
+        "marca": "Demo",
+        "presentacion": "Caja de 2 blísteres de 10 tabletas",
+        "unidad_medida": "Caja",
+        "unidad_por_envase": 20,
+        "categoria_id": "CAT001",
+        "categoria": "Genéricos",
+        "cantidad": 45,
+        "factor_inventario": 1,
+        "cantidad_inventario": 45,
+        "unidad_inventario": "comercial",
+        "precio_unitario": 150,
+        "subtotal": 6750,
+        "asignaciones_lotes": [
+          {
+            "id_lote": "LOTE001",
+            "cantidad": 30
+          },
+          {
+            "id_lote": "LOTE003",
+            "cantidad": 15
+          }
+        ]
+      },
+      {
+        "id_producto": "PROD002",
+        "nombre": "Guantes de nitrilo",
+        "marca": "Demo",
+        "presentacion": "Caja de 100 guantes",
+        "unidad_medida": "Caja",
+        "unidad_por_envase": 100,
+        "categoria_id": "CAT002",
+        "categoria": "Insumos clínicos",
+        "cantidad": 20,
+        "factor_inventario": 1,
+        "cantidad_inventario": 20,
+        "unidad_inventario": "comercial",
+        "precio_unitario": 85,
+        "subtotal": 1700,
+        "asignaciones_lotes": [
+          {
+            "id_lote": "LOTE002",
+            "cantidad": 20
+          }
+        ]
+      },
+      {
+        "id_producto": "PROD003",
+        "nombre": "Reactivo de glucosa",
+        "marca": "Demo",
+        "presentacion": "Frasco de reactivo",
+        "unidad_medida": "Frasco",
+        "unidad_por_envase": 1,
+        "categoria_id": "CAT003",
+        "categoria": "Reactivos",
+        "cantidad": 5,
+        "factor_inventario": 1,
+        "cantidad_inventario": 5,
+        "unidad_inventario": "comercial",
+        "precio_unitario": 210,
+        "subtotal": 1050,
+        "asignaciones_lotes": [
+          {
+            "id_lote": "LOTE004",
+            "cantidad": 5
+          }
+        ]
+      }
+    ]
+  },
+  "subcolecciones": {
+    "detalle_pedido": {
+      "DET001": {
+        "id_producto": "PROD001",
+        "nombre": "Paracetamol 500 mg",
+        "marca": "Demo",
+        "presentacion": "Caja de 2 blísteres de 10 tabletas",
+        "unidad_medida": "Caja",
+        "unidad_por_envase": 20,
+        "categoria_id": "CAT001",
+        "categoria": "Genéricos",
+        "cantidad": 45,
+        "factor_inventario": 1,
+        "cantidad_inventario": 45,
+        "unidad_inventario": "comercial",
+        "precio_unitario": 150,
+        "subtotal": 6750,
+        "asignaciones_lotes": [
+          {
+            "id_lote": "LOTE001",
+            "cantidad": 30
+          },
+          {
+            "id_lote": "LOTE003",
+            "cantidad": 15
+          }
+        ]
+      },
+      "DET002": {
+        "id_producto": "PROD002",
+        "nombre": "Guantes de nitrilo",
+        "marca": "Demo",
+        "presentacion": "Caja de 100 guantes",
+        "unidad_medida": "Caja",
+        "unidad_por_envase": 100,
+        "categoria_id": "CAT002",
+        "categoria": "Insumos clínicos",
+        "cantidad": 20,
+        "factor_inventario": 1,
+        "cantidad_inventario": 20,
+        "unidad_inventario": "comercial",
+        "precio_unitario": 85,
+        "subtotal": 1700,
+        "asignaciones_lotes": [
+          {
+            "id_lote": "LOTE002",
+            "cantidad": 20
+          }
+        ]
+      },
+      "DET003": {
+        "id_producto": "PROD003",
+        "nombre": "Reactivo de glucosa",
+        "marca": "Demo",
+        "presentacion": "Frasco de reactivo",
+        "unidad_medida": "Frasco",
+        "unidad_por_envase": 1,
+        "categoria_id": "CAT003",
+        "categoria": "Reactivos",
+        "cantidad": 5,
+        "factor_inventario": 1,
+        "cantidad_inventario": 5,
+        "unidad_inventario": "comercial",
+        "precio_unitario": 210,
+        "subtotal": 1050,
+        "asignaciones_lotes": [
+          {
+            "id_lote": "LOTE004",
+            "cantidad": 5
+          }
+        ]
+      }
+    },
+    "historial_estado/confirmacion": {
+      "estado_anterior": "pendiente",
+      "estado": "pendiente",
+      "fecha": "2026-11-27T15:00:00Z",
+      "operacion": "confirm",
+      "usuario_id": "cliente-demo-a",
+      "rol": "cliente",
+      "nota": "Pedido confirmado; inventario descontado."
+    },
+    "movimientos_inventario": {
+      "SALIDA_LOTE001": {
+        "id_lote": "LOTE001",
+        "id_producto": "PROD001",
+        "cantidad": -30,
+        "fecha": "2026-11-27T15:00:00Z",
+        "tipo": "confirmacion",
+        "usuario_id": "cliente-demo-a"
+      },
+      "SALIDA_LOTE003": {
+        "id_lote": "LOTE003",
+        "id_producto": "PROD001",
+        "cantidad": -15,
+        "fecha": "2026-11-27T15:00:00Z",
+        "tipo": "confirmacion",
+        "usuario_id": "cliente-demo-a"
+      },
+      "SALIDA_LOTE002": {
+        "id_lote": "LOTE002",
+        "id_producto": "PROD002",
+        "cantidad": -20,
+        "fecha": "2026-11-27T15:00:00Z",
+        "tipo": "confirmacion",
+        "usuario_id": "cliente-demo-a"
+      },
+      "SALIDA_LOTE004": {
+        "id_lote": "LOTE004",
+        "id_producto": "PROD003",
+        "cantidad": -5,
+        "fecha": "2026-11-27T15:00:00Z",
+        "tipo": "confirmacion",
+        "usuario_id": "cliente-demo-a"
+      }
+    }
+  },
+  "stock_final": {
+    "LOTE001": 0,
+    "LOTE003": 55,
+    "LOTE002": 30,
+    "LOTE004": 20
+  },
+  "operacion": {
+    "documento": "usuarios/cliente-demo-a/operaciones_pedido/AbCdEfGhIjKlMnOpQrSt",
+    "datos": {
+      "huella": "51d2516c10c2ff16c6fcd46ca9a4da2eaccfdfce3dec0a7d2e4b9d3b6f705bee",
+      "resultado": {
+        "orderId": "ORD_f8b10553fa781f05b25101ab97ff512157b49c8f63a5db0d780af2dc0c3e16d6",
+        "number": "PED002",
+        "operationId": "AbCdEfGhIjKlMnOpQrSt"
+      },
+      "fecha": "2026-11-27T15:00:00Z",
+      "id_cliente": "FARM001"
+    }
+  },
+  "contador": {
+    "ultimo_numero": 2,
+    "ultimo_id": "PED002",
+    "ultimo_documento_id": "ORD_f8b10553fa781f05b25101ab97ff512157b49c8f63a5db0d780af2dc0c3e16d6"
+  }
+}

@@ -630,6 +630,7 @@ service cloud.firestore {
         && order.numero_comercial == counter.ultimo_id
         && order.observaciones is string && order.observaciones.size() <= 500
         && farm.usuario_id == request.auth.uid && farm.estado == true
+        && farm.get('tiene_deuda_vencida', false) != true
         && address.id_cliente == order.id_cliente && address.estado == true
         && line is map
         && line.keys().hasOnly(['id_producto', 'id_lote', 'cantidad', 'precio_unitario', 'subtotal'])
@@ -639,11 +640,16 @@ service cloud.firestore {
         && line.id_lote.matches('^[A-Za-z0-9_-]{1,100}$')
         && line.cantidad is int && line.cantidad > 0 && line.cantidad <= 1000
         && product.estado == true && product.precio is number
+        && product.get('inventario_unidad', 'comercial') != 'base'
         && product.precio > 0 && product.precio <= 1000000
         && line.precio_unitario == product.precio
         && line.subtotal == product.precio * line.cantidad && order.total == line.subtotal
         && before.producto_id == line.id_producto && before.cantidad_disponible is int
         && before.get('estado', true) != false
+        && before.get('bloqueado', false) != true
+        && before.get('comercializable', true) != false
+        && (before.get('fecha_vencimiento', null) == null
+          || (before.fecha_vencimiento is timestamp && before.fecha_vencimiento > request.time))
         && before.cantidad_disponible >= line.cantidad
         && product.get('requiere_vencimiento', false) is bool
         && (!product.get('requiere_vencimiento', false)
@@ -658,6 +664,7 @@ service cloud.firestore {
     function newSparkParent(id) {
       let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
       return activeClient() && !exists(/databases/$(database)/documents/pedidos/$(id))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get('tiene_deuda_vencida', false) != true
         && order.schema_version == 'spark_single_v2'
         && order.usuario_id == request.auth.uid && order.id_operacion == id
         && order.estado == 'pendiente' && order.fecha_pedido == request.time;
@@ -794,6 +801,11 @@ service cloud.firestore {
         );
 
         allow create, update, delete: if false;
+      }
+
+      match /movimientos_inventario/{movimientoId} {
+        allow get, list: if readsOrder(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data);
+        allow write: if false;
       }
 
       allow update: if activeStaff()

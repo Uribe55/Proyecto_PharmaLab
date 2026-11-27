@@ -1,3 +1,6 @@
+import '../../widgets/admin_scroll_layout.dart';
+import '../../widgets/remote_cancellation_panel.dart';
+import '../../widgets/staff_filter_chip.dart';
 import '../shared/remote_logistics_screen.dart';
 
 import 'package:flutter/material.dart';
@@ -31,83 +34,80 @@ class _RemoteSellerOrdersScreenState extends State<RemoteSellerOrdersScreen> {
       final orders = sellerOrderList(vm.orders, status: _status);
       return Scaffold(
         body: SafeArea(
-          child: Column(
-            children: [
-              const AppTabHeader(title: 'Pedidos reales', showLogo: true),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    Text(
-                      'Pendientes: ${vm.loading || vm.error != null ? '—' : vm.pendingCount}',
-                      style: AppText.h1,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Los pedidos se actualizan mientras la aplicación está abierta.',
-                      style: AppText.muted,
-                    ),
-                    if (vm.fromCache)
-                      const Text(
-                        'Datos guardados. Esperando confirmación del servidor.',
-                      ),
-                    if (vm.loading) const LinearProgressIndicator(),
-                    if (vm.error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        vm.error!,
-                        style: const TextStyle(color: AppColors.danger),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final status in <OrderStatus?>[
-                            null,
-                            ...OrderStatus.values,
-                          ])
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: Text(orderFilterLabel(status)),
-                                selected: _status == status,
-                                onSelected: (_) =>
-                                    setState(() => _status = status),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (!vm.loading && vm.error == null && orders.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Text('No hay pedidos en esta vista.'),
-                      ),
-                    for (final order in orders) ...[
-                      const SizedBox(height: 12),
-                      OrderListTile(
-                        order: order,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => RemoteSellerOrderDetailScreen(
-                              order: order,
-                              repository: vm.repository,
-                            ),
+          child: AdminScrollLayout(
+            header: AppTabHeader(title: 'Pedidos reales', showLogo: true),
+            body: AdminScrollList(
+              padding: const EdgeInsets.all(20),
+              children: [
+                const Text('GESTIÓN DE PEDIDOS', style: AppText.eyebrow),
+                const SizedBox(height: 7),
+                Text(
+                  'Pendientes: ${vm.loading || vm.error != null ? '—' : vm.pendingCount}',
+                  style: AppText.h1,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Los pedidos se actualizan mientras la aplicación está abierta.',
+                  style: AppText.muted,
+                ),
+                if (vm.fromCache)
+                  const Text(
+                    'Datos guardados. Esperando confirmación del servidor.',
+                  ),
+                if (vm.loading) const LinearProgressIndicator(),
+                if (vm.error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    vm.error!,
+                    style: const TextStyle(color: AppColors.danger),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final status in <OrderStatus?>[
+                        null,
+                        ...OrderStatus.values,
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: StaffFilterChip(
+                            label: orderFilterLabel(status),
+                            selected: _status == status,
+                            onTap: () => setState(() => _status = status),
                           ),
                         ),
-                        caption: order.fromCache
-                            ? 'Información guardada'
-                            : order.createdAtKnown
-                            ? 'Registrado en Firestore'
-                            : 'Fecha no disponible',
-                      ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                if (!vm.loading && vm.error == null && orders.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Text('No hay pedidos en esta vista.'),
+                  ),
+                for (final order in orders) ...[
+                  const SizedBox(height: 12),
+                  OrderListTile(
+                    order: order,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => RemoteSellerOrderDetailScreen(
+                          order: order,
+                          repository: vm.repository,
+                        ),
+                      ),
+                    ),
+                    caption: order.fromCache
+                        ? 'Información guardada'
+                        : order.createdAtKnown
+                        ? 'Registrado en Firestore'
+                        : 'Fecha no disponible',
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       );
@@ -185,6 +185,7 @@ class _RemoteSellerOrderDetailScreenState
                     ),
                   const SizedBox(height: 16),
                   OrderDetailCard(order: order),
+                  RemoteCancellationPanel(order: order),
                   if (order.isApproved && order.deliveryId == null)
                     OutlinedButton(
                       onPressed: order.fromCache

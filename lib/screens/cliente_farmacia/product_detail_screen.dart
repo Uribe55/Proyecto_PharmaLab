@@ -240,8 +240,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ),
                 QuantityStepper(
+                  editable: true,
                   value: quantity,
-                  max: maxQuantity > 0 ? maxQuantity : 1,
+                  max: maxQuantity,
                   onChanged: maxQuantity > 0
                       ? (value) => setState(() => _quantity = value)
                       : (_) {},
@@ -251,72 +252,77 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+          ? null
+          : SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(top: BorderSide(color: AppColors.border)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          remote ? 'Total estimado' : 'Total',
-                          style: AppText.label,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                remote ? 'Total estimado' : 'Total',
+                                style: AppText.label,
+                              ),
+                              Text(
+                                _product.quantityLabel(quantity),
+                                style: AppText.meta,
+                              ),
+                            ],
+                          ),
                         ),
-                        Text(
-                          _product.quantityLabel(quantity),
-                          style: AppText.meta,
+                        Flexible(
+                          child: Text(
+                            formatBs(_product.estimatedTotal(quantity)),
+                            textAlign: TextAlign.right,
+                            style: AppText.h2,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  Text(
-                    formatBs(_product.estimatedTotal(quantity)),
-                    style: AppText.h2,
-                  ),
-                ],
-              ),
-              if (remote) ...[
-                const SizedBox(height: 5),
-                const Text(
-                  'Cálculo informativo. No se genera un pedido ni se descuenta stock.',
-                  style: AppText.meta,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: inCart
-                    ? widget.onOpenCart
-                    : canAdd
-                    ? _addToCart
-                    : null,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    inCart
-                        ? 'Ver carrito'
-                        : canAdd
-                        ? 'Añadir al carrito · '
-                              '${formatBs(_product.estimatedTotal(quantity))}'
-                        : 'Producto agotado',
-                  ),
+                    if (remote) ...[
+                      const SizedBox(height: 5),
+                      const Text(
+                        'Cálculo informativo. No se genera un pedido ni se descuenta stock.',
+                        style: AppText.meta,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: inCart
+                          ? widget.onOpenCart
+                          : canAdd
+                          ? _addToCart
+                          : null,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          inCart
+                              ? 'Ver carrito'
+                              : canAdd
+                              ? 'Añadir al carrito · '
+                                    '${formatBs(_product.estimatedTotal(quantity))}'
+                              : 'Producto agotado',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

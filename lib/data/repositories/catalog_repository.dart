@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/catalog_category.dart';
 import '../../models/product.dart';
 import '../../models/product_batch.dart';
+import '../../utils/bolivia_time.dart';
 import '../datasources/firestore_catalog_data_source.dart';
 
 /// Transforma documentos Firestore en modelos usados por la aplicación.
@@ -35,9 +36,17 @@ class CatalogRepository {
           return ProductBatch(
             id: doc.id,
             productId: _text(data['producto_id']),
-            available: _integer(data['cantidad_disponible']),
-            active: data['estado'] != false,
-            expiresAt: rawDate is Timestamp ? rawDate.toDate() : null,
+            available: data['cantidad_disponible'] is int
+                ? _integer(data['cantidad_disponible'])
+                : 0,
+            active:
+                data['estado'] != false &&
+                data['bloqueado'] != true &&
+                data['comercializable'] != false,
+            invalidExpiry: rawDate != null && rawDate is! Timestamp,
+            expiresAt: rawDate is Timestamp
+                ? BoliviaTime.fromInstant(rawDate.toDate())
+                : null,
           );
         }).toList();
       });
@@ -64,6 +73,13 @@ class CatalogRepository {
             // Aceptamos tambien unidad_medida por compatibilidad.
             unitOfMeasure: _text(data['unidadMedida'] ?? data['unidad_medida']),
             unitsPerPackage: _integer(data['unidad_por_envase']),
+            baseInventory: data['inventario_unidad'] == 'base',
+            presentations: data['presentaciones_venta'] is List
+                ? (data['presentaciones_venta'] as List)
+                      .whereType<Map>()
+                      .map((p) => Map<String, dynamic>.from(p))
+                      .toList()
+                : const [],
           );
         }).toList();
       });
@@ -99,28 +115,76 @@ class CatalogRepository {
     final result = <Product>[];
     for (final record in records) {
       final category = categoriesById[record.categoryId];
-      result.add(
-        Product(
-          id: record.id,
-          name: record.name,
-          brand: record.brand,
-          presentation: record.presentation,
-          category: category?.visualCategory ?? ProductCategory.insumosClinicos,
-          categoryId: record.categoryId,
-          categoryName: namesById[record.categoryId] ?? 'Sin categoría',
-          price: record.price,
-          stock: stockByProduct[record.id] ?? 0,
-          description: record.description,
-          isFeatured: record.featured,
-          code: record.code,
-          concentration: record.concentration,
-          material: record.material,
-          size: record.size,
-          requiresExpiry: record.requiresExpiry,
-          unitOfMeasure: record.unitOfMeasure,
-          unitsPerPackage: record.unitsPerPackage,
-        ),
+      final product = Product(
+        id: record.id,
+        name: record.name,
+        brand: record.brand,
+        presentation: record.presentation,
+        category: category?.visualCategory ?? ProductCategory.insumosClinicos,
+        categoryId: record.categoryId,
+        categoryName: namesById[record.categoryId] ?? 'Sin categoría',
+        price: record.price,
+        stock: stockByProduct[record.id] ?? 0,
+        description: record.description,
+        isFeatured: record.featured,
+        code: record.code,
+        concentration: record.concentration,
+        material: record.material,
+        size: record.size,
+        requiresExpiry: record.requiresExpiry,
+        unitOfMeasure: record.unitOfMeasure,
+        unitsPerPackage: record.unitsPerPackage,
       );
+      if (!record.baseInventory) {
+        result.add(product);
+      } else {
+        final seen = <String>{};
+        for (final choice in record.presentations) {
+          final id = choice['id'],
+              factor = choice['unidades_base'],
+              price = choice['precio'];
+          if (id is! String ||
+              !RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(id) ||
+              !seen.add(id) ||
+              choice['estado'] != true ||
+              factor is! int ||
+              factor < 1 ||
+              factor > 10000 ||
+              price is! num ||
+              !price.isFinite ||
+              price <= 0 ||
+              choice['nombre'] is! String) {
+            continue;
+          }
+          result.add(
+            Product(
+              id: product.id,
+              name: product.name,
+              brand: product.brand,
+              presentation: choice['nombre'] as String,
+              category: product.category,
+              categoryId: product.categoryId,
+              categoryName: product.categoryName,
+              price: price.toDouble(),
+              stock: product.stock ~/ factor,
+              description: product.description,
+              isFeatured: product.isFeatured,
+              code: product.code,
+              concentration: product.concentration,
+              material: product.material,
+              size: product.size,
+              requiresExpiry: product.requiresExpiry,
+              unitOfMeasure:
+                  choice['unidad_medida'] as String? ??
+                  choice['nombre'] as String,
+              unitsPerPackage: product.unitsPerPackage,
+              presentationId: id,
+              inventoryFactor: factor,
+              inventoryStock: product.stock,
+            ),
+          );
+        }
+      }
     }
     result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return result;
@@ -153,6 +217,8 @@ class CatalogProductRecord {
     required this.featured,
     this.unitOfMeasure = '',
     this.unitsPerPackage = 0,
+    this.baseInventory = false,
+    this.presentations = const [],
   });
 
   final String id;
@@ -170,4 +236,6 @@ class CatalogProductRecord {
   final bool featured;
   final String unitOfMeasure;
   final int unitsPerPackage;
+  final bool baseInventory;
+  final List<Map<String, dynamic>> presentations;
 }

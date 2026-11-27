@@ -44,6 +44,7 @@ class FirestoreOrderMapper {
         : null;
     final order = PharmacyOrder(
       number: number,
+      schemaVersion: data['schema_version'] as String? ?? '',
       documentId: documentId,
       operationId: data['id_operacion'] as String?,
       addressId: data['id_direccion'] as String?,
@@ -72,10 +73,25 @@ class FirestoreOrderMapper {
             saleUnit: line['unidad_medida'] as String? ?? '',
             unitPrice: (line['precio_unitario'] as num).toDouble(),
             quantity: (line['cantidad'] as num).toInt(),
+            presentationId: line['id_presentacion'] as String?,
+            inventoryFactor: (line['factor_inventario'] as num?)?.toInt() ?? 1,
+            inventoryQuantity: (line['cantidad_inventario'] as num?)?.toInt(),
           ),
       ],
     );
     order.deliveryId = data['id_entrega'] as String?;
+    order.stockRestored = data['stock_restituido'] == true;
+    final request = data['solicitud_cancelacion'];
+    if (request is Map && request['estado'] == 'pendiente') {
+      order.cancellationRequests.add(
+        CancellationRequest(
+          id: 'remota',
+          requestedBy: request['usuario_id'] as String,
+          reason: request['motivo'] as String,
+          requestedAt: date(request['fecha']),
+        ),
+      );
+    }
     if (data['fecha_logistica'] != null) {
       final at = date(data['fecha_logistica']);
       if (order.status == OrderStatus.entregado) order.deliveredAt = at;

@@ -92,6 +92,8 @@ class SparkCheckout {
     final product = await tx.read('productos/$productId');
     final lot = await tx.read('lotes_productos/$lotId');
     if (user?['rol'] != 'cliente' ||
+        user?['tiene_deuda_vencida'] == true ||
+        farm?['tiene_deuda_vencida'] == true ||
         user?['estado'] != true ||
         farm?['usuario_id'] != uid ||
         farm?['estado'] != true ||
@@ -104,6 +106,7 @@ class SparkCheckout {
     }
     final price = product?['precio'];
     if (product?['estado'] != true ||
+        product?['inventario_unidad'] == 'base' ||
         price is! num ||
         !price.isFinite ||
         price <= 0 ||
@@ -124,6 +127,9 @@ class SparkCheckout {
     final stock = lot?['cantidad_disponible'];
     final expiry = lot?['fecha_vencimiento'];
     if (lot?['estado'] == false ||
+        lot?['bloqueado'] == true ||
+        lot?['comercializable'] == false ||
+        (expiry != null && (expiry is! DateTime || !expiry.isAfter(now))) ||
         lot?['producto_id'] != productId ||
         stock is! int ||
         stock < quantity ||

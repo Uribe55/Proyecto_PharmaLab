@@ -1,3 +1,5 @@
+import 'order_gateway.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/spark_approval.dart';
@@ -68,6 +70,16 @@ class FirestoreStaffOrderDataSource implements StaffOrderRepository {
     if (!approvalEnabled) throw StateError(SparkApproval.blockedReason);
     final uid = _session.uid;
     if (uid == null || !_authorized(uid)) throw StateError('Sesión no válida.');
+    if (FirebaseEnvironment.externalOrdersEnabled) {
+      final order = await _db
+          .doc('pedidos/$orderId')
+          .get(const GetOptions(source: Source.server));
+      if (order.data()?['schema_version'] == 'transactional_multi_v1') {
+        await OrderGateway().call('approveMultiOrder', {'orderId': orderId});
+        if (!_authorized(uid)) throw StateError('La sesión cambió.');
+        return;
+      }
+    }
     await _db.runTransaction((transaction) async {
       if (!_authorized(uid)) throw StateError('La sesión cambió.');
       await SparkApproval.prepare(

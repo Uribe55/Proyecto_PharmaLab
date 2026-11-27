@@ -1,3 +1,6 @@
+import '../../widgets/staff_filter_chip.dart';
+import '../../widgets/admin_scroll_layout.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../widgets/delivery_card.dart';
@@ -34,6 +37,15 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
   late final drivers = vm.repository.watchDrivers();
   String? selected;
   String? _filter;
+
+  Widget get _tabHeader => AppTabHeader(
+    title: widget.history
+        ? 'Historial de entregas'
+        : PharmaService.instance.role.name == 'repartidor'
+        ? 'Mis entregas'
+        : 'Entregas',
+    showLogo: true,
+  );
 
   @override
   void dispose() {
@@ -113,153 +125,180 @@ class _RemoteLogisticsScreenState extends State<RemoteLogisticsScreen> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: vm,
     builder: (context, _) => Scaffold(
-      appBar: AppPageAppBar(
-        title: widget.order != null
-            ? 'Asignar repartidor'
-            : widget.history
-            ? 'Historial de entregas'
-            : PharmaService.instance.role.name == 'repartidor'
-            ? 'Mis entregas'
-            : 'Entregas',
-      ),
-      body: widget.order != null
-          ? StreamBuilder<List<LogisticsDriver>>(
-              stream: drivers,
-              builder: (context, s) {
-                if (s.hasError) {
-                  return const Center(
-                    child: Text('No se pudieron consultar los repartidores.'),
-                  );
-                }
-                if (!s.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                return ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    Text(widget.order!.number),
-                    Text(widget.order!.address),
-                    if (s.data!.isEmpty)
-                      const Text('Sin repartidores activos.'),
-                    for (final d in s.data!)
-                      ListTile(
-                        title: Text(d.name),
-                        subtitle: Text(d.id),
-                        selected: selected == d.id,
-                        onTap: vm.busy
-                            ? null
-                            : () => setState(() => selected = d.id),
-                      ),
-                    FilledButton(
-                      onPressed: selected == null || vm.busy
-                          ? null
-                          : () => result(vm.assign(widget.order!, selected!)),
-                      child: const Text('Confirmar asignación'),
-                    ),
-                  ],
-                );
-              },
-            )
-          : StreamBuilder<List<DeliveryRecord>>(
-              stream: deliveries,
-              builder: (context, s) {
-                if (s.hasError) {
-                  return const Center(
-                    child: Text(
-                      'No se pudieron consultar las entregas. Revisa tu sesión y permisos.',
-                    ),
-                  );
-                }
-                if (!s.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final driver = PharmaService.instance.role.name == 'repartidor';
-                final records = deliveryList(
-                  s.data!,
-                  history: widget.history,
-                  filter: _filter,
-                );
-                return ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    Text(
-                      widget.history
-                          ? 'Entregas completadas'
-                          : 'Tu operación de entrega',
-                      style: AppText.h1,
-                    ),
-                    const SizedBox(height: 12),
-                    if (!widget.history)
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final entry in const <String?, String>{
-                              null: 'Todas',
-                              'asignada': 'Asignadas',
-                              'en_ruta': 'En ruta',
-                              'entregado': 'Entregadas',
-                              'fallida': 'Fallidas',
-                            }.entries)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ChoiceChip(
-                                  label: Text(entry.value),
-                                  selected: _filter == entry.key,
-                                  onSelected: (_) =>
-                                      setState(() => _filter = entry.key),
-                                ),
-                              ),
-                          ],
+      appBar: widget.order == null
+          ? null
+          : AppPageAppBar(
+              title: widget.order != null
+                  ? 'Asignar repartidor'
+                  : widget.history
+                  ? 'Historial de entregas'
+                  : PharmaService.instance.role.name == 'repartidor'
+                  ? 'Mis entregas'
+                  : 'Entregas',
+            ),
+      body: SafeArea(
+        child: widget.order != null
+            ? StreamBuilder<List<LogisticsDriver>>(
+                stream: drivers,
+                builder: (context, s) {
+                  if (s.hasError) {
+                    return const Center(
+                      child: Text('No se pudieron consultar los repartidores.'),
+                    );
+                  }
+                  if (!s.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      Text(widget.order!.number),
+                      Text(widget.order!.address),
+                      if (s.data!.isEmpty)
+                        const Text('Sin repartidores activos.'),
+                      for (final d in s.data!)
+                        ListTile(
+                          title: Text(d.name),
+                          subtitle: Text(d.id),
+                          selected: selected == d.id,
+                          onTap: vm.busy
+                              ? null
+                              : () => setState(() => selected = d.id),
                         ),
+                      FilledButton(
+                        onPressed: selected == null || vm.busy
+                            ? null
+                            : () => result(vm.assign(widget.order!, selected!)),
+                        child: const Text('Confirmar asignación'),
                       ),
-                    const SizedBox(height: 16),
-                    if (records.isEmpty)
-                      const EmptyState(
-                        icon: Icons.local_shipping_outlined,
-                        title: 'Sin entregas en esta vista',
-                        description: 'Las entregas aparecerán aquí cuando correspondan a la categoría seleccionada.',
+                    ],
+                  );
+                },
+              )
+            : StreamBuilder<List<DeliveryRecord>>(
+                stream: deliveries,
+                builder: (context, s) {
+                  if (s.hasError) {
+                    return AdminScrollList(
+                      headerPrefix: _tabHeader,
+                      padding: const EdgeInsets.all(20),
+                      children: const [
+                        Text(
+                          'No se pudieron consultar las entregas. Revisa tu sesión y permisos.',
+                        ),
+                      ],
+                    );
+                  }
+                  if (!s.hasData) {
+                    return AdminScrollList(
+                      headerPrefix: _tabHeader,
+                      padding: const EdgeInsets.all(20),
+                      children: const [
+                        Center(child: CircularProgressIndicator()),
+                      ],
+                    );
+                  }
+                  final driver =
+                      PharmaService.instance.role.name == 'repartidor';
+                  final records = deliveryList(
+                    s.data!,
+                    history: widget.history,
+                    filter: _filter,
+                  );
+                  return AdminScrollList(
+                    headerPrefix: _tabHeader,
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                    children: [
+                      Text(
+                        widget.history ? 'ENTREGAS COMPLETADAS' : 'LOGÍSTICA',
+                        style: AppText.eyebrow,
                       ),
-                    for (final d in records)
-                      DeliveryCard(
-                        delivery: d,
-                        showDriver: !driver,
-                        amount: !driver && d.data['total'] is num
-                            ? (d.data['total'] as num).toDouble()
-                            : null,
-                        actions: [
-                          if (!widget.history &&
-                              driver &&
-                              d.data['schema_version'] ==
-                                  'spark_logistics_v1' &&
-                              d.data['from_cache'] != true) ...[
-                            if (d.state == 'asignada')
-                              FilledButton(
-                                onPressed: vm.busy
-                                    ? null
-                                    : () => result(vm.transition(d, 'en_ruta')),
-                                child: const Text('INICIAR REPARTO'),
-                              ),
-                            if (d.state == 'en_ruta') ...[
-                              FilledButton(
-                                onPressed: vm.busy
-                                    ? null
-                                    : () =>
-                                          result(vm.transition(d, 'entregado')),
-                                child: const Text('MARCAR COMO ENTREGADO'),
-                              ),
-                              OutlinedButton(
-                                onPressed: vm.busy ? null : () => fail(d),
-                                child: const Text('REGISTRAR ENTREGA FALLIDA'),
-                              ),
+                      const SizedBox(height: 7),
+                      Text(
+                        widget.history
+                            ? 'Entregas completadas'
+                            : 'Tu operación de entrega',
+                        style: AppText.h1,
+                      ),
+                      const SizedBox(height: 12),
+                      if (!widget.history)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (final entry in const <String?, String>{
+                                null: 'Todas',
+                                'asignada': 'Asignadas',
+                                'en_ruta': 'En ruta',
+                                'entregado': 'Entregadas',
+                                'fallida': 'Fallidas',
+                              }.entries)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: StaffFilterChip(
+                                    label: entry.value,
+                                    selected: _filter == entry.key,
+                                    onTap: () =>
+                                        setState(() => _filter = entry.key),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                      if (records.isEmpty)
+                        const EmptyState(
+                          icon: Icons.local_shipping_outlined,
+                          title: 'Sin entregas en esta vista',
+                          description: 'Las entregas aparecerán aquí cuando correspondan a la categoría seleccionada.',
+                        ),
+                      for (final d in records)
+                        DeliveryCard(
+                          delivery: d,
+                          showDriver: !driver,
+                          amount: !driver && d.data['total'] is num
+                              ? (d.data['total'] as num).toDouble()
+                              : null,
+                          actions: [
+                            if (!widget.history &&
+                                driver &&
+                                [
+                                  'spark_logistics_v1',
+                                  'transactional_logistics_v1',
+                                ].contains(d.data['schema_version']) &&
+                                d.data['from_cache'] != true) ...[
+                              if (d.state == 'asignada')
+                                FilledButton(
+                                  onPressed: vm.busy
+                                      ? null
+                                      : () =>
+                                            result(vm.transition(d, 'en_ruta')),
+                                  child: const Text('INICIAR REPARTO'),
+                                ),
+                              if (d.state == 'en_ruta') ...[
+                                FilledButton(
+                                  onPressed: vm.busy
+                                      ? null
+                                      : () => result(
+                                          vm.transition(d, 'entregado'),
+                                        ),
+                                  child: const Text('MARCAR COMO ENTREGADO'),
+                                ),
+                                OutlinedButton(
+                                  onPressed: vm.busy ? null : () => fail(d),
+                                  child: const Text(
+                                    'REGISTRAR ENTREGA FALLIDA',
+                                  ),
+                                ),
+                              ],
                             ],
                           ],
-                        ],
-                      ),
-                  ],
-                );
-              },
-            ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+      ),
     ),
   );
 }

@@ -271,10 +271,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 if (_checkout?.hasPending ?? false)
                   _PendingCheckoutCard(checkout: _checkout!),
                 if (cart.isRemote)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
-                      SparkCheckout.limitMessage,
+                      _checkout?.scopeMessage ?? SparkCheckout.limitMessage,
                       style: AppText.label,
                     ),
                   ),
@@ -304,7 +304,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           price: _checkout == null
                               ? null
                               : _checkout.priceCents(
-                                      cart.items[index].product.id,
+                                      cart.items[index].product.cartKey,
                                       cart.items[index].product.price,
                                     ) /
                                     100,
@@ -561,7 +561,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Expanded(
                         child: Text(
                           cart.isRemote
-                              ? 'Al confirmar se registrará el pedido pendiente y se descontarán cajas del lote en una sola transacción. El carrito solo se vacía tras verificar el éxito.'
+                              ? 'Al confirmar se registrará un pedido pendiente y se descontará el inventario en una sola transacción. El carrito solo se vacía tras verificar el éxito.'
                               : 'Al confirmar, el stock se descuenta automáticamente y se genera un número único de pedido.',
                           style: AppText.meta.copyWith(height: 1.4),
                         ),
@@ -611,12 +611,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ? null
                       : _confirmOrder,
                   child: _loading || (_checkout?.busy ?? false)
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                      ? const FittedBox(
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text('Conectando con el servidor de pedidos…'),
+                            ],
                           ),
                         )
                       : FittedBox(

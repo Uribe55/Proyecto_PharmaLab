@@ -185,8 +185,7 @@ class DashboardOrder {
       !cancelled &&
       (status == OrderStatus.fallida || status == OrderStatus.reprogramado);
 
-  bool get isRescheduled =>
-      !cancelled && status == OrderStatus.reprogramado;
+  bool get isRescheduled => !cancelled && status == OrderStatus.reprogramado;
 
   bool get isPending => !cancelled && status == OrderStatus.pendiente;
 
@@ -286,6 +285,8 @@ class DashboardLot {
     this.lotCode = '',
     this.expiresAt,
     this.receivedAt,
+    this.active = true,
+    this.invalidExpiry = false,
   });
 
   final String id;
@@ -297,9 +298,10 @@ class DashboardLot {
   final String lotCode;
   final DateTime? expiresAt;
   final DateTime? receivedAt;
+  final bool active, invalidExpiry;
 
   bool isExpiredAt(DateTime now) {
-    if (!requiresExpiration || expiresAt == null) return false;
+    if (expiresAt == null) return false;
     final today = DateTime(now.year, now.month, now.day);
     return expiresAt!.isBefore(today);
   }

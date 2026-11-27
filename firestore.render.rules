@@ -1,0 +1,1029 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // 1. AUTENTICACION Y ROLES
+    // ============================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function activeRole(role) {
+      return signedIn()
+        && exists(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        )
+        && get(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        ).data.get('estado', false) == true
+        && get(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        ).data.get('rol', '') == role;
+    }
+
+    function activeClient() {
+      return activeRole('cliente');
+    }
+
+    function activeStaff() {
+      return activeRole('vendedor')
+        || activeRole('administrador');
+    }
+
+    function ownsFarm(farmId) {
+      return activeClient()
+        && farmId is string
+        && farmId.size() > 0
+        && exists(
+          /databases/$(database)/documents/farmacia_cliente/$(farmId)
+        )
+        && get(
+          /databases/$(database)/documents/farmacia_cliente/$(farmId)
+        ).data.get('usuario_id', '') == request.auth.uid
+        && get(
+          /databases/$(database)/documents/farmacia_cliente/$(farmId)
+        ).data.get('estado', false) == true;
+    }
+
+    // ============================================
+    // 2. REGISTRO DE FARMACIAS Y NIT
+    // ============================================
+
+    // El administrador gestiona catálogo, precios y entradas de mercadería.
+    function activeAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.estado == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'administrador';
+    }
+
+    // Identificador legible y consecutivo, con relleno de ceros.
+    function farmCode(n) {
+      return n < 10 ? 'FARM00' + string(n)
+        : n < 100 ? 'FARM0' + string(n)
+        : 'FARM' + string(n);
+    }
+
+    // Identificador de empleado EMP### con el mismo relleno que farmCode.
+    function employeeCode(n) {
+      return n < 10 ? 'EMP00' + string(n)
+        : n < 100 ? 'EMP0' + string(n)
+        : 'EMP' + string(n);
+    }
+
+    function nextEmployeeCounter() {
+      return getAfter(
+        /databases/$(database)/documents/configuracion/contadores_empleados
+      ).data;
+    }
+
+    function nextFarmCounter() {
+      return getAfter(
+        /databases/$(database)/documents/configuracion/contadores_farmacia
+      ).data;
+    }
+
+    function commercialCode(prefix, n) {
+      return n < 10 ? prefix + '00' + string(n)
+        : n < 100 ? prefix + '0' + string(n) : prefix + string(n);
+    }
+
+    // El ID interno vincula el incremento con UN documento nuevo de esta operación.
+    function validCommercialCounter(prefix) {
+      let before = resource.data;
+      let after = request.resource.data;
+      return before.ultimo_numero is int && before.ultimo_numero >= 1
+        && before.ultimo_numero < 999999999
+        && before.ultimo_id == commercialCode(prefix, before.ultimo_numero)
+        && before.ultimo_documento_id is string && before.ultimo_documento_id.size() > 0
+        && after.keys().hasOnly(['ultimo_numero', 'ultimo_id', 'ultimo_documento_id'])
+        && after.keys().hasAll(['ultimo_numero', 'ultimo_id', 'ultimo_documento_id'])
+        && after.ultimo_numero is int
+        && after.ultimo_numero == before.ultimo_numero + 1
+        && after.ultimo_id == commercialCode(prefix, after.ultimo_numero)
+        && after.ultimo_documento_id is string
+        && after.ultimo_documento_id.matches('^[A-Za-z0-9]{20}$');
+    }
+
+    match /usuarios/{uid} {
+
+      allow get: if (
+        signedIn() && request.auth.uid == uid
+      ) || activeRole('administrador');
+
+      allow list: if activeRole('administrador');
+
+      // RF-01: cada usuario actualiza únicamente sus datos de contacto.
+      // `tiene_deuda_vencida` es de solo lectura: lo administra el servidor y
+      // el cliente no puede modificarlo.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['nombre', 'telefono', 'direccion'])
+        && request.resource.data.nombre is string
+        && request.resource.data.get('telefono', '') is string
+        && request.resource.data.direccion is string;
+
+      // El administrador activo gestiona perfiles de empleados: estado,
+      // rol vendedor/repartidor y el vínculo empleado_id. No puede crear ni
+      // reasignar administradores, ni convertir clientes en personal.
+      allow update: if activeAdmin()
+        && employeeProfileConsistent(uid)
+        && request.auth.uid != uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly([
+            'nombre', 'telefono', 'direccion', 'correo',
+            'rol', 'estado', 'empleado_id'
+          ])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.get('telefono', '') is string
+        && request.resource.data.get('direccion', '') is string
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['correo'])
+          || request.resource.data.correo is string
+        )
+        && request.resource.data.estado is bool
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['rol'])
+          || (
+            resource.data.get('rol', '') == 'cliente'
+              ? request.resource.data.rol == 'cliente'
+              : (
+                resource.data.get('rol', '') == 'administrador'
+                  ? request.resource.data.rol == 'administrador'
+                  : request.resource.data.rol in ['vendedor', 'repartidor']
+              )
+          )
+        )
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['empleado_id'])
+          || (
+            request.resource.data.empleado_id is string
+            && request.resource.data.empleado_id.matches('^EMP[0-9]{3,}$')
+          )
+        );
+
+      // Un cliente nuevo solo puede crear su propio perfil mínimo.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'correo', 'nombre', 'rol', 'estado',
+          'fecha_registro'
+        ])
+        && request.resource.data.keys().hasAll([
+          'correo', 'nombre', 'rol', 'estado',
+          'fecha_registro'
+        ])
+        && request.resource.data.correo is string
+        && request.resource.data.correo == request.auth.token.email
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.rol == 'cliente'
+        && request.resource.data.estado == true
+        && request.resource.data.fecha_registro == request.time
+        && nextFarmCounter().ultimo_uid == uid
+        && getAfter(
+          /databases/$(database)/documents/farmacia_cliente/$(nextFarmCounter().ultimo_id)
+        ).data.usuario_id == uid
+        && getAfter(
+          /databases/$(database)/documents/nits_farmacia/$(getAfter(
+            /databases/$(database)/documents/farmacia_cliente/$(nextFarmCounter().ultimo_id)
+          ).data.nit)
+        ).data.usuario_id == uid;
+
+      // Alta de empleado: el administrador crea el perfil del UID recién
+      // creado en Authentication, en la misma transacción que empleado/EMP###
+      // y el incremento de configuracion/contadores_empleados.
+      allow create: if activeAdmin()
+        && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly([
+          'nombre', 'correo', 'telefono', 'rol', 'estado',
+          'fecha_registro', 'empleado_id'
+        ])
+        && request.resource.data.keys().hasAll([
+          'nombre', 'correo', 'telefono', 'rol', 'estado',
+          'fecha_registro', 'empleado_id'
+        ])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.correo is string
+        && request.resource.data.correo.size() > 0
+        && request.resource.data.telefono is string
+        && request.resource.data.rol in ['vendedor', 'repartidor']
+        && request.resource.data.estado is bool
+        && request.resource.data.fecha_registro == request.time
+        && request.resource.data.empleado_id is string
+        && request.resource.data.empleado_id.matches('^EMP[0-9]{3,}$')
+        && nextEmployeeCounter().ultimo_id == request.resource.data.empleado_id
+        && getAfter(
+          /databases/$(database)/documents/empleado/$(request.resource.data.empleado_id)
+        ).data.usuario_id == uid;
+
+      allow update, delete: if false;
+
+      match /operaciones_pedido/{operacionId} {
+        allow get: if activeClient()
+          && request.auth.uid == uid;
+
+        allow create: if activeClient() && request.auth.uid == uid
+          && validSparkOperation(request.resource.data, operacionId);
+        allow list, update, delete: if false;
+      }
+    }
+
+    match /farmacia_cliente/{farmaciaId} {
+
+      allow get, list: if (
+        activeClient()
+        && resource.data.usuario_id == request.auth.uid
+      ) || activeStaff();
+
+      // RF-01: el cliente actualiza responsable, teléfono y dirección.
+      allow update: if activeClient()
+        && resource.data.usuario_id == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['responsable', 'telefono', 'direccion_fiscal']);
+
+      // Se requiere crear la farmacia en la misma transacción que el usuario
+      // y la actualización del contador. Otros roles no pueden autogenerarse.
+      allow create: if signedIn()
+        && farmaciaId.matches('^FARM[0-9]{3,}$')
+        && farmaciaId == farmCode(nextFarmCounter().ultimo_numero)
+        && request.resource.data.keys().hasOnly([
+          'usuario_id', 'nombre_farmacia', 'nit',
+          'responsable', 'telefono', 'direccion_fiscal',
+          'estado', 'fecha_registro'
+        ])
+        && request.resource.data.keys().hasAll([
+          'usuario_id', 'nombre_farmacia', 'nit',
+          'responsable', 'telefono', 'direccion_fiscal',
+          'estado', 'fecha_registro'
+        ])
+        && request.resource.data.usuario_id == request.auth.uid
+        && request.resource.data.nombre_farmacia is string
+        && request.resource.data.nombre_farmacia.size() > 0
+        && request.resource.data.nit is string
+        && request.resource.data.nit.matches('^[0-9]{7,15}$')
+        && request.resource.data.responsable is string
+        && request.resource.data.responsable.size() > 0
+        && request.resource.data.telefono is string
+        && request.resource.data.direccion_fiscal is string
+        && request.resource.data.estado == true
+        && request.resource.data.fecha_registro == request.time
+        && nextFarmCounter().ultimo_id == farmaciaId
+        && nextFarmCounter().ultimo_uid == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        ).data.rol == 'cliente'
+        && getAfter(
+          /databases/$(database)/documents/nits_farmacia/$(request.resource.data.nit)
+        ).data.farmacia_id == farmaciaId
+        && getAfter(
+          /databases/$(database)/documents/nits_farmacia/$(request.resource.data.nit)
+        ).data.usuario_id == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
+    match /configuracion/contadores_farmacia {
+
+      allow get: if signedIn();
+
+      allow update: if signedIn()
+        && resource.data.keys().hasAll([
+          'ultimo_numero', 'ultimo_id', 'ultimo_uid'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ultimo_numero', 'ultimo_id', 'ultimo_uid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'ultimo_numero', 'ultimo_id', 'ultimo_uid'
+        ])
+        && resource.data.ultimo_numero is int
+        && request.resource.data.ultimo_numero is int
+        && request.resource.data.ultimo_numero
+          == resource.data.ultimo_numero + 1
+        && request.resource.data.ultimo_uid == request.auth.uid
+        && request.resource.data.ultimo_id is string
+        && request.resource.data.ultimo_id.matches('^FARM[0-9]{3,}$')
+        && request.resource.data.ultimo_id
+          == farmCode(request.resource.data.ultimo_numero)
+        && !exists(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        )
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        ).data.rol == 'cliente'
+        && getAfter(
+          /databases/$(database)/documents/farmacia_cliente/$(request.resource.data.ultimo_id)
+        ).data.usuario_id == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/nits_farmacia/$(getAfter(
+            /databases/$(database)/documents/farmacia_cliente/$(request.resource.data.ultimo_id)
+          ).data.nit)
+        ).data.farmacia_id == request.resource.data.ultimo_id;
+
+      allow create, delete, list: if false;
+    }
+
+    match /nits_farmacia/{nit} {
+
+      allow get: if signedIn();
+
+      allow create: if signedIn()
+        && nit.matches('^[0-9]{7,15}$')
+        && request.resource.data.keys().hasOnly([
+          'farmacia_id', 'usuario_id'
+        ])
+        && request.resource.data.keys().hasAll([
+          'farmacia_id', 'usuario_id'
+        ])
+        && request.resource.data.usuario_id == request.auth.uid
+        && request.resource.data.farmacia_id is string
+        && request.resource.data.farmacia_id
+          == nextFarmCounter().ultimo_id
+        && nextFarmCounter().ultimo_uid == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        ).data.rol == 'cliente'
+        && getAfter(
+          /databases/$(database)/documents/farmacia_cliente/$(request.resource.data.farmacia_id)
+        ).data.nit == nit
+        && getAfter(
+          /databases/$(database)/documents/farmacia_cliente/$(request.resource.data.farmacia_id)
+        ).data.usuario_id == request.auth.uid;
+
+      allow list, update, delete: if false;
+    }
+
+    // ============================================
+    // 3. CATALOGO Y STOCK
+    // ============================================
+
+    match /categorias/{categoriaId} {
+      allow get, list: if activeClient() || activeStaff();
+      allow create, update, delete: if activeAdmin();
+    }
+
+    match /productos/{productoId} {
+      allow get, list: if (activeClient() && resource.data.get('estado', false) == true)
+        || activeStaff();
+      allow create, update, delete: if activeAdmin();
+    }
+
+    match /lotes_productos/{loteId} {
+      allow get, list: if activeClient() || activeStaff();
+      allow update: if activeAdmin();
+      allow create, delete: if activeAdmin();
+    }
+
+    // ============================================
+    // 4. EMPLEADOS
+    // ============================================
+
+    function canReadEmployee(data) {
+      return activeRole('administrador')
+        || (
+          activeRole('vendedor')
+          && data.get('cargo', '') == 'Repartidor'
+        )
+        || (
+          (
+            activeRole('vendedor')
+            || activeRole('repartidor')
+          )
+          && data.get('usuario_id', '') == request.auth.uid
+        );
+    }
+
+    function employeeProfileConsistent(uid) {
+      let data = request.resource.data;
+      let id = data.get('empleado_id', '');
+      return id == '' ? (!resource.data.keys().hasAny(['empleado_id'])
+          && (!(resource.data.get('rol', '') in ['vendedor', 'repartidor'])
+            || !data.diff(resource.data).affectedKeys().hasAny(['rol', 'estado'])))
+        : (id == resource.data.get('empleado_id', id)
+          && getAfter(/databases/$(database)/documents/empleado/$(id)).data.usuario_id == uid
+          && getAfter(/databases/$(database)/documents/empleado/$(id)).data.estado == data.estado
+          && data.rol == (getAfter(/databases/$(database)/documents/empleado/$(id)).data.cargo == 'Vendedor' ? 'vendedor' : 'repartidor'));
+    }
+
+    match /empleado/{empleadoId} {
+      allow get: if activeAdmin() || canReadEmployee(resource.data);
+      allow list: if canReadEmployee(resource.data);
+
+      // El alta exige el contador actualizado, el ID consecutivo y el perfil
+      // usuarios/{uid} creado en la misma transacción.
+      allow create: if validEmployeeCreate(empleadoId);
+
+      // Edición: solo datos descriptivos y estado. El ID EMP###, el usuario_id
+      // y la fecha de ingreso son inmutables.
+      allow update: if validEmployeeUpdate(empleadoId);
+      // Contacto propio: nunca modifica UID, cargo, estado ni numeración.
+      allow update: if signedIn()
+        && resource.data.usuario_id == request.auth.uid
+        && resource.data.estado == true
+        && (activeRole('repartidor') || activeRole('vendedor') || activeAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['telefono'])
+        && request.resource.data.telefono is string
+        && request.resource.data.telefono.size() > 0
+        && request.resource.data.telefono.size() <= 40;
+
+      allow delete: if false;
+    }
+
+    function validEmployeeCreate(empleadoId) {
+      let before = get(
+        /databases/$(database)/documents/configuracion/contadores_empleados
+      ).data;
+      let counter = nextEmployeeCounter();
+      let data = request.resource.data;
+      return activeAdmin()
+        && empleadoId.matches('^EMP[0-9]{3,}$')
+        && before.ultimo_numero is int
+        && before.ultimo_numero >= 3
+        && before.ultimo_id == employeeCode(before.ultimo_numero)
+        && counter.ultimo_numero is int
+        && counter.ultimo_numero == before.ultimo_numero + 1
+        && counter.ultimo_id == empleadoId
+        && counter.ultimo_id == employeeCode(counter.ultimo_numero)
+        && data.keys().hasOnly([
+          'nombre', 'apellido', 'cargo', 'telefono', 'estado',
+          'fecha_ingreso', 'usuario_id'
+        ])
+        && data.keys().hasAll([
+          'nombre', 'apellido', 'cargo', 'telefono', 'estado',
+          'fecha_ingreso', 'usuario_id'
+        ])
+        && data.nombre is string && data.nombre.size() > 0
+        && data.apellido is string && data.apellido.size() > 0
+        && data.cargo in ['Vendedor', 'Repartidor']
+        && data.telefono is string
+        && data.estado is bool
+        && data.fecha_ingreso == request.time
+        && data.usuario_id is string
+        && data.usuario_id.size() > 0
+        && !exists(/databases/$(database)/documents/usuarios/$(data.usuario_id))
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.empleado_id == empleadoId
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.rol == (data.cargo == 'Vendedor' ? 'vendedor' : 'repartidor')
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.estado == data.estado;
+    }
+
+    function validEmployeeUpdate(empleadoId) {
+      let data = request.resource.data;
+      return activeAdmin()
+        && data.diff(resource.data).affectedKeys()
+          .hasOnly(['nombre', 'apellido', 'cargo', 'telefono', 'estado'])
+        && data.nombre is string && data.nombre.size() > 0
+        && data.apellido is string && data.apellido.size() > 0
+        && data.cargo in ['Vendedor', 'Repartidor']
+        && data.telefono is string
+        && data.estado is bool
+        && data.usuario_id == resource.data.usuario_id
+        && data.fecha_ingreso == resource.data.fecha_ingreso
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.empleado_id == empleadoId
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.rol == (data.cargo == 'Vendedor' ? 'vendedor' : 'repartidor')
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(data.usuario_id)
+        ).data.estado == data.estado;
+    }
+
+    // ============================================
+    // 5. DIRECCIONES
+    // ============================================
+
+    function validAddress(data) {
+      return data.keys().hasOnly([
+          'id_cliente', 'nombre', 'direccion',
+          'referencia', 'latitud', 'longitud', 'estado', 'numero_comercial'
+        ])
+        && data.keys().hasAll([
+          'id_cliente', 'nombre', 'direccion', 'estado'
+        ])
+        && data.id_cliente is string
+        && ownsFarm(data.id_cliente)
+        && data.nombre is string
+        && data.nombre.size() > 0
+        && data.nombre.size() <= 80
+        && data.direccion is string
+        && data.direccion.size() > 0
+        && data.direccion.size() <= 300
+        && data.get('referencia', '') is string
+        && data.get('referencia', '').size() <= 300
+        && (
+          data.get('latitud', null) == null
+          || (
+            data.get('latitud', null) is number
+            && data.get('latitud', null) >= -90
+            && data.get('latitud', null) <= 90
+          )
+        )
+        && (
+          data.get('longitud', null) == null
+          || (
+            data.get('longitud', null) is number
+            && data.get('longitud', null) >= -180
+            && data.get('longitud', null) <= 180
+          )
+        )
+        && data.estado is bool
+        && (!('numero_comercial' in data)
+          || (data.numero_comercial is string && data.numero_comercial.matches('^DIR[0-9]{3,}$')));
+    }
+
+    function numberedAddress(data, id) {
+      let counter = getAfter(/databases/$(database)/documents/configuracion/contadores_direcciones).data;
+      return validAddress(data) && data.estado == true
+        && id.matches('^[A-Za-z0-9]{20}$')
+        && counter.ultimo_numero == get(/databases/$(database)/documents/configuracion/contadores_direcciones).data.ultimo_numero + 1
+        && counter.ultimo_documento_id == id
+        && data.numero_comercial == counter.ultimo_id;
+    }
+
+    match /direcciones/{direccionId} {
+
+      allow get: if (activeClient() && !exists(/databases/$(database)/documents/direcciones/$(direccionId)))
+        || ownsFarm(resource.data.get('id_cliente', '')) || activeStaff();
+      allow list: if
+        ownsFarm(resource.data.get('id_cliente', ''))
+        || activeStaff();
+
+      allow create: if numberedAddress(request.resource.data, direccionId);
+
+      allow update: if
+        ownsFarm(resource.data.get('id_cliente', ''))
+        && request.resource.data.id_cliente
+          == resource.data.id_cliente
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['numero_comercial'])
+        && validAddress(request.resource.data);
+
+      allow delete: if false;
+    }
+
+    // ============================================
+    // 6. PEDIDOS
+    // ============================================
+
+    function readsOrder(data) {
+      return activeStaff()
+        || ownsFarm(data.get('id_cliente', ''))
+        || (
+          activeRole('repartidor')
+          && data.get('repartidor_uid', '')
+            == request.auth.uid
+        );
+    }
+
+    // v2: DET001 y contador, además del contrato de inventario v1.
+    function sparkInitialEvent(uid) {
+      return {'estado_anterior': null, 'estado_nuevo': 'pendiente',
+        'fecha_cambio': request.time, 'id_usuario': uid};
+    }
+
+    function sparkOperation(order, id) {
+      return {'pedido_id': id, 'id_cliente': order.id_cliente,
+        'id_direccion': order.id_direccion, 'linea': order.linea,
+        'observaciones': order.observaciones, 'fecha': request.time};
+    }
+
+    function validSparkOrder(order, id) {
+      let line = order.linea;
+      let farm = get(/databases/$(database)/documents/farmacia_cliente/$(order.id_cliente)).data;
+      let address = get(/databases/$(database)/documents/direcciones/$(order.id_direccion)).data;
+      let product = get(/databases/$(database)/documents/productos/$(line.id_producto)).data;
+      let before = get(/databases/$(database)/documents/lotes_productos/$(line.id_lote)).data;
+      let after = getAfter(/databases/$(database)/documents/lotes_productos/$(line.id_lote)).data;
+      let counter = getAfter(/databases/$(database)/documents/configuracion/contadores_pedidos).data;
+      // El rol activo se comprueba en las escrituras obligatorias de lote y operación.
+      // Aquí evita una lectura extra: máximo 10 accesos por escritura.
+      return signedIn()
+        && id.matches('^[A-Za-z0-9]{20}$')
+        && order.keys().hasOnly(['schema_version', 'estado', 'fecha_pedido', 'id_cliente',
+          'id_direccion', 'total', 'usuario_id', 'id_operacion', 'numero_comercial', 'linea', 'observaciones'])
+        && order.keys().hasAll(['schema_version', 'estado', 'fecha_pedido', 'id_cliente',
+          'id_direccion', 'total', 'usuario_id', 'id_operacion', 'numero_comercial', 'linea', 'observaciones'])
+        && order.schema_version == 'spark_single_v2'
+        && order.estado == 'pendiente' && order.fecha_pedido == request.time
+        && order.usuario_id == request.auth.uid && order.id_operacion == id
+        && order.id_cliente.matches('^FARM[0-9]{3,}$')
+        && order.id_direccion.matches('^[A-Za-z0-9_-]{1,100}$')
+        && counter.ultimo_documento_id == id
+        && counter.ultimo_numero == get(/databases/$(database)/documents/configuracion/contadores_pedidos).data.ultimo_numero + 1
+        && order.numero_comercial == counter.ultimo_id
+        && order.observaciones is string && order.observaciones.size() <= 500
+        && farm.usuario_id == request.auth.uid && farm.estado == true
+        && farm.get('tiene_deuda_vencida', false) != true
+        && address.id_cliente == order.id_cliente && address.estado == true
+        && line is map
+        && line.keys().hasOnly(['id_producto', 'id_lote', 'cantidad', 'precio_unitario', 'subtotal'])
+        && line.keys().hasAll(['id_producto', 'id_lote', 'cantidad', 'precio_unitario', 'subtotal'])
+        && line.id_producto is string && line.id_lote is string
+        && line.id_producto.matches('^[A-Za-z0-9_-]{1,100}$')
+        && line.id_lote.matches('^[A-Za-z0-9_-]{1,100}$')
+        && line.cantidad is int && line.cantidad > 0 && line.cantidad <= 1000
+        && product.estado == true && product.precio is number
+        && product.get('inventario_unidad', 'comercial') != 'base'
+        && product.precio > 0 && product.precio <= 1000000
+        && line.precio_unitario == product.precio
+        && line.subtotal == product.precio * line.cantidad && order.total == line.subtotal
+        && before.producto_id == line.id_producto && before.cantidad_disponible is int
+        && before.get('estado', true) != false
+        && before.get('bloqueado', false) != true
+        && before.get('comercializable', true) != false
+        && (before.get('fecha_vencimiento', null) == null
+          || (before.fecha_vencimiento is timestamp && before.fecha_vencimiento > request.time))
+        && before.cantidad_disponible >= line.cantidad
+        && product.get('requiere_vencimiento', false) is bool
+        && (!product.get('requiere_vencimiento', false)
+          || (before.fecha_vencimiento is timestamp && before.fecha_vencimiento > request.time))
+        && after.cantidad_disponible == before.cantidad_disponible - line.cantidad
+        && after.ultimo_pedido_id == id
+        && getAfter(/databases/$(database)/documents/pedidos/$(id)/detalle_pedido/DET001).data == line
+        && getAfter(/databases/$(database)/documents/pedidos/$(id)/historial_estado/CONFIRMACION).data == sparkInitialEvent(request.auth.uid)
+        && getAfter(/databases/$(database)/documents/usuarios/$(request.auth.uid)/operaciones_pedido/$(id)).data == sparkOperation(order, id);
+    }
+
+    function newSparkParent(id) { return false; }
+
+    function newSparkParentDisabled(id) {
+      let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
+      return activeClient() && !exists(/databases/$(database)/documents/pedidos/$(id))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get('tiene_deuda_vencida', false) != true
+        && order.schema_version == 'spark_single_v2'
+        && order.usuario_id == request.auth.uid && order.id_operacion == id
+        && order.estado == 'pendiente' && order.fecha_pedido == request.time;
+    }
+
+    function validSparkOperation(data, id) {
+      let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
+      return false; // Render: operaciones escritas solo por el servidor.
+    }
+
+    function validSparkLotDebit(lotId) {
+      let next = request.resource.data;
+      let id = next.ultimo_pedido_id;
+      let order = getAfter(/databases/$(database)/documents/pedidos/$(id)).data;
+      return newSparkParent(id)
+        && next.diff(resource.data).affectedKeys().hasOnly(['cantidad_disponible', 'ultimo_pedido_id'])
+        && next.diff(resource.data).affectedKeys().hasAll(['cantidad_disponible', 'ultimo_pedido_id'])
+        && next.cantidad_disponible is int && next.cantidad_disponible >= 0
+        && resource.data.cantidad_disponible is int
+        && order.linea.id_lote == lotId && order.linea.id_producto == resource.data.producto_id
+        && order.linea.cantidad is int && order.linea.cantidad > 0
+        && next.cantidad_disponible == resource.data.cantidad_disponible - order.linea.cantidad;
+    }
+
+    match /pedidos/{pedidoId} {
+
+      allow get: if (activeClient() && !exists(/databases/$(database)/documents/pedidos/$(pedidoId)))
+        || readsOrder(resource.data);
+      allow list: if readsOrder(resource.data);
+
+      allow create: if false; // Render: confirmacion exclusiva mediante API.
+
+      // APROBACION CONTROLADA:
+      // Requiere una escritura atomica del pedido
+      // y un evento de historial con ID APROBACION.
+      allow update: if activeStaff()
+        && resource.data.get('schema_version', '') != 'transactional_multi_v1'
+        && resource.data.get('estado', '') == 'pendiente'
+        && request.resource.data.estado == 'aprobado'
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly([
+            'estado', 'aprobado_por', 'fecha_aprobacion'
+          ])
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasAll([
+            'estado', 'aprobado_por', 'fecha_aprobacion'
+          ])
+        && request.resource.data.aprobado_por == request.auth.uid
+        && request.resource.data.fecha_aprobacion == request.time
+        && !exists(
+          /databases/$(database)/documents/pedidos/$(pedidoId)/historial_estado/APROBACION
+        )
+        && getAfter(
+          /databases/$(database)/documents/pedidos/$(pedidoId)/historial_estado/APROBACION
+        ).data.get('estado_anterior', '') == 'pendiente'
+        && getAfter(
+          /databases/$(database)/documents/pedidos/$(pedidoId)/historial_estado/APROBACION
+        ).data.get('estado_nuevo', '') == 'aprobado'
+        && getAfter(
+          /databases/$(database)/documents/pedidos/$(pedidoId)/historial_estado/APROBACION
+        ).data.get('id_usuario', '') == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/pedidos/$(pedidoId)/historial_estado/APROBACION
+        ).data.fecha_cambio == request.time;
+
+      allow delete: if false;
+
+      match /detalle_pedido/{detalleId} {
+
+        allow get, list: if readsOrder(
+          get(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data
+        );
+
+        allow create: if detalleId == 'DET001' && newSparkParent(pedidoId)
+          && request.resource.data == getAfter(/databases/$(database)/documents/pedidos/$(pedidoId)).data.linea;
+        allow update, delete: if false;
+      }
+
+      match /historial_estado/{eventoId} {
+
+        allow get, list: if readsOrder(
+          get(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data
+        );
+
+        // Evento unico de aprobacion con escritura
+        // atomica junto al cambio de estado.
+        allow create: if (eventoId == 'CONFIRMACION' && newSparkParent(pedidoId)
+            && request.resource.data == sparkInitialEvent(request.auth.uid))
+          || (eventoId == 'APROBACION'
+          && activeStaff()
+          && request.resource.data.keys().hasOnly([
+            'estado_anterior', 'estado_nuevo',
+            'fecha_cambio', 'id_usuario'
+          ])
+          && request.resource.data.keys().hasAll([
+            'estado_anterior', 'estado_nuevo',
+            'fecha_cambio', 'id_usuario'
+          ])
+          && request.resource.data.estado_anterior == 'pendiente'
+          && request.resource.data.estado_nuevo == 'aprobado'
+          && request.resource.data.id_usuario == request.auth.uid
+          && request.resource.data.fecha_cambio == request.time
+          && get(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data.estado == 'pendiente'
+          && getAfter(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data.estado == 'aprobado'
+          && getAfter(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data.aprobado_por == request.auth.uid
+          && getAfter(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data.fecha_aprobacion == request.time);
+
+        allow update, delete: if false;
+
+        allow create: if eventoId in ['LOG_en_ruta', 'LOG_entregado', 'LOG_fallida']
+          && logisticsTransition(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data.id_entrega,
+            get(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data.id_entrega)).data,
+            getAfter(/databases/$(database)/documents/entregas/$(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data.id_entrega)).data)
+          && eventoId == 'LOG_' + request.resource.data.estado_nuevo;
+
+      }
+
+      match /asignaciones_lotes/{asignacionId} {
+        allow get, list: if readsOrder(
+          get(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data
+        );
+
+        allow create, update, delete: if false;
+      }
+
+      match /movimientos_inventario/{movimientoId} {
+        allow get, list: if readsOrder(get(/databases/$(database)/documents/pedidos/$(pedidoId)).data);
+        allow write: if false;
+      }
+
+      allow update: if activeStaff()
+        && resource.data.schema_version == 'spark_single_v2' && resource.data.estado == 'aprobado'
+        && resource.data.get('id_entrega', null) == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id_entrega'])
+        && !exists(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega))
+        && getAfter(/databases/$(database)/documents/entregas/$(request.resource.data.id_entrega)).data.id_pedido == pedidoId;
+      allow update: if resource.data.get('id_entrega', null) is string
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'fecha_logistica'])
+        && logisticsTransition(resource.data.id_entrega,
+          get(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data,
+          getAfter(/databases/$(database)/documents/entregas/$(resource.data.id_entrega)).data);
+
+
+    }
+
+    // ============================================
+    // 7. CONTADOR DE PEDIDOS
+    // ============================================
+
+    match /configuracion/contadores_pedidos {
+
+      allow get: if activeClient();
+      allow update: if activeClient() && validCommercialCounter('PED')
+        && newSparkParent(request.resource.data.ultimo_documento_id)
+        && getAfter(/databases/$(database)/documents/pedidos/$(request.resource.data.ultimo_documento_id)).data.numero_comercial
+          == request.resource.data.ultimo_id;
+      allow create, list, delete: if false;
+    }
+
+    match /configuracion/contadores_direcciones {
+      allow get: if activeClient();
+      allow update: if activeClient() && validCommercialCounter('DIR')
+        && !exists(/databases/$(database)/documents/direcciones/$(request.resource.data.ultimo_documento_id))
+        && numberedAddress(
+          getAfter(/databases/$(database)/documents/direcciones/$(request.resource.data.ultimo_documento_id)).data,
+          request.resource.data.ultimo_documento_id);
+      allow create, list, delete: if false;
+    }
+
+    // El documento configuracion/contadores_empleados se crea manualmente en
+    // la consola con { ultimo_numero: 3, ultimo_id: "EMP003" }. La app solo
+    // puede incrementarlo dentro de la transacción de alta de un empleado.
+    match /configuracion/contadores_empleados {
+      allow get: if activeAdmin();
+      allow update: if validEmployeeCounter();
+      allow create, list, delete: if false;
+    }
+
+    function validEmployeeCounter() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return activeAdmin()
+        && before.keys().hasAll(['ultimo_numero', 'ultimo_id'])
+        && before.ultimo_numero is int
+        && before.ultimo_numero >= 3
+        && before.ultimo_id == employeeCode(before.ultimo_numero)
+        && after.keys().hasOnly(['ultimo_numero', 'ultimo_id'])
+        && after.keys().hasAll(['ultimo_numero', 'ultimo_id'])
+        && after.ultimo_numero is int
+        && after.ultimo_numero == before.ultimo_numero + 1
+        && after.ultimo_id == employeeCode(after.ultimo_numero)
+        && !exists(/databases/$(database)/documents/empleado/$(after.ultimo_id))
+        && getAfter(
+          /databases/$(database)/documents/empleado/$(after.ultimo_id)
+        ).data.usuario_id is string
+        && getAfter(
+          /databases/$(database)/documents/usuarios/$(getAfter(
+            /databases/$(database)/documents/empleado/$(after.ultimo_id)
+          ).data.usuario_id)
+        ).data.empleado_id == after.ultimo_id;
+    }
+
+    // ============================================
+    // 8. ENTREGAS
+    // ============================================
+
+    function assignedDriver(empId) {
+      return activeRole('repartidor')
+        && empId is string
+        && empId.size() > 0
+        && exists(
+          /databases/$(database)/documents/empleado/$(empId)
+        )
+        && get(
+          /databases/$(database)/documents/empleado/$(empId)
+        ).data.get('usuario_id', '') == request.auth.uid
+        && get(
+          /databases/$(database)/documents/empleado/$(empId)
+        ).data.get('cargo', '') == 'Repartidor'
+        && get(
+          /databases/$(database)/documents/empleado/$(empId)
+        ).data.get('estado', false) == true;
+    }
+
+    function ownsDelivery(pedidoId) {
+      return activeClient()
+        && pedidoId is string
+        && pedidoId.size() > 0
+        && exists(
+          /databases/$(database)/documents/pedidos/$(pedidoId)
+        )
+        && ownsFarm(
+          get(
+            /databases/$(database)/documents/pedidos/$(pedidoId)
+          ).data.get('id_cliente', '')
+        );
+    }
+
+    function canReadDelivery(data) {
+      return activeStaff()
+        || assignedDriver(data.get('id_repartidor', ''))
+        || ownsDelivery(data.get('id_pedido', ''));
+    }
+
+    match /entregas/{entregaId} {
+
+      allow get: if canReadDelivery(resource.data);
+
+      allow list: if activeStaff()
+        || assignedDriver(
+          resource.data.get('id_repartidor', '')
+        );
+
+      allow delete: if false;
+
+      match /detalle_entrega/{detalleId} {
+
+        allow get, list: if canReadDelivery(
+          get(
+            /databases/$(database)/documents/entregas/$(entregaId)
+          ).data
+        );
+
+        allow delete: if false;
+
+        allow create: if detalleId == 'DENT001' && activeStaff()
+          && !exists(/databases/$(database)/documents/entregas/$(entregaId))
+          && getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data.schema_version == 'spark_logistics_v1'
+          && request.resource.data == logisticsDetail(getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data, false);
+        allow update: if detalleId == 'DENT001'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cantidad_entregada'])
+          && logisticsTransition(entregaId, get(/databases/$(database)/documents/entregas/$(entregaId)).data,
+            getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data)
+          && getAfter(/databases/$(database)/documents/entregas/$(entregaId)).data.estado == 'entregado';
+
+      }
+
+      allow create: if logisticsAssignment(entregaId, request.resource.data);
+      allow update: if logisticsTransition(entregaId, resource.data, request.resource.data);
+
+
+    }
+
+    // ============================================
+    // Logística Spark: alcance de una línea, documentos históricos inmutables.
+    function logisticsDetail(d, delivered) {
+      return {'id_detalle_pedido': 'DET001', 'cantidad_programada': d.cantidad,
+        'cantidad_entregada': delivered ? d.cantidad : 0};
+    }
+
+    function logisticsAssignment(id, d) {
+      let o = get(/databases/$(database)/documents/pedidos/$(d.id_pedido)).data;
+      let emp = get(/databases/$(database)/documents/empleado/$(d.id_repartidor)).data;
+      let user = get(/databases/$(database)/documents/usuarios/$(emp.usuario_id)).data;
+      let farm = get(/databases/$(database)/documents/farmacia_cliente/$(o.id_cliente)).data;
+      let address = get(/databases/$(database)/documents/direcciones/$(o.id_direccion)).data;
+      let line = get(/databases/$(database)/documents/pedidos/$(d.id_pedido)/detalle_pedido/DET001).data;
+      let product = get(/databases/$(database)/documents/productos/$(line.id_producto)).data;
+      return activeStaff() && id.matches('^[A-Za-z0-9]{20}$')
+        && o.schema_version == 'spark_single_v2' && o.estado == 'aprobado'
+        && o.get('id_entrega', null) == null
+        && emp.cargo == 'Repartidor' && emp.estado == true
+        && user.rol == 'repartidor' && user.estado == true
+        && d == {'schema_version': 'spark_logistics_v1', 'estado': 'asignada',
+          'fecha_creacion': request.time, 'fecha_programada': null,
+          'id_pedido': d.id_pedido, 'id_repartidor': d.id_repartidor,
+          'repartidor_uid': emp.usuario_id, 'asignado_por': request.auth.uid,
+          'numero_comercial': 'ENT-' + o.numero_comercial, 'pedido_numero': o.numero_comercial,
+          'farmacia': farm.nombre_farmacia, 'contacto': farm.responsable,
+          'telefono': farm.telefono, 'direccion': address.direccion,
+          'referencia': address.get('referencia', ''),
+          'producto': line.id_producto, 'producto_nombre': product.get('nombre', line.id_producto), 'cantidad': line.cantidad}
+        && getAfter(/databases/$(database)/documents/pedidos/$(d.id_pedido)).data.id_entrega == id
+        && getAfter(/databases/$(database)/documents/entregas/$(id)/detalle_entrega/DENT001).data == logisticsDetail(d, false);
+    }
+
+    function logisticsTransition(id, before, after) {
+      let o = get(/databases/$(database)/documents/pedidos/$(before.id_pedido)).data;
+      let next = getAfter(/databases/$(database)/documents/pedidos/$(before.id_pedido)).data;
+      let event = getAfter(/databases/$(database)/documents/pedidos/$(before.id_pedido)/historial_estado/$("LOG_" + after.estado)).data;
+      return before.schema_version == 'spark_logistics_v1'
+        && assignedDriver(before.id_repartidor) && before.repartidor_uid == request.auth.uid
+        && o.id_entrega == id
+        && ((before.estado == 'asignada' && o.estado == 'aprobado' && after.estado == 'en_ruta')
+          || (before.estado == 'en_ruta' && o.estado == 'en_ruta' && after.estado in ['entregado', 'fallida']))
+        && after.diff(before).affectedKeys().hasOnly(['estado', 'fecha_estado', 'motivo', 'observacion'])
+        && after.fecha_estado == request.time
+        && after.motivo is string && after.observacion is string
+        && after.motivo.size() <= 100 && after.observacion.size() <= 180
+        && (after.estado == 'fallida' ? after.motivo.size() > 0 : after.motivo == '' && after.observacion == '')
+        && next.estado == after.estado && next.fecha_logistica == request.time
+        && event == {'estado_anterior': o.estado, 'estado_nuevo': after.estado,
+          'fecha_cambio': request.time, 'id_usuario': request.auth.uid,
+          'observaciones': after.estado == 'fallida' ? after.motivo + ': ' + after.observacion : ''}
+        && (after.estado != 'entregado'
+          || getAfter(/databases/$(database)/documents/entregas/$(id)/detalle_entrega/DENT001).data == logisticsDetail(before, true));
+    }
+
+    // 9. DENEGAR TODO LO NO AUTORIZADO
+    // ============================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

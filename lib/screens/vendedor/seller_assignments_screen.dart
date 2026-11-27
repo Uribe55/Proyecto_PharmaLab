@@ -1,3 +1,5 @@
+import '../../widgets/admin_scroll_layout.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../services/pharma_service.dart';
@@ -31,104 +33,90 @@ class SellerAssignmentsScreen extends StatelessWidget {
         return Scaffold(
           body: SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                AppTabHeader(
-                  title: 'Entregas',
-                  actions: [
-                    IconButton(
-                      tooltip: 'Cancelaciones e incidencias',
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const OrderOperationsScreen(),
-                        ),
+            child: AdminScrollLayout(
+              header: AppTabHeader(
+                title: 'Entregas',
+                showLogo: true,
+                actions: [
+                  IconButton(
+                    tooltip: 'Cancelaciones e incidencias',
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const OrderOperationsScreen(),
                       ),
-                      icon: const Icon(Icons.rule_rounded),
                     ),
-                  ],
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                    children: [
-                      const Text('LOGÍSTICA', style: AppText.eyebrow),
-                      const SizedBox(height: 7),
-                      const Text(
-                        'Del almacén a la farmacia.',
-                        style: AppText.h1,
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Asigna los pedidos aprobados y sigue las entregas que '
-                        'ya están en ruta.',
-                        style: AppText.muted,
-                      ),
-                      const SizedBox(height: 22),
-                      _GroupHeader(
-                        title: 'Por asignar',
-                        count: toAssign.length,
-                      ),
-                      const SizedBox(height: 12),
-                      if (toAssign.isEmpty)
-                        const _EmptyGroup(
-                          icon: Icons.assignment_turned_in_outlined,
-                          text:
-                              'No hay pedidos aprobados esperando repartidor.',
-                        )
-                      else
-                        for (final order in toAssign) ...[
-                          OrderDeliveryCard(
-                            order: order,
-                            caption: 'Aprobado · listo para asignar',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      SellerAssignScreen(order: order),
-                                ),
-                              );
-                            },
-                          ),
-                          if (order != toAssign.last)
-                            const SizedBox(height: 11),
-                        ],
-                      const SizedBox(height: 24),
-                      _GroupHeader(
-                        title: 'Asignados sin despachar',
-                        count: assigned.length,
-                      ),
-                      for (final order in assigned)
-                        OrderDeliveryCard(
-                          order: order,
-                          caption:
-                              'Asignado a ${order.driverName ?? ''} · Sin despachar',
-                          onTap: () =>
-                              showOrderDetailSheet(context, order: order),
-                        ),
-                      const SizedBox(height: 24),
-                      _GroupHeader(title: 'En ruta', count: inTransit.length),
-                      const SizedBox(height: 12),
-                      if (inTransit.isEmpty)
-                        const _EmptyGroup(
-                          icon: Icons.local_shipping_outlined,
-                          text: 'Todavía no hay entregas en camino.',
-                        )
-                      else
-                        for (final order in inTransit) ...[
-                          OrderDeliveryCard(
-                            order: order,
-                            caption:
-                                'Repartidor: ${order.driverName ?? 'sin asignar'}',
-                            onTap: () =>
-                                showOrderDetailSheet(context, order: order),
-                          ),
-                          if (order != inTransit.last)
-                            const SizedBox(height: 11),
-                        ],
-                    ],
+                    icon: const Icon(Icons.rule_rounded),
                   ),
-                ),
-              ],
+                ],
+              ),
+              body: AdminScrollList(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                children: [
+                  const Text('LOGÍSTICA', style: AppText.eyebrow),
+                  const SizedBox(height: 7),
+                  const Text('Del almacén a la farmacia.', style: AppText.h1),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Asigna los pedidos aprobados y sigue las entregas que '
+                    'ya están en ruta.',
+                    style: AppText.muted,
+                  ),
+                  const SizedBox(height: 22),
+                  _GroupHeader(title: 'Por asignar', count: toAssign.length),
+                  const SizedBox(height: 12),
+                  if (toAssign.isEmpty)
+                    const _EmptyGroup(
+                      icon: Icons.assignment_turned_in_outlined,
+                      text: 'No hay pedidos aprobados esperando repartidor.',
+                    )
+                  else
+                    for (final order in toAssign) ...[
+                      OrderDeliveryCard(
+                        order: order,
+                        caption: 'Aprobado · listo para asignar',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SellerAssignScreen(order: order),
+                            ),
+                          );
+                        },
+                      ),
+                      if (order != toAssign.last) const SizedBox(height: 11),
+                    ],
+                  const SizedBox(height: 24),
+                  _GroupHeader(
+                    title: 'Asignados sin despachar',
+                    count: assigned.length,
+                  ),
+                  for (final order in assigned)
+                    OrderDeliveryCard(
+                      order: order,
+                      caption:
+                          'Asignado a ${order.driverName ?? ''} · Sin despachar',
+                      onTap: () => showOrderDetailSheet(context, order: order),
+                    ),
+                  const SizedBox(height: 24),
+                  _GroupHeader(title: 'En ruta', count: inTransit.length),
+                  const SizedBox(height: 12),
+                  if (inTransit.isEmpty)
+                    const _EmptyGroup(
+                      icon: Icons.local_shipping_outlined,
+                      text: 'Todavía no hay entregas en camino.',
+                    )
+                  else
+                    for (final order in inTransit) ...[
+                      OrderDeliveryCard(
+                        order: order,
+                        caption:
+                            'Repartidor: ${order.driverName ?? 'sin asignar'}',
+                        onTap: () =>
+                            showOrderDetailSheet(context, order: order),
+                      ),
+                      if (order != inTransit.last) const SizedBox(height: 11),
+                    ],
+                ],
+              ),
             ),
           ),
         );

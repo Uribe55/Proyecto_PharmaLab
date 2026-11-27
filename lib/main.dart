@@ -93,10 +93,12 @@ class _PharmaLabAppState extends State<PharmaLabApp> {
                         child: SizedBox(
                           width: double.infinity,
                           child: Text(
-                            FirebaseEnvironment .emulatorOrdersEnabled
+                            FirebaseEnvironment.emulatorOrdersEnabled
                                 ? 'Entorno local de pruebas · Datos de demostración en Firebase Emulator Suite.'
                                 : service.usesFirebase
-                                ? 'Firebase real · Pedidos Spark: un producto y un lote por compra.'
+                                ? (FirebaseEnvironment.externalOrdersEnabled
+                                      ? 'Firebase real · Pedidos múltiples mediante servidor externo.'
+                                      : 'Firebase real · Pedidos Spark: un producto y un lote por compra.')
                                 : 'Modo local de demostración · Catálogo, '
                                       'pedidos y usuarios de prueba.',
                             textAlign: TextAlign.center,

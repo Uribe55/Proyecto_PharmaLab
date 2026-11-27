@@ -57,6 +57,23 @@ function payload(db,{id=doc(collection(db,'pedidos')).id,quantity=1,price=150,fa
  ]};
 }
 function commit(db,data){const batch=writeBatch(db);for(const w of data.writes){if(w.update)batch.update(doc(db,w.p),w.data);else batch.set(doc(db,w.p),w.data);}return batch.commit();}
+for (const path of ['usuarios/client', 'farmacia_cliente/FARM004']) {
+ test(`cuenta con deuda vencida no puede eludir el backend mediante Spark: ${path}`, async () => {
+  await env.withSecurityRulesDisabled(async c => {const db=c.firestore(),b=writeBatch(db);b.update(doc(db,path),{tiene_deuda_vencida:true});await b.commit();});
+  const db=client();await assertFails(commit(db,payload(db)));
+  assert.equal((await getDoc(doc(db,'lotes_productos/LOTE001'))).data().cantidad_disponible,100);
+ });
+}
+test('inventario base no acepta la ruta Spark sin conversiones autorizadas',async()=>{
+ await env.withSecurityRulesDisabled(async c=>{const db=c.firestore(),b=writeBatch(db);b.update(doc(db,'productos/PROD001'),{inventario_unidad:'base'});await b.commit();});
+ const db=client();await assertFails(commit(db,payload(db)));
+});
+for(const change of [{bloqueado:true},{comercializable:false},{fecha_vencimiento:Timestamp.fromMillis(1)}]){
+ test(`Spark tampoco permite eludir lotes no vendibles: ${JSON.stringify(change)}`,async()=>{
+  await env.withSecurityRulesDisabled(async c=>{const db=c.firestore(),b=writeBatch(db);b.update(doc(db,'lotes_productos/LOTE001'),change);b.update(doc(db,'productos/PROD001'),{requiere_vencimiento:false});await b.commit();});
+  const db=client();await assertFails(commit(db,payload(db)));
+ });
+}
 async function confirm(db,options={},trace={}){
  const data=payload(db,options);trace.stage='counter-read';
  return numberedRun(db,'configuracion/contadores_pedidos',async tx=>{

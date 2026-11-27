@@ -53,7 +53,20 @@ class CheckoutViewModel extends ChangeNotifier {
         (item['quantity'] as num) * (item['expectedPriceCents'] as num) / 100,
   );
   bool get enabled => repository.confirmationEnabled;
-  String? get scopeError => cart.items.length != 1
+  bool get supportsMultipleProducts =>
+      repository is MultiOrderCapability &&
+      (repository as MultiOrderCapability).supportsMultipleProducts;
+  String get scopeMessage => supportsMultipleProducts
+      ? 'Un pedido admite hasta 20 líneas, 10.000 unidades comerciales por línea y 100 lotes utilizados. Si se excede un límite, no se confirma ni divide el carrito.'
+      : SparkCheckout.limitMessage;
+  String? get scopeError => supportsMultipleProducts
+      ? cart.items.length > 20 ||
+                cart.items.any((item) => item.quantity > 10000)
+            ? scopeMessage
+            : null
+      : cart.items.any((item) => item.product.presentationId != null)
+      ? 'Las presentaciones con inventario base requieren el backend transaccional, disponible por ahora en emuladores.'
+      : cart.items.length != 1
       ? SparkCheckout.limitMessage
       : cart.items.single.quantity > 1000
       ? 'El máximo es 1000 cajas por pedido.'
@@ -71,7 +84,9 @@ class CheckoutViewModel extends ChangeNotifier {
     0.0,
     (sum, item) =>
         sum +
-        priceCents(item.product.id, item.product.price) * item.quantity / 100,
+        priceCents(item.product.cartKey, item.product.price) *
+            item.quantity /
+            100,
   );
   bool get canConfirm =>
       enabled &&
@@ -140,16 +155,24 @@ class CheckoutViewModel extends ChangeNotifier {
         for (final item in cart.items)
           {
             'productId': item.product.id,
+            if (item.product.presentationId != null)
+              'presentationId': item.product.presentationId,
             'quantity': item.quantity,
             'expectedPriceCents': priceCents(
-              item.product.id,
+              item.product.cartKey,
               item.product.price,
             ),
           },
-      ]..sort(
-        (a, b) =>
-            (a['productId'] as String).compareTo(b['productId'] as String),
-      );
+      ]..sort((a, b) {
+        final product = (a['productId'] as String).compareTo(
+          b['productId'] as String,
+        );
+        return product != 0
+            ? product
+            : (a['presentationId'] as String? ?? '').compareTo(
+                b['presentationId'] as String? ?? '',
+              );
+      });
 
   Future<PharmacyOrder?> confirm({
     String notes = '',

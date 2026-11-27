@@ -1,3 +1,5 @@
+import '../../widgets/admin_scroll_layout.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../models/order.dart';
@@ -43,67 +45,62 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
         return Scaffold(
           body: SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                const AppTabHeader(title: 'Historial'),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            child: AdminScrollLayout(
+              header: AppTabHeader(title: 'Historial', showLogo: true),
+              body: AdminScrollList(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                children: [
+                  const Text('ENTREGAS CERRADAS', style: AppText.eyebrow),
+                  const SizedBox(height: 7),
+                  const Text('Tu historial de ruta.', style: AppText.h1),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Consulta únicamente tus entregas completadas correctamente.',
+                    style: AppText.muted,
+                  ),
+                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
-                      const Text('ENTREGAS CERRADAS', style: AppText.eyebrow),
-                      const SizedBox(height: 7),
-                      const Text('Tu historial de ruta.', style: AppText.h1),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Consulta únicamente tus entregas completadas correctamente.',
-                        style: AppText.muted,
+                      const Expanded(
+                        child: Text('Registros', style: AppText.h3),
                       ),
-                      const SizedBox(height: 18),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text('Registros', style: AppText.h3),
-                          ),
-                          Text(
-                            '${orders.length} '
-                            '${orders.length == 1 ? 'resultado' : 'resultados'}',
-                            style: AppText.meta,
-                          ),
-                        ],
+                      Text(
+                        '${orders.length} '
+                        '${orders.length == 1 ? 'resultado' : 'resultados'}',
+                        style: AppText.meta,
                       ),
-                      const SizedBox(height: 12),
-                      if (orders.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 26),
-                          child: EmptyState(
-                            icon: Icons.history_rounded,
-                            title: 'Sin entregas en esta vista',
-                            description:
-                                'Aquí aparecerán tus entregas exitosas.',
-                          ),
-                        )
-                      else
-                        for (final order in orders) ...[
-                          OrderDeliveryCard(
-                            order: order,
-                            showTotal: false,
-                            caption: _captionFor(order),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      DriverDeliveryDetailScreen(order: order),
-                                ),
-                              );
-                            },
-                          ),
-                          if (order != orders.last) const SizedBox(height: 11),
-                        ],
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  if (orders.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 26),
+                      child: EmptyState(
+                        icon: Icons.history_rounded,
+                        title: 'Sin entregas en esta vista',
+                        description: 'Aquí aparecerán tus entregas exitosas.',
+                      ),
+                    )
+                  else
+                    for (final order in orders) ...[
+                      OrderDeliveryCard(
+                        order: order,
+                        showTotal: false,
+                        caption: _captionFor(order),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  DriverDeliveryDetailScreen(order: order),
+                            ),
+                          );
+                        },
+                      ),
+                      if (order != orders.last) const SizedBox(height: 11),
+                    ],
+                ],
+              ),
             ),
           ),
         );

@@ -3,45 +3,38 @@
 const {createHash} = require("node:crypto");
 const {Timestamp} = require("firebase-admin/firestore");
 const {HttpsError} = require("firebase-functions/v2/https");
+const {LIMITS, presentation, eligibleLots, allocate} = require("./inventory");
+const SCHEMA = "transactional_multi_v1";
 
 const fail = (code, message, details) => {
   throw new HttpsError(code, message, details);
 };
 const id = (value) => typeof value === "string" && /^[\w-]{1,128}$/.test(value);
-const money = (value) => {
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0 ||
-      Math.abs(value * 100 - Math.round(value * 100)) > 0.00001) {
-    fail("failed-precondition", "Precio inválido en el catálogo.");
-  }
-  return Math.round(value * 100);
-};
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const text = (value) => typeof value === "string" ? value : "";
 
 function validate(data) {
   if (!data || !id(data.operationId) || !id(data.addressId) ||
       !Array.isArray(data.items) || !data.items.length || data.items.length > 20 ||
-      typeof data.notes !== "string" || data.notes.length > 1000) {
+      typeof data.notes !== "string" || data.notes.length > 500) {
     fail("invalid-argument", "Carrito, dirección u operación inválidos (máximo 20 productos).");
   }
   const seen = new Set();
   const items = data.items.map((item) => {
-    if (!item || !id(item.productId) || seen.has(item.productId) ||
+    const key = `${item?.productId}:${item?.presentationId || ""}`;
+    if (!item || !id(item.productId) || seen.has(key) ||
+        (item.presentationId != null && !id(item.presentationId)) ||
         !Number.isSafeInteger(item.quantity) || item.quantity <= 0 || item.quantity > 10000 ||
         !Number.isSafeInteger(item.expectedPriceCents) || item.expectedPriceCents <= 0) {
       fail("invalid-argument", "Producto, cantidad o precio de revisión inválido.");
     }
-    seen.add(item.productId);
+    seen.add(key);
     return {productId: item.productId, quantity: item.quantity,
-      expectedPriceCents: item.expectedPriceCents};
-  }).sort((a, b) => a.productId.localeCompare(b.productId));
+      expectedPriceCents: item.expectedPriceCents,
+      ...(item.presentationId ? {presentationId: item.presentationId} : {})};
+  }).sort((a, b) => a.productId.localeCompare(b.productId) || (a.presentationId || "").localeCompare(b.presentationId || ""));
   return {operationId: data.operationId, addressId: data.addressId,
     notes: data.notes.trim(), items};
-}
-
-// Día comercial boliviano, independiente del huso horario de la máquina.
-function dayBolivia(date) {
-  return new Date(date.getTime() - 4 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 async function clientContext(tx, db, uid) {
@@ -59,6 +52,7 @@ async function clientContext(tx, db, uid) {
 
 /** La única unidad de trabajo de confirmación. Todos los reads preceden los writes. */
 async function confirmOrder(db, uid, input, {now = () => new Date(), beforeCommit} = {}) {
+  if (!id(uid)) fail("unauthenticated", "Inicia sesión.");
   const data = validate(input);
   const fingerprint = hash(JSON.stringify(data));
   const operation = db.doc(`usuarios/${uid}/operaciones_pedido/${data.operationId}`);
@@ -68,67 +62,71 @@ async function confirmOrder(db, uid, input, {now = () => new Date(), beforeCommi
     const {user, farm} = await clientContext(tx, db, uid);
     const prior = await tx.get(operation);
     if (prior.exists) {
-      if (prior.get("huella") !== fingerprint) fail("already-exists", "La operación ya tiene otro contenido.");
+      if (prior.get("huella") !== fingerprint || !prior.get("resultado")) fail("already-exists", "La operación ya tiene otro contenido o contrato.");
       return prior.get("resultado");
+    }
+    if (user.tiene_deuda_vencida === true || farm.get("tiene_deuda_vencida") === true) {
+      fail("failed-precondition", "Tu cuenta tiene deuda vencida. Contacta al vendedor.");
     }
     const address = await tx.get(db.doc(`direcciones/${data.addressId}`));
     if (!address.exists || address.get("id_cliente") !== farm.id || address.get("estado") !== true) {
       fail("permission-denied", "Selecciona una dirección activa de tu farmacia.");
     }
     const counter = await tx.get(db.doc("configuracion/contadores_pedidos"));
-    if (!counter.exists || !Number.isSafeInteger(counter.get("ultimo_numero")) || counter.get("ultimo_numero") < 0) {
+    const last = counter.get("ultimo_numero");
+    const commercialCode = (n) => `PED${String(n).padStart(3, "0")}`;
+    if (!counter.exists || !Number.isSafeInteger(last) || last < 1 || last >= 999999999 ||
+        counter.get("ultimo_id") !== commercialCode(last) || !id(counter.get("ultimo_documento_id"))) {
       fail("failed-precondition", "El contador de pedidos requiere preparación autorizada.");
     }
     if ((await tx.get(orderRef)).exists) fail("already-exists", "Identificador de pedido ocupado.");
     const time = now();
     const lines = [];
-    const debits = [];
+    const debits = new Map();
+    const products = new Map(), batchesByProduct = new Map(), remainingByLot = new Map(), categoryNames = new Map();
     const prices = {};
     let totalCents = 0;
     for (const item of data.items) {
-      const product = await tx.get(db.doc(`productos/${item.productId}`));
+      const product = products.get(item.productId) ?? await tx.get(db.doc(`productos/${item.productId}`));
+      products.set(item.productId, product);
       if (!product.exists || product.get("estado") !== true) fail("failed-precondition", "Producto inactivo.");
       const p = product.data();
-      if (typeof p.requiere_vencimiento !== "boolean") fail("failed-precondition", "Falta definir la política de vencimiento del producto.");
-      const cents = money(p.precio);
-      if (cents !== item.expectedPriceCents) prices[item.productId] = cents;
-      const batches = await tx.get(db.collection("lotes_productos").where("producto_id", "==", item.productId).limit(101));
-      if (batches.size > 100) fail("resource-exhausted", "Demasiados lotes; requiere consolidación del inventario.");
-      // FEFO si exige vencimiento; en otro caso FIFO de ingreso, ID como desempate.
-      const eligible = batches.docs.filter((b) => {
-        const expiry = b.get("fecha_vencimiento");
-        if (p.requiere_vencimiento === true && !(expiry instanceof Timestamp)) return false;
-        if (expiry != null && !(expiry instanceof Timestamp)) return false;
-        if (expiry && dayBolivia(expiry.toDate()) < dayBolivia(time)) return false;
-        return Number.isSafeInteger(b.get("cantidad_disponible")) && b.get("cantidad_disponible") > 0;
-      }).sort((a, b) => {
-        const field = p.requiere_vencimiento === true ? "fecha_vencimiento" : "fecha_ingreso";
-        const millis = (doc) => doc.get(field) instanceof Timestamp ? doc.get(field).toMillis() : 0;
-        return millis(a) - millis(b) || a.id.localeCompare(b.id);
-      });
-      let remaining = item.quantity;
-      const allocations = [];
-      for (const batch of eligible) {
-        const quantity = Math.min(remaining, batch.get("cantidad_disponible"));
-        if (!quantity) break;
-        debits.push({ref: batch.ref, available: batch.get("cantidad_disponible") - quantity});
-        allocations.push({id_lote: batch.id, cantidad: quantity});
-        remaining -= quantity;
+      if (id(p.categoria_id) && !categoryNames.has(p.categoria_id)) {
+        const category = await tx.get(db.doc(`categorias/${p.categoria_id}`));
+        categoryNames.set(p.categoria_id, text(category.get("nombre")));
       }
-      if (remaining) fail("failed-precondition", "Stock insuficiente.", {productId: item.productId});
+      if (typeof p.requiere_vencimiento !== "boolean") fail("failed-precondition", "Falta definir la política de vencimiento del producto.");
+      const choice = presentation(p, item.presentationId);
+      const cents = choice.cents;
+      if (cents !== item.expectedPriceCents) prices[item.presentationId ? `${item.productId}:${item.presentationId}` : item.productId] = cents;
+      const batches = batchesByProduct.get(item.productId) ?? await tx.get(db.collection("lotes_productos").where("producto_id", "==", item.productId).limit(101));
+      batchesByProduct.set(item.productId, batches);
+      if (batches.size > 100) fail("resource-exhausted", "Demasiados lotes; requiere consolidación del inventario.");
+      const eligible = eligibleLots(batches.docs.map((b) => ({id: b.id, ref: b.ref, data: b.data()})), p.requiere_vencimiento, time);
+      const available = eligible.reduce((sum, b) => sum + (remainingByLot.has(b.id) ? remainingByLot.get(b.id) : b.data.cantidad_disponible), 0);
+      const allocations = allocate(eligible, item.quantity * choice.factor, remainingByLot);
+      if (!allocations) fail("failed-precondition", `El stock de ${text(p.nombre) || item.productId} ha cambiado. Solicitaste ${item.quantity} ${choice.unit}, pero actualmente hay ${Math.floor(available / choice.factor)} disponibles.`,
+        {productId: item.productId, requested: item.quantity, available: Math.floor(available / choice.factor)});
+      for (const allocation of allocations) {
+        const batch = eligible.find((b) => b.id === allocation.id_lote);
+        debits.set(batch.id, batch);
+      }
       totalCents += cents * item.quantity;
       if (!Number.isSafeInteger(totalCents) || totalCents > 1000000000) fail("invalid-argument", "Importe fuera del límite.");
       lines.push({id_producto: item.productId, cantidad: item.quantity,
+        ...(item.presentationId ? {id_presentacion: item.presentationId} : {}),
+        factor_inventario: choice.factor, cantidad_inventario: item.quantity * choice.factor, unidad_inventario: choice.mode,
         precio_unitario: cents / 100, subtotal: cents * item.quantity / 100,
-        nombre: text(p.nombre), marca: text(p.marca), presentacion: text(p.presentacion),
-        unidad_medida: text(p.unidadMedida || p.unidad_medida),
+        nombre: text(p.nombre), marca: text(p.marca), presentacion: choice.name,
+        unidad_medida: choice.unit, categoria_id: text(p.categoria_id),
+        ...(categoryNames.get(p.categoria_id) ? {categoria: categoryNames.get(p.categoria_id)} : {}),
         unidad_por_envase: p.unidad_por_envase || 0, asignaciones_lotes: allocations});
     }
     if (Object.keys(prices).length) fail("failed-precondition", "El precio cambió. Revisa el nuevo importe.", {prices});
-    if (debits.length > 300) fail("resource-exhausted", "El pedido utiliza demasiados lotes.");
+    if (debits.size > LIMITS.usedLots || Buffer.byteLength(JSON.stringify(lines)) > 500000) fail("resource-exhausted", "Máximo 100 lotes utilizados y 500 KB de detalle. No se dividió el carrito.");
     const sequence = counter.get("ultimo_numero") + 1;
     if (!Number.isSafeInteger(sequence)) fail("resource-exhausted", "Contador agotado.");
-    const number = `PL-${dayBolivia(time).slice(0, 4)}-${String(sequence).padStart(6, "0")}`;
+    const number = commercialCode(sequence);
     const result = {orderId: orderRef.id, number, operationId: data.operationId};
     const stamp = Timestamp.fromDate(time);
     const delivery = {nombre: text(address.get("nombre")), direccion: text(address.get("direccion")),
@@ -139,14 +137,20 @@ async function confirmOrder(db, uid, input, {now = () => new Date(), beforeCommi
       usuario_id: uid, id_direccion: address.id, total: totalCents / 100,
       numero_comercial: number, id_operacion: data.operationId, observaciones: data.notes,
       nombre_farmacia: text(farm.get("nombre_farmacia")), responsable: text(farm.get("responsable") || user.nombre),
-      telefono: text(farm.get("telefono")), entrega: delivery, version_esquema: 1});
-    for (const line of lines) tx.create(orderRef.collection("detalle_pedido").doc(line.id_producto), line);
+      telefono: text(farm.get("telefono")), entrega: delivery, schema_version: SCHEMA, lineas: lines, stock_restituido: false});
+    for (let i = 0; i < lines.length; i++) tx.create(orderRef.collection("detalle_pedido").doc(`DET${String(i + 1).padStart(3, "0")}`), lines[i]);
     tx.create(orderRef.collection("historial_estado").doc("confirmacion"), {
       estado_anterior: "pendiente", estado: "pendiente", fecha: stamp,
       operacion: "confirm", usuario_id: uid, rol: "cliente", nota: "Pedido confirmado; inventario descontado.",
     });
-    for (const debit of debits) tx.update(debit.ref, {cantidad_disponible: debit.available});
-    tx.update(counter.ref, {ultimo_numero: sequence});
+    for (const lot of debits.values()) {
+      tx.update(lot.ref, {cantidad_disponible: remainingByLot.get(lot.id)});
+      tx.create(orderRef.collection("movimientos_inventario").doc(`SALIDA_${lot.id}`), {
+        id_lote: lot.id, id_producto: lot.data.producto_id,
+        cantidad: remainingByLot.get(lot.id) - lot.data.cantidad_disponible, fecha: stamp, tipo: "confirmacion", usuario_id: uid,
+      });
+    }
+    tx.update(counter.ref, {ultimo_numero: sequence, ultimo_id: number, ultimo_documento_id: orderRef.id});
     tx.create(operation, {huella: fingerprint, resultado: result, fecha: stamp, id_cliente: farm.id});
     // Fallo de prueba después de preparar TODAS las escrituras: ninguna se aplica parcialmente.
     if (beforeCommit) await beforeCommit();
@@ -163,4 +167,4 @@ async function operationResult(db, uid, operationId) {
   });
 }
 
-module.exports = {confirmOrder, operationResult};
+module.exports = {confirmOrder, operationResult, SCHEMA};

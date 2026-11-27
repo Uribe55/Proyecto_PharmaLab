@@ -6,6 +6,7 @@ import '../data/repositories/catalog_repository.dart';
 import '../models/catalog_category.dart';
 import '../models/product.dart';
 import '../models/product_batch.dart';
+import '../utils/bolivia_time.dart';
 
 /// ViewModel observable del catálogo. No accede directamente a Firestore.
 class CatalogViewModel extends ChangeNotifier {
@@ -27,6 +28,7 @@ class CatalogViewModel extends ChangeNotifier {
   bool _hasBatches = false;
   String? _error;
   bool _started = false;
+  Timer? _expiryRefresh;
 
   bool get loading =>
       _started &&
@@ -49,6 +51,10 @@ class CatalogViewModel extends ChangeNotifier {
   void start() {
     if (_started) return;
     _started = true;
+    _expiryRefresh = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _refresh(),
+    );
     _error = null;
     _hasProducts = false;
     _hasCategories = false;
@@ -86,7 +92,7 @@ class CatalogViewModel extends ChangeNotifier {
         records: _records,
         categories: _categories,
         batches: _batches,
-        now: DateTime.now(),
+        now: BoliviaTime.now(),
       );
     }
     notifyListeners();
@@ -95,6 +101,8 @@ class CatalogViewModel extends ChangeNotifier {
   void stop() {
     if (!_started) return;
     _started = false;
+    _expiryRefresh?.cancel();
+    _expiryRefresh = null;
     unawaited(_productsSubscription?.cancel() ?? Future<void>.value());
     unawaited(_categoriesSubscription?.cancel() ?? Future<void>.value());
     unawaited(_batchesSubscription?.cancel() ?? Future<void>.value());

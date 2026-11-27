@@ -38,6 +38,7 @@ class CartViewModel extends ChangeNotifier {
   bool get canReview =>
       isNotEmpty &&
       catalogReady &&
+      !_service.hasInventoryConflict &&
       items.every((item) => !item.needsAdjustment);
   bool get canConfirm => !isRemote && canReview;
 
@@ -62,12 +63,13 @@ class CartViewModel extends ChangeNotifier {
     if (!isRemote) return product;
     if (!_catalog.ready) return null;
     for (final latest in _catalog.products) {
-      if (latest.id == product.id) return latest;
+      if (latest.cartKey == product.cartKey) return latest;
     }
     return null;
   }
 
   int quantityFor(Product product) => _service.quantityFor(product);
+  int maximumFor(Product product) => _service.maximumFor(product);
 
   int remainingFor(Product product) {
     final latest = currentProduct(product);
@@ -85,11 +87,12 @@ class CartViewModel extends ChangeNotifier {
       return;
     }
     final latest = currentProduct(product);
-    if (latest == null || latest.stock < quantity) return;
+    if (latest == null || maximumFor(latest) < quantity) return;
     _service.setQuantity(latest, quantity);
   }
 
-  void adjust(CartItem item) => setQuantity(item.product, item.product.stock);
+  void adjust(CartItem item) =>
+      setQuantity(item.product, maximumFor(item.product));
   void remove(Product product) => _service.remove(product);
   void clear() => _service.clear();
   @override

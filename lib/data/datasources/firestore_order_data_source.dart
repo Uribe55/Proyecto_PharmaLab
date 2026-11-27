@@ -10,9 +10,11 @@ import 'firestore_order_reader.dart';
 import 'firestore_spark_checkout.dart';
 import 'checkout_diagnostics.dart';
 import 'numbered_transaction.dart';
+import 'order_gateway.dart';
 import '../repositories/remote_order_repository.dart';
 
-class FirestoreOrderDataSource implements RemoteOrderRepository {
+class FirestoreOrderDataSource
+    implements RemoteOrderRepository, MultiOrderCapability {
   FirestoreOrderDataSource({FirebaseFirestore? db, PharmaService? session})
     : _db = db ?? FirebaseEnvironment.firestore,
       _session = session ?? PharmaService.instance;
@@ -27,10 +29,20 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
   @override
   bool get confirmationEnabled => true;
   @override
+  bool get supportsMultipleProducts => FirebaseEnvironment.multiOrdersEnabled;
+  @override
   String newOperationId() => _db.collection('pedidos').doc().id;
 
   @override
   Future<PharmacyOrder> confirm(Map<String, dynamic> request) async {
+    if (supportsMultipleProducts) {
+      final uid = _uid, farm = _farm;
+      final response = await OrderGateway().call('confirmOrder', request);
+      if (_session.uid != uid || _session.pharmacyId != farm) {
+        throw StateError('La sesión cambió.');
+      }
+      return _load(response!['orderId'] as String, server: true);
+    }
     SparkCheckout.item(request);
     final uid = _uid, farm = _farm;
     final existing = await result(request['operationId'] as String);
@@ -70,6 +82,37 @@ class FirestoreOrderDataSource implements RemoteOrderRepository {
       );
     }
     final uid = _uid, farm = _farm;
+    if (supportsMultipleProducts) {
+      if (FirebaseEnvironment.externalOrdersEnabled) {
+        final response = await OrderGateway().call('orderOperationResult', {
+          'operationId': operationId,
+        });
+        if (_session.uid != uid || _session.pharmacyId != farm) {
+          throw StateError('La sesión cambió.');
+        }
+        if (response != null) {
+          return _load(response['orderId'] as String, server: true);
+        }
+      }
+      // Conserva también la recuperación de operaciones Spark anteriores.
+      final operation = await _db
+          .doc('usuarios/$uid/operaciones_pedido/$operationId')
+          .get(const GetOptions(source: Source.server));
+      if (_session.uid != uid || _session.pharmacyId != farm) {
+        throw StateError('La sesión cambió.');
+      }
+      if (!operation.exists) return null;
+      final data = operation.data()!;
+      if (data['id_cliente'] != farm) {
+        throw StateError('La operación pertenece a otra farmacia.');
+      }
+      final result = data['resultado'];
+      final id = result is Map ? result['orderId'] : data['pedido_id'];
+      if (id is! String) {
+        throw StateError('La operación no contiene un resultado verificable.');
+      }
+      return _load(id, server: true);
+    }
     final diagnostics = CheckoutDiagnostics(
       uid: uid,
       farmId: farm,

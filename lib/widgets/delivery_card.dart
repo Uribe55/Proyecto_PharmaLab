@@ -206,6 +206,12 @@ class DeliveryCard extends StatelessWidget {
                                         ),
                                       ),
                                   for (final line
+                                      in d['productos'] as List? ?? [])
+                                    Text(
+                                      '${line['nombre']} · ${line['presentacion']} · ${line['cantidad']} ${line['unidad_medida']}',
+                                      style: AppText.muted,
+                                    ),
+                                  for (final line
                                       in d['detalles_historicos'] as List? ??
                                           [])
                                     Text(
