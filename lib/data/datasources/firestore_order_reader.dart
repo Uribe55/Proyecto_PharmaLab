@@ -10,6 +10,137 @@ class FirestoreOrderReader {
   FirestoreOrderReader(this.db);
   final FirebaseFirestore db;
 
+  /// Un listener por fuente; los cambios no vuelven a consultar el pedido.
+  /// La entrega se lee por ID autorizado, nunca mediante un listado de empleados.
+  Stream<PharmacyOrder> watchClient(
+    String id, {
+    required String ownerUid,
+    required bool Function(Map<String, dynamic>) authorized,
+  }) {
+    late StreamController<PharmacyOrder> controller;
+    DocumentSnapshot<Map<String, dynamic>>? parent, delivery;
+    QuerySnapshot<Map<String, dynamic>>? details, history;
+    final subscriptions = <StreamSubscription<dynamic>>[];
+    StreamSubscription<dynamic>? deliverySubscription;
+    String? deliveryId;
+    var closed = false, deliveryVersion = 0;
+    void error(Object error, StackTrace stack) {
+      if (!closed) controller.addError(error, stack);
+    }
+
+    void emit() {
+      if (closed || parent == null || details == null || history == null) {
+        return;
+      }
+      try {
+        final data = parent!.data();
+        if (data == null || !authorized(data)) {
+          throw StateError('Pedido no disponible para esta cuenta.');
+        }
+        controller.add(
+          FirestoreOrderMapper.fromMaps(
+            documentId: id,
+            ownerUid: ownerUid,
+            data: data,
+            details: details!.docs.isNotEmpty
+                ? details!.docs.map((doc) => doc.data()).toList()
+                : (data['lineas'] as List? ??
+                          (data['linea'] is Map ? [data['linea']] : const []))
+                      .map((line) => Map<String, dynamic>.from(line as Map))
+                      .toList(),
+            history: {for (final doc in history!.docs) doc.id: doc.data()},
+            deliveryData: delivery?.data(),
+            fromCache:
+                (deliveryId != null && delivery == null) ||
+                [
+                  parent!.metadata,
+                  details!.metadata,
+                  history!.metadata,
+                  if (delivery != null) delivery!.metadata,
+                ].any(
+                  (metadata) =>
+                      metadata.isFromCache || metadata.hasPendingWrites,
+                ),
+          ),
+        );
+      } catch (e, stack) {
+        error(e, stack);
+      }
+    }
+
+    final ref = db.doc('pedidos/$id');
+    controller = StreamController<PharmacyOrder>(
+      onListen: () {
+        subscriptions.add(
+          ref.snapshots(includeMetadataChanges: true).listen((snapshot) {
+            parent = snapshot;
+            final data = snapshot.data();
+            if (data == null || !authorized(data)) {
+              error(
+                StateError('Pedido no disponible para esta cuenta.'),
+                StackTrace.current,
+              );
+              return;
+            }
+            final next = data['id_entrega'] as String?;
+            if (next != deliveryId) {
+              deliveryId = next;
+              delivery = null;
+              final version = ++deliveryVersion;
+              deliverySubscription?.cancel();
+              if (next != null) {
+                deliverySubscription = db
+                    .doc('entregas/$next')
+                    .snapshots(includeMetadataChanges: true)
+                    .listen((snapshot) {
+                      if (version != deliveryVersion) return;
+                      if (snapshot.exists &&
+                          snapshot.data()?['id_pedido'] != id) {
+                        error(
+                          StateError('Entrega incompatible con el pedido.'),
+                          StackTrace.current,
+                        );
+                        return;
+                      }
+                      delivery = snapshot;
+                      emit();
+                    }, onError: error);
+              }
+            }
+            emit();
+          }, onError: error),
+        );
+        subscriptions.add(
+          ref
+              .collection('detalle_pedido')
+              .snapshots(includeMetadataChanges: true)
+              .listen((snapshot) {
+                details = snapshot;
+                emit();
+              }, onError: error),
+        );
+        subscriptions.add(
+          ref
+              .collection('historial_estado')
+              .snapshots(includeMetadataChanges: true)
+              .listen((snapshot) {
+                history = snapshot;
+                emit();
+              }, onError: error),
+        );
+      },
+      onCancel: () async {
+        closed = true;
+        deliveryVersion++;
+        await deliverySubscription?.cancel();
+        for (final subscription in subscriptions) {
+          await subscription.cancel();
+        }
+      },
+    );
+    return controller.stream;
+  }
+
   Stream<PharmacyOrder> watch(
     String id, {
     required String ownerUid,

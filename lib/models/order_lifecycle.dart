@@ -85,11 +85,13 @@ class OrderHistoryEvent {
     required this.actorId,
     required this.role,
     this.note = '',
+    this.atKnown = true,
   });
   final String id, orderNumber, actorId, note;
   final OrderStatus before, after;
   final String operation;
   final DateTime at;
+  final bool atKnown;
   final UserRole? role;
   Map<String, Object?> toMap() => {
     'id': id,

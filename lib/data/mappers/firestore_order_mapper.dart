@@ -8,7 +8,7 @@ import '../../models/order_lifecycle.dart';
 class FirestoreOrderMapper {
   static DateTime date(dynamic value) {
     if (value is Timestamp) return value.toDate();
-    if (value is String) return DateTime.parse(value);
+    if (value is String) return DateTime.parse(value).toLocal();
     throw const FormatException('Fecha de pedido no válida.');
   }
 
@@ -30,6 +30,7 @@ class FirestoreOrderMapper {
     required List<Map<String, dynamic>> details,
     required Map<String, Map<String, dynamic>> history,
     bool fromCache = false,
+    Map<String, dynamic>? deliveryData,
   }) {
     final delivery = Map<String, dynamic>.from(data['entrega'] as Map? ?? {});
     final number = CommercialNumber.orderLabel(
@@ -40,7 +41,7 @@ class FirestoreOrderMapper {
     final created = rawDate is Timestamp
         ? rawDate.toDate()
         : rawDate is String
-        ? DateTime.tryParse(rawDate)
+        ? DateTime.tryParse(rawDate)?.toLocal()
         : null;
     final order = PharmacyOrder(
       number: number,
@@ -76,10 +77,40 @@ class FirestoreOrderMapper {
             presentationId: line['id_presentacion'] as String?,
             inventoryFactor: (line['factor_inventario'] as num?)?.toInt() ?? 1,
             inventoryQuantity: (line['cantidad_inventario'] as num?)?.toInt(),
+            recordedSubtotal: (line['subtotal'] as num?)?.toDouble(),
           ),
       ],
     );
     order.deliveryId = data['id_entrega'] as String?;
+    order.pharmacyId = data['id_cliente'] as String?;
+    DateTime? optionalDate(dynamic value) => value is Timestamp
+        ? value.toDate()
+        : value is String
+        ? DateTime.tryParse(value)?.toLocal()
+        : value is DateTime
+        ? value
+        : null;
+    order.approvedAt = optionalDate(data['fecha_aprobacion']);
+    order.assignedAt = optionalDate(
+      data['fecha_asignacion'] ?? deliveryData?['fecha_creacion'],
+    );
+    order.dispatchedAt = optionalDate(data['fecha_despacho']);
+    order.cancelledAt = optionalDate(data['fecha_cancelacion']);
+    order.cancellationReason = data['motivo_cancelacion'] as String?;
+    order.deliveryReference = delivery['referencia'] as String? ?? '';
+    order.deliveryState = deliveryData?['estado'] as String?;
+    order.driverId = deliveryData?['id_repartidor'] as String?;
+    order.driverName =
+        (deliveryData?['repartidor_nombre'] ?? data['repartidor_nombre'])
+            as String?;
+    order.scheduledFor = optionalDate(deliveryData?['fecha_programada']);
+    order.failureReason = deliveryData?['motivo'] as String?;
+    order.failureNote = deliveryData?['observacion'] as String?;
+    if (order.status == OrderStatus.entregado) {
+      order.deliveredAt = optionalDate(
+        data['fecha_logistica'] ?? deliveryData?['fecha_estado'],
+      );
+    }
     order.stockRestored = data['stock_restituido'] == true;
     final request = data['solicitud_cancelacion'];
     if (request is Map && request['estado'] == 'pendiente') {
@@ -93,7 +124,7 @@ class FirestoreOrderMapper {
       );
     }
     if (data['fecha_logistica'] != null) {
-      final at = date(data['fecha_logistica']);
+      final at = optionalDate(data['fecha_logistica']);
       if (order.status == OrderStatus.entregado) order.deliveredAt = at;
       if (order.status == OrderStatus.fallida) order.failedAt = at;
       if (order.status == OrderStatus.enRuta) order.dispatchedAt = at;
@@ -121,17 +152,25 @@ class FirestoreOrderMapper {
     }
     for (final entry in history.entries) {
       final event = entry.value;
-      final after = status(event['estado'] ?? event['estado_nuevo']);
+      OrderStatus after, before;
+      try {
+        after = status(event['estado'] ?? event['estado_nuevo']);
+        before = event['estado_anterior'] == null
+            ? after
+            : status(event['estado_anterior']);
+      } on FormatException {
+        continue;
+      }
+      final eventDate = optionalDate(event['fecha'] ?? event['fecha_cambio']);
       order.history.add(
         OrderHistoryEvent(
           id: entry.key,
           orderNumber: number,
-          before: event['estado_anterior'] == null
-              ? after
-              : status(event['estado_anterior']),
+          before: before,
           after: after,
           operation: event['operacion'] as String? ?? 'estado',
-          at: date(event['fecha'] ?? event['fecha_cambio']),
+          at: eventDate ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+          atKnown: eventDate != null,
           actorId:
               event['usuario_id'] as String? ??
               event['id_usuario'] as String? ??

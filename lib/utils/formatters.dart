@@ -48,7 +48,9 @@ String buildOrderSummary(PharmacyOrder order) {
   final buffer = StringBuffer()
     ..writeln('PharmaLab · Resumen de pedido')
     ..writeln('Pedido: ${order.number}')
-    ..writeln('Fecha: ${formatOrderDate(order.createdAt)}')
+    ..writeln(
+      'Fecha: ${order.createdAtKnown ? formatOrderDate(order.createdAt) : 'No registrada'}',
+    )
     ..writeln('Estado: ${order.status.label}')
     ..writeln()
     ..writeln('Productos:');

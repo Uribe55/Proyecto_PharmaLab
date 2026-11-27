@@ -47,6 +47,7 @@ class OrderLine {
     this.presentationId,
     this.inventoryFactor = 1,
     this.inventoryQuantity,
+    this.recordedSubtotal,
   });
 
   final String productId;
@@ -59,8 +60,9 @@ class OrderLine {
   final String? presentationId;
   final int inventoryFactor;
   final int? inventoryQuantity;
+  final double? recordedSubtotal;
 
-  double get subtotal => unitPrice * quantity;
+  double get subtotal => recordedSubtotal ?? unitPrice * quantity;
 }
 
 class PharmacyOrder {
@@ -133,6 +135,10 @@ class PharmacyOrder {
   final String? customerId;
   final bool remote;
   DateTime? assignedAt, dispatchedAt, failedAt, cancelledAt, rescheduledFor;
+  DateTime? approvedAt;
+  String? deliveryState;
+  String deliveryReference = '';
+  String? pharmacyId;
   String? assignedBy, dispatchedBy, cancelledBy, cancellationReason;
   bool hasBeenDispatched = false;
   bool stockRestored = false;

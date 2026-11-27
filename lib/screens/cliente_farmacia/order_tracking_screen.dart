@@ -53,6 +53,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     stream: _stream,
     builder: (context, snapshot) {
       if (snapshot.hasError) {
+        if (_latest != null) return _buildPage(context, error: true);
         return Scaffold(
           appBar: const ClientPageAppBar(title: 'Seguimiento'),
           body: const Center(
@@ -70,10 +71,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     },
   );
 
-  Widget _buildPage(BuildContext context) {
+  Widget _buildPage(BuildContext context, {bool error = false}) {
     if (!OrderPolicy.canRead(order, PharmaService.instance.currentUser)) {
       return const Scaffold(
         body: Center(child: Text('Pedido no disponible para esta cuenta.')),
+      );
+    }
+    if (order.remote &&
+        PharmaService.instance.usesFirebase &&
+        order.pharmacyId != PharmaService.instance.pharmacyId) {
+      return const Scaffold(
+        body: Center(child: Text('Pedido no disponible para esta farmacia.')),
       );
     }
     return Scaffold(
@@ -91,14 +99,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
         children: [
+          if (error)
+            const Text(
+              'No se pudo sincronizar. Se muestra la última información recibida; puede estar desactualizada.',
+              style: AppText.muted,
+            ),
           if (order.fromCache)
             const Text(
               'Información guardada; pendiente de actualizar con el servidor.',
-              style: AppText.muted,
-            ),
-          if (order.remote && order.schemaVersion != 'transactional_multi_v1')
-            const Text(
-              'Las cancelaciones y otras operaciones remotas aún no están disponibles.',
               style: AppText.muted,
             ),
           if (showConfirmation) ...[
@@ -108,13 +116,18 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           _OrderSummaryCard(order: order),
           RemoteCancellationPanel(order: order),
           const SizedBox(height: 14),
-          OrderLifecyclePanel(order: order),
+          if (!order.remote) OrderLifecyclePanel(order: order),
           const SizedBox(height: 22),
           const Text('Progreso de entrega', style: AppText.h3),
           const SizedBox(height: 14),
-          if (order.status != OrderStatus.cancelado) _Timeline(order: order),
+          _Timeline(order: order),
           const SizedBox(height: 22),
           const Text('Productos', style: AppText.h3),
+          if (order.items.isEmpty)
+            const Text(
+              'No hay detalles de productos registrados para este pedido.',
+              style: AppText.meta,
+            ),
           const SizedBox(height: 12),
           _ProductsCard(order: order),
           const SizedBox(height: 22),
@@ -228,7 +241,12 @@ class _OrderSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(formatOrderDate(order.createdAt), style: AppText.meta),
+          Text(
+            order.createdAtKnown
+                ? formatOrderDate(order.createdAt)
+                : 'Fecha no registrada',
+            style: AppText.meta,
+          ),
           const SizedBox(height: 12),
           const Divider(),
           const SizedBox(height: 12),
@@ -236,7 +254,7 @@ class _OrderSummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${order.items.length} productos · '
+                  '${order.items.map((line) => line.productId).toSet().length} productos · '
                   '${order.totalUnits} unidades',
                   style: AppText.meta.copyWith(fontSize: 10.5),
                 ),
@@ -255,128 +273,137 @@ class _OrderSummaryCard extends StatelessWidget {
 
 class _Timeline extends StatelessWidget {
   const _Timeline({required this.order});
-
   final PharmacyOrder order;
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          for (var index = 0; index < OrderStatus.deliverySteps.length; index++)
-            _TimelineStep(
-              status: OrderStatus.deliverySteps[index],
-              index: index,
-              currentIndex: order.statusIndex,
-              isLast: index == OrderStatus.deliverySteps.length - 1,
-            ),
-        ],
-      ),
-    );
-  }
-}
+    DateTime? eventDate(OrderStatus status) {
+      for (final event in order.history) {
+        if (event.after == status && event.atKnown) return event.at;
+      }
+      return null;
+    }
 
-class _TimelineStep extends StatelessWidget {
-  const _TimelineStep({
-    required this.status,
-    required this.index,
-    required this.currentIndex,
-    required this.isLast,
-  });
-
-  final OrderStatus status;
-  final int index;
-  final int currentIndex;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDone = index < currentIndex;
-    final isActive = index == currentIndex;
-    final isFuture = index > currentIndex;
-    final lineColor = index < currentIndex
-        ? AppColors.primary.withValues(alpha: 0.45)
-        : AppColors.border;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    bool recorded(OrderStatus status) =>
+        order.history.any((event) => event.after == status);
+    final stages =
+        <({String title, bool observed, DateTime? at, bool current})>[
+          (
+            title: 'Pedido confirmado',
+            observed:
+                order.createdAtKnown ||
+                recorded(OrderStatus.pendiente) ||
+                order.status == OrderStatus.pendiente,
+            at:
+                eventDate(OrderStatus.pendiente) ??
+                (order.createdAtKnown ? order.createdAt : null),
+            current: order.status == OrderStatus.pendiente,
+          ),
+          (
+            title: 'Pedido aprobado',
+            observed:
+                order.approvedAt != null ||
+                recorded(OrderStatus.aprobado) ||
+                order.status == OrderStatus.aprobado,
+            at: order.approvedAt ?? eventDate(OrderStatus.aprobado),
+            current:
+                order.status == OrderStatus.aprobado &&
+                order.deliveryId == null,
+          ),
+          (
+            title: 'Repartidor asignado',
+            observed: order.deliveryId != null || order.assignedAt != null,
+            at: order.assignedAt,
+            current:
+                order.status == OrderStatus.aprobado &&
+                order.deliveryId != null,
+          ),
+          (
+            title: 'Pedido en ruta',
+            observed:
+                order.dispatchedAt != null ||
+                recorded(OrderStatus.enRuta) ||
+                order.status == OrderStatus.enRuta,
+            at: order.dispatchedAt ?? eventDate(OrderStatus.enRuta),
+            current: order.status == OrderStatus.enRuta,
+          ),
+          (
+            title: 'Pedido entregado',
+            observed:
+                order.deliveredAt != null ||
+                recorded(OrderStatus.entregado) ||
+                order.status == OrderStatus.entregado,
+            at: order.deliveredAt ?? eventDate(OrderStatus.entregado),
+            current: order.status == OrderStatus.entregado,
+          ),
+        ];
+    final history = [...order.history]
+      ..sort(
+        (a, b) => a.atKnown == b.atKnown
+            ? a.at.compareTo(b.at)
+            : a.atKnown
+            ? -1
+            : 1,
+      );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          width: 26,
-          child: Column(
-            children: [
-              Container(
-                width: 26,
-                height: 26,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive
-                      ? AppColors.primary
-                      : isDone
-                      ? AppColors.mint
-                      : AppColors.surface,
-                  border: Border.all(
-                    color: isFuture ? AppColors.border : AppColors.primary,
-                    width: 1.5,
-                  ),
-                ),
-                child: isDone
-                    ? const Icon(
-                        Icons.check_rounded,
-                        size: 14,
-                        color: AppColors.primary,
-                      )
-                    : isActive
-                    ? Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                    : null,
-              ),
-              if (!isLast) Container(width: 2, height: 38, color: lineColor),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(top: 3, bottom: isLast ? 18 : 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  status.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.2,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                    color: isFuture
-                        ? AppColors.muted
-                        : isActive
-                        ? AppColors.primary
-                        : AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  status.description,
-                  style: AppText.meta.copyWith(fontSize: 10.5),
-                ),
-              ],
+        for (final stage in stages)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              stage.current
+                  ? Icons.radio_button_checked
+                  : stage.observed
+                  ? Icons.check_circle_outline
+                  : Icons.radio_button_unchecked,
+              color: stage.observed ? AppColors.primary : AppColors.muted,
+            ),
+            title: Text(
+              stage.title,
+              style: stage.current ? AppText.label : AppText.meta,
+            ),
+            subtitle: Text(
+              stage.at != null
+                  ? formatOrderDate(stage.at!)
+                  : stage.observed
+                  ? 'Fecha no registrada'
+                  : 'Sin evidencia registrada',
+              style: AppText.meta,
             ),
           ),
-        ),
+        if (order.status == OrderStatus.fallida ||
+            order.status == OrderStatus.cancelado ||
+            order.status == OrderStatus.reprogramado)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.info_outline, color: AppColors.danger),
+            title: Text(order.status.label),
+            subtitle: Text(
+              order.cancellationReason ??
+                  order.failureReason ??
+                  order.status.description,
+            ),
+          ),
+        const SizedBox(height: 14),
+        const Text('Historial de estados', style: AppText.h3),
+        if (history.isEmpty)
+          const Text(
+            'No hay eventos históricos registrados.',
+            style: AppText.meta,
+          ),
+        for (final event in history)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.history),
+            title: Text(
+              '${event.before.label} → ${event.after.label}',
+              style: AppText.label,
+            ),
+            subtitle: Text(
+              '${event.atKnown ? formatOrderDate(event.at) : 'Fecha no registrada'}\n${event.note.isEmpty ? event.after.description : event.note}',
+              style: AppText.meta,
+            ),
+          ),
       ],
     );
   }
@@ -482,6 +509,43 @@ class _DeliveryCard extends StatelessWidget {
             title: order.pharmacyName,
             subtitle: order.address,
           ),
+          if (order.deliveryReference.isNotEmpty)
+            Text('Referencia: ${order.deliveryReference}', style: AppText.meta),
+          if (order.deliveryId != null) ...[
+            const Divider(height: 22),
+            _DetailRow(
+              icon: Icons.local_shipping_outlined,
+              title: order.driverName ?? 'Repartidor asignado',
+              subtitle: order.deliveryState == null
+                  ? 'Información de entrega no disponible'
+                  : 'Estado de entrega: ${order.deliveryState}',
+            ),
+          ],
+          if (order.scheduledFor != null)
+            Text(
+              'Entrega programada: ${formatOrderDate(order.scheduledFor!)}',
+              style: AppText.meta,
+            ),
+          if (order.dispatchedAt != null)
+            Text(
+              'Inicio de recorrido: ${formatOrderDate(order.dispatchedAt!)}',
+              style: AppText.meta,
+            ),
+          if (order.deliveredAt != null)
+            Text(
+              'Entrega efectiva: ${formatOrderDate(order.deliveredAt!)}',
+              style: AppText.meta,
+            ),
+          if (order.failureReason?.isNotEmpty == true)
+            Text(
+              'Incidencia: ${order.failureReason} ${order.failureNote ?? ''}',
+              style: AppText.meta,
+            ),
+          if (order.rescheduledFor != null)
+            Text(
+              'Reprogramación: ${formatOrderDate(order.rescheduledFor!)}',
+              style: AppText.meta,
+            ),
           const Divider(height: 22),
           _DetailRow(
             icon: Icons.person_outline_rounded,

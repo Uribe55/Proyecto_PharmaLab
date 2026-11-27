@@ -11,21 +11,22 @@ import '../../widgets/status_chip.dart';
 import 'order_tracking_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
-  const OrderHistoryScreen({super.key, required this.onBrowse});
+  const OrderHistoryScreen({super.key, required this.onBrowse, this.viewModel});
 
   final VoidCallback onBrowse;
+  final OrderHistoryViewModel? viewModel;
 
   @override
   State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
 }
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
-  OrderStatus? _filter;
-  late final _history = OrderHistoryViewModel();
+  String _filter = 'all';
+  late final _history = widget.viewModel ?? OrderHistoryViewModel();
 
   @override
   void dispose() {
-    _history.dispose();
+    if (widget.viewModel == null) _history.dispose();
     super.dispose();
   }
 
@@ -35,16 +36,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       listenable: _history,
       builder: (context, _) {
         final allOrders = _history.orders;
-        final orders = _filter == null
-            ? allOrders
-            : allOrders.where((order) => order.status == _filter).toList();
+        final orders = OrderHistoryViewModel.selectOrders(allOrders, _filter);
 
         return Scaffold(
           body: SafeArea(
             bottom: false,
             child: Column(
               children: [
-                const ClientTabHeader(title: 'Historial de pedidos'),
+                const ClientTabHeader(title: 'Mis pedidos'),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
@@ -65,19 +64,27 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _HistoryFilter(
-                              label: 'Todos',
-                              selected: _filter == null,
-                              onTap: () => setState(() => _filter = null),
-                            ),
-                            for (final status in OrderStatus.values) ...[
-                              const SizedBox(width: 8),
-                              _HistoryFilter(
-                                label: status.label,
-                                selected: _filter == status,
-                                onTap: () => setState(() => _filter = status),
+                            for (final entry in const {
+                              'all': 'Todos',
+                              'active': 'Activos',
+                              'history': 'Historial',
+                              'pendiente': 'Pendientes',
+                              'aprobado': 'Aprobados',
+                              'enRuta': 'En ruta',
+                              'entregado': 'Entregados',
+                              'fallida': 'Fallidos',
+                              'cancelado': 'Cancelados',
+                              'reprogramado': 'Reprogramados',
+                            }.entries)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: _HistoryFilter(
+                                  label: entry.value,
+                                  selected: _filter == entry.key,
+                                  onTap: () =>
+                                      setState(() => _filter = entry.key),
+                                ),
                               ),
-                            ],
                           ],
                         ),
                       ),
@@ -105,9 +112,19 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         const Center(child: CircularProgressIndicator()),
                       if (_history.error != null)
                         Text(_history.error!, style: AppText.muted),
-                      if (PharmaService.instance.usesFirebase)
+                      if (_history.error != null && orders.isNotEmpty)
                         const Text(
-                          'Últimos 50 pedidos de tu farmacia.',
+                          'Se muestra la última información recibida; puede estar desactualizada.',
+                          style: AppText.meta,
+                        ),
+                      if (_history.error != null)
+                        TextButton(
+                          onPressed: _history.retry,
+                          child: const Text('Reintentar consulta'),
+                        ),
+                      if (PharmaService.instance.usesFirebase)
+                        Text(
+                          'Pedidos de tu farmacia cargados: ${allOrders.length}.',
                           style: AppText.meta,
                         ),
                       if (orders.any((order) => order.fromCache))
@@ -115,24 +132,27 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           'Datos guardados en este dispositivo; pueden estar desactualizados.',
                           style: AppText.meta,
                         ),
-                      if (orders.isEmpty)
+                      if (orders.isEmpty &&
+                          !_history.loading &&
+                          _history.error == null)
                         Padding(
                           padding: const EdgeInsets.only(top: 30),
                           child: EmptyState(
                             icon: Icons.receipt_long_outlined,
                             title: 'Sin pedidos por aquí',
-                            description: _filter == null
+                            description: _filter == 'all'
                                 ? 'Todavía no realizaste ningún pedido. '
                                       'Explora el catálogo para comenzar.'
-                                : 'No tienes pedidos con el estado '
-                                      '“${_filter!.label}”.',
+                                : _history.canLoadMore
+                                ? 'No hay coincidencias en los pedidos cargados. Carga más para buscar pedidos anteriores.'
+                                : 'No hay pedidos en la categoría seleccionada.',
                             action: OutlinedButton(
                               onPressed: widget.onBrowse,
                               child: const Text('Explorar catálogo'),
                             ),
                           ),
-                        )
-                      else
+                        ),
+                      if (orders.isNotEmpty)
                         for (final order in orders) ...[
                           _OrderCard(
                             order: order,
@@ -147,6 +167,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           ),
                           if (order != orders.last) const SizedBox(height: 12),
                         ],
+                      if (_history.canLoadMore)
+                        OutlinedButton(
+                          onPressed: _history.loading
+                              ? null
+                              : _history.loadMore,
+                          child: const Text('Cargar más pedidos'),
+                        ),
                     ],
                   ),
                 ),
@@ -209,20 +236,26 @@ class _OrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                formatOrderDate(order.createdAt),
+                order.createdAtKnown
+                    ? formatOrderDate(order.createdAt)
+                    : 'Fecha no registrada',
                 style: AppText.meta.copyWith(fontSize: 10.5),
               ),
+              const SizedBox(height: 8),
+              Text(order.status.description, style: AppText.meta),
               const SizedBox(height: 12),
               const Divider(),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Text(
-                    '${order.items.length} '
-                    '${order.items.length == 1 ? 'producto' : 'productos'}',
-                    style: AppText.meta.copyWith(fontSize: 10.5),
+                  Expanded(
+                    child: Text(
+                      order.items.isEmpty
+                          ? 'Productos: ver detalle'
+                          : '${order.items.map((line) => line.productId).toSet().length} productos diferentes',
+                      style: AppText.meta.copyWith(fontSize: 10.5),
+                    ),
                   ),
-                  const Spacer(),
                   Text(
                     formatBs(order.total),
                     style: AppText.h3.copyWith(fontSize: 13),
@@ -234,6 +267,15 @@ class _OrderCard extends StatelessWidget {
                     color: AppColors.muted,
                   ),
                 ],
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: onTap,
+                  child: Text(
+                    order.status.isFinal ? 'Ver detalle' : 'Seguir pedido',
+                  ),
+                ),
               ),
             ],
           ),

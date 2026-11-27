@@ -188,25 +188,47 @@ class FirestoreOrderDataSource
   }
 
   @override
-  Stream<List<PharmacyOrder>> watchOwnOrders() {
-    // No se combina con _orders de demostración; el filtro coincide con rules.
+  Stream<List<PharmacyOrder>> watchOwnOrders({int limit = 50}) {
+    final uid = _uid, farm = _farm;
     return _db
         .collection('pedidos')
-        .where('id_cliente', isEqualTo: _farm)
+        .where('id_cliente', isEqualTo: farm)
         .orderBy('fecha_pedido', descending: true)
-        .limit(50)
+        .limit(limit)
         .snapshots(includeMetadataChanges: true)
-        .asyncMap(
-          (snapshot) async =>
-              Future.wait(snapshot.docs.map((d) => _load(d.id))),
-        );
+        .map((snapshot) {
+          if (_session.uid != uid || _session.pharmacyId != farm) {
+            throw StateError('La sesión cambió.');
+          }
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            if (data['id_cliente'] != farm) throw StateError('Pedido ajeno.');
+            final lines = data['lineas'] is List
+                ? data['lineas'] as List
+                : data['linea'] is Map
+                ? [data['linea']]
+                : const [];
+            return FirestoreOrderMapper.fromMaps(
+              documentId: doc.id,
+              ownerUid: uid,
+              data: data,
+              details: lines
+                  .map((line) => Map<String, dynamic>.from(line as Map))
+                  .toList(),
+              history: const {},
+              fromCache:
+                  snapshot.metadata.isFromCache ||
+                  snapshot.metadata.hasPendingWrites,
+            );
+          }).toList();
+        });
   }
 
   @override
   Stream<PharmacyOrder> watchOrder(String documentId) {
     final uid = _uid;
     final farm = _farm;
-    return FirestoreOrderReader(_db).watch(
+    return FirestoreOrderReader(_db).watchClient(
       documentId,
       ownerUid: uid,
       authorized: (data) =>
